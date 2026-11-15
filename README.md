@@ -4,6 +4,10 @@ An interactive web application for exploring, learning, and evaluating lunar lan
 
 Built for the NASA Space Apps Challenge, *CLPS Lunar Mission Browser*.
 
+> **This is the continued version.** The version submitted to NASA Space Apps 2026 (Kuala Lumpur) stays frozen at [Arairo/NASA_lunarmoon-](https://github.com/Arairo/NASA_lunarmoon-). Work since the event, and the plan for what comes next, is in [IMPROVEMENTS.md](IMPROVEMENTS.md).
+>
+> **New since the event:** a "What if?" card in Professional mode (nudge the site 0.25–10 km or the date by a day, with a plain sentence saying what changed and Undo), "Find the next good date" in both modes, a ±250 m uncertainty range, JPL Horizons checks in the test suite plus a Horizons validation workflow, and phone and keyboard fixes.
+
 ---
 
 ## 🌟 Application Modes

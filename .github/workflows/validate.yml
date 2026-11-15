@@ -1,0 +1,27 @@
+name: Validate against JPL Horizons
+
+# Run from the Actions tab ("Run workflow"). Compares the engine's Sun and
+# Earth positions with NASA JPL Horizons and posts the scoreboard to the run
+# summary, plus a downloadable JSON file.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Compare with JPL Horizons
+        run: node tools/validate-horizons.mjs --json validation.json | tee -a "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: horizons-validation
+          path: validation.json
