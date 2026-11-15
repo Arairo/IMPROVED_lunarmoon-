@@ -414,6 +414,22 @@ export function createGlobeRenderer(canvas, onPickSite, options = {}) {
       renderGlobe();
     },
     setHighlights,
+    /** Grey marker where the site was before a nudge (null hides it). */
+    setGhost(lat, lon) {
+      if (!three) return;
+      if (!three.ghost) {
+        const T = three.T;
+        three.ghost = new T.Mesh(new T.SphereGeometry(0.014, 16, 16), new T.MeshBasicMaterial({ color: 0x9aa0ad, transparent: true, opacity: 0.85 }));
+        three.scene.add(three.ghost);
+      }
+      three.ghost.visible = lat != null;
+      if (lat != null) {
+        const p = latLonToVec3(lat, lon, 1.006);
+        three.ghost.position.set(p[0], p[1], p[2]);
+        three.ghost.scale.setScalar(clamp((distance - 1) / 2.1, 0.2, 1));
+      }
+      renderGlobe();
+    },
     setHighlightEarth(states) {
       highlights.forEach((h, i) => { h.earthUp = states[i]; });
       renderGlobe();

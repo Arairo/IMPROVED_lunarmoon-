@@ -10,6 +10,7 @@ import { createWalk } from './walk.js';
 import { findBestSpots } from './bestSpots.js';
 import { soundOn, toggleSound } from './sound.js';
 import { openAbout } from './about.js';
+import { mountPlanCard } from './plan.js';
 import { prepareSite, evaluate } from '../core/analysis.js';
 
 const store = {
@@ -128,7 +129,7 @@ export function initExperience(api) {
     { target: '#paneSite', mood: 'think', title: 'Pick a landing site', body: 'Choose from Apollo, CLPS, Chandrayaan-3, Chang’e and computed best-lit spots, or type your own coordinates with “+ Coords”.', why: 'Sites marked “computed” were found by scanning NASA LOLA terrain for the places that see the most Sun in 2027.' },
     { target: '#globeViewport', pad: 0, mood: 'wow', title: 'The 3D Moon', body: 'Gold is the direction of the Sun from your site; blue is Earth. Click anywhere on the surface to test that exact spot.', extra: GESTURES },
     { target: '#xp-notch', pad: 8, mood: 'happy', title: 'Live status', body: 'This pill tells you, at a glance, whether you have power and a radio link right now. The numbers flash green when they rise and red when they fall.' },
-    { target: '#clockToolbar', mood: 'think', title: 'Travel through time', body: 'Change the date (UTC), step by hours or days, or press Play to watch the Sun circle the sky.', why: 'At the south pole the Sun circles the whole horizon once every 29.5 days. Play at 6 h/s to watch it skim the ridges.' },
+    { target: '#clockToolbar', mood: 'think', title: 'Travel through time', body: 'Change the date (UTC), step a day at a time, or press Play to watch the Sun circle the sky.', why: 'At the south pole the Sun circles the whole horizon once every 29.5 days. Play at 6 h/s to watch it skim the ridges.' },
     { target: '#timelineWrap', mood: 'happy', title: 'The operations timeline', body: 'Each row is a resource over the window: sunlight, power, Earth in view, Deep Space Network coverage and the direct-to-Earth link. Drag across it to scrub time.' },
     { target: '#paneResults', mood: 'think', title: 'The assessment', body: 'GO / CAUTION / NO-GO now, the terrain skyline, time to sunset and Earthset, battery size and link margin.', why: 'Power and link figures depend on the spacecraft assumptions (⚙ Spacecraft): panel area, efficiency, load, mast height and radio.' },
     { target: '#modeCompareBtn', mood: 'wow', title: 'Compare scenarios', body: 'Add the current site and date, then test launch slips of 1–3 months or nearby sunnier spots side by side, and export to CSV.' },
@@ -243,6 +244,9 @@ export function initExperience(api) {
     getGlobe()?.setHighlightEarth(best.spots.map((sp) => evaluate(app.timeMs, sp.ctx, app.config, { withDsn: false }).earth.los));
   }
 
+  // ---------- What if? card (nudge site / date, find a date) ----------
+  const plan = mountPlanCard({ app, selectSite, setTime, getGlobe });
+
   // ---------- Entry ----------
   window.addEventListener('hashchange', () => {
     const m = location.hash.slice(1).split('&')[0];
@@ -263,6 +267,7 @@ export function initExperience(api) {
     busy: () => notchBusy(),
     update: () => {
       notchUpdate(app.lastNow, { playing: app.playing });
+      plan.refresh();
       refreshBest();
       updateBestLinks();
       // Terrain 3D opens the Cesium view on the same site and date.

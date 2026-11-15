@@ -8,6 +8,7 @@ import { SYNODIC_MONTH_DAYS, clamp } from '../core/constants.js';
 import { esc, fmtLatLon, fmtHours } from '../ui/format.js';
 import { setLumi } from './lumi.js';
 import { play } from './sound.js';
+import { findNextWindow } from '../core/planning.js';
 
 const DAY = 86400000;
 const FEATURED = [
@@ -203,17 +204,39 @@ export function createWalk({ app, sites, onOpenPro, onExit, onToggleTheme, onTog
         <div class="w-content"><div class="w-row">${DATES.map((d) => `<button type="button" class="w-pill ${st.startMs === d.ms ? 'is-picked' : ''}" data-ms="${d.ms}">${d.label}<br><small style="font-weight:500;opacity:.7">${fmtDate(d.ms)}</small></button>`).join('')}</div>
           <div class="w-more"><label for="wDate">Or pick any date and time (UTC, the time used for space missions)</label>
             <input id="wDate" type="datetime-local" class="w-input" value="${new Date(st.startMs).toISOString().slice(0, 16)}"/>
-            <p class="w-note">Your local time: ${new Date(st.startMs).toLocaleString()}</p></div></div>`,
+            <p class="w-note" data-local>Your local time: ${new Date(st.startMs).toLocaleString()}</p></div>
+          <div class="w-row" style="margin-top:14px"><button type="button" class="xp-btn xp-btn-ghost" data-a="findDate">✨ Find the next good date for me</button></div>
+          <p class="w-note" data-find-out aria-live="polite"></p></div>`,
       bind: () => {
+        const showLocal = () => { scene.querySelector('[data-local]').textContent = `Your local time: ${new Date(st.startMs).toLocaleString()}`; };
         scene.querySelectorAll('[data-ms]').forEach((b) => b.addEventListener('click', () => {
           st.startMs = Number(b.dataset.ms);
           scene.querySelectorAll('[data-ms]').forEach((c) => c.classList.toggle('is-picked', c === b));
           scene.querySelector('#wDate').value = new Date(st.startMs).toISOString().slice(0, 16);
+          showLocal();
         }));
+        // Lumi searches ahead for the first landing time with sunlight and Earth together for 3+ days.
+        scene.querySelector('[data-a="findDate"]').addEventListener('click', () => {
+          const outEl = scene.querySelector('[data-find-out]');
+          const res = findNextWindow(st.site, st.startMs, app.config, { minDays: 3 });
+          if (!res) {
+            outEl.textContent = `Lumi searched the next 12 months: there is no time here with sunlight and Earth in view together for 3 days. Try another place!`;
+            setLumi(scene.querySelector('[data-lumi]'), 'worried', 'hop', 140);
+            return;
+          }
+          st.startMs = res.ms;
+          scene.querySelector('#wDate').value = new Date(res.ms).toISOString().slice(0, 16);
+          scene.querySelectorAll('[data-ms]').forEach((c) => c.classList.toggle('is-picked', Number(c.dataset.ms) === res.ms));
+          showLocal();
+          const lasts = ((res.endMs - res.ms) / 86400000).toFixed(0);
+          outEl.textContent = `Found one: ${fmtDate(res.ms)}. From then, sunlight and Earth stay in view together for about ${lasts} days.`;
+          setLumi(scene.querySelector('[data-lumi]'), 'happy', 'cheer', 140);
+          play('go');
+        });
         scene.querySelector('#wDate').addEventListener('change', (e) => {
           if (!e.target.value) return; // an empty field would parse as 1 January 2000
           const ms = Date.parse(e.target.value + ':00Z');
-          if (Number.isFinite(ms)) { st.startMs = ms; scene.querySelectorAll('[data-ms]').forEach((c) => c.classList.remove('is-picked')); }
+          if (Number.isFinite(ms)) { st.startMs = ms; scene.querySelectorAll('[data-ms]').forEach((c) => c.classList.remove('is-picked')); showLocal(); }
         });
       },
       next: () => { st.scan = null; go(3); },
