@@ -11,6 +11,8 @@ import { findBestSpots } from './bestSpots.js';
 import { soundOn, toggleSound } from './sound.js';
 import { openAbout } from './about.js';
 import { mountPlanCard } from './plan.js';
+import { mountFlow } from './flow.js';
+import { createAssistant } from './assistant.js';
 import { prepareSite, evaluate } from '../core/analysis.js';
 
 const store = {
@@ -67,6 +69,7 @@ export function initExperience(api) {
     const tools = document.createElement('div');
     tools.className = 'xp-headtools';
     tools.innerHTML = `
+      <button type="button" class="xp-chip is-accent" data-x="lumi" title="Ask Lumi: type what you want to do or know">✨ Ask Lumi</button>
       <button type="button" class="xp-chip" data-x="video" title="Watch the 85-second narrated tour of Professional mode">▶ Video</button>
       <button type="button" class="xp-chip" data-x="beginner" title="Switch to the guided Beginner walk">Beginner</button>
       <a class="xp-chip" data-x="terrain" href="./planner.html#from=pro" title="Open this site and date over real LOLA 3D terrain with shadows (CesiumJS)">Terrain 3D ↗</a>
@@ -125,15 +128,15 @@ export function initExperience(api) {
 
   // ---------- Pro-mode tour ----------
   const proTour = createSpotlight([
-    { target: null, mood: 'happy', title: 'Welcome to Professional mode', body: 'Everything a mission planner needs is on one screen. I’ll walk you round it in under a minute.' },
-    { target: '#paneSite', mood: 'think', title: 'Pick a landing site', body: 'Choose from Apollo, CLPS, Chandrayaan-3, Chang’e and computed best-lit spots, or type your own coordinates with “+ Coords”.', why: 'Sites marked “computed” were found by scanning NASA LOLA terrain for the places that see the most Sun in 2027.' },
+    { target: null, mood: 'happy', title: 'Welcome to Professional mode', body: 'Professional mode walks you through a landing plan in five steps, with the 3D Moon in the middle. I’ll show you round in under a minute.' },
+    { target: '#paneSite .f-top', mood: 'think', title: 'Five steps, in order', body: 'Site → Date → Check → What if → Report. Each step shows only what it needs. Tap a number to jump, or use Next at the bottom.', why: 'Mission planners work in this order: choose where, choose when, check it works, test what happens if plans change, then write it up.' },
+    { target: '#paneSite .f-body', before: () => flow.go(0, { quiet: true }), mood: 'happy', title: 'Step 1: pick a landing site', body: 'Choose from Apollo, CLPS, Chandrayaan-3, Chang’e and computed best-lit spots, type coordinates with “+ Coords”, or tap the best-spot shortcut.', why: 'Sites marked “computed” were found by scanning NASA LOLA terrain for the places that see the most Sun.' },
     { target: '#globeViewport', pad: 0, mood: 'wow', title: 'The 3D Moon', body: 'Gold is the direction of the Sun from your site; blue is Earth. Click anywhere on the surface to test that exact spot.', extra: GESTURES },
     { target: '#xp-notch', pad: 8, mood: 'happy', title: 'Live status', body: 'This pill tells you, at a glance, whether you have power and a radio link right now. The numbers flash green when they rise and red when they fall.' },
-    { target: '#clockToolbar', mood: 'think', title: 'Travel through time', body: 'Change the date (UTC), step a day at a time, or press Play to watch the Sun circle the sky.', why: 'At the south pole the Sun circles the whole horizon once every 29.5 days. Play at 6 h/s to watch it skim the ridges.' },
+    { target: '#clockToolbar', mood: 'think', title: 'Travel through time', body: 'Press Play to watch the Sun circle the sky, or scrub the timeline below. Step 2 (Date) is where you set the touchdown date.', why: 'At the south pole the Sun circles the whole horizon once every 29.5 days. Play at 6 h/s to watch it skim the ridges.' },
     { target: '#timelineWrap', mood: 'happy', title: 'The operations timeline', body: 'Each row is a resource over the window: sunlight, power, Earth in view, Deep Space Network coverage and the direct-to-Earth link. Drag across it to scrub time.' },
-    { target: '#paneResults', mood: 'think', title: 'The assessment', body: 'GO / CAUTION / NO-GO now, the terrain skyline, time to sunset and Earthset, battery size and link margin.', why: 'Power and link figures depend on the spacecraft assumptions (⚙ Spacecraft): panel area, efficiency, load, mast height and radio.' },
-    { target: '#modeCompareBtn', mood: 'wow', title: 'Compare scenarios', body: 'Add the current site and date, then test launch slips of 1–3 months or nearby sunnier spots side by side, and export to CSV.' },
-    { target: '.xp-headtools', mood: 'happy', title: 'Make it yours', body: 'Switch between light and dark, or hop back to the Beginner walk any time. Press ? on the globe to see the controls again.' },
+    { target: '[data-x="lumi"]', pad: 6, mood: 'wow', title: 'Ask Lumi', body: 'Stuck? Type what you want: “best date at the ridge in 2027”, “compare ridge and IM-2”, “move 1 km north” or “what is libration?”.', why: 'Lumi runs in your browser with no AI service: it turns your words into planner actions and reads every number from the same engine you see on screen.' },
+    { target: '.xp-headtools', mood: 'happy', title: 'Make it yours', body: 'Switch between light and dark, watch the video tour, or hop back to the Beginner walk any time. Press ? on the globe to see the controls again.' },
   ], { label: 'Tour' });
 
   // Replace the old tour button with the spotlight tour.
@@ -234,6 +237,7 @@ export function initExperience(api) {
           best.spots.forEach((sp) => { sp.ctx = prepareSite(sp.r.site, null, app.config); });
           getGlobe()?.setHighlights(best.spots.map((sp) => ({ lat: sp.r.site.lat, lon: sp.r.site.lon, color: sp.color, title: sp.title, sub: `${pctTxt(sp.r.ops)} power + Earth` })));
           renderBest('done');
+          flow.renderBest();
           updateBestLinks();
         },
       });
@@ -246,6 +250,30 @@ export function initExperience(api) {
 
   // ---------- What if? card (nudge site / date, find a date) ----------
   const plan = mountPlanCard({ app, selectSite, setTime, getGlobe });
+
+  // ---------- Guided mission flow + Ask Lumi ----------
+  const actions = {
+    selectSite: (site) => selectSite(site, true),
+    slipCompare: () => { document.getElementById('cmpSlipBtn')?.click(); switchMode('compare'); },
+    compareBest: () => api.compareSites?.([app.site, ...best.spots.map((sp) => sp.r.site)]),
+    copyLink: () => api.copyLink?.(),
+    terrain: () => { const a = document.querySelector('[data-x="terrain"]'); if (a) location.href = a.href; },
+    lumi: () => assistant.open(),
+    look: (body) => getGlobe()?.lookAlong?.(body),
+    theme: (v) => applyTheme(v),
+    tour: () => proTour.start(),
+    beginner: () => setMode('beginner'),
+    play: (on) => { if (app.playing !== on) document.getElementById('playPauseBtn')?.click(); },
+  };
+  const flow = mountFlow({ app, setTime, switchMode, getBestSpots: () => best.spots, actions });
+  const assistant = createAssistant({ app, sites, selectSite, setTime, switchMode, getGlobe, compareSites: (l) => api.compareSites?.(l), getBestSpots: () => best.spots, actions });
+  document.querySelector('[data-x="lumi"]')?.addEventListener('click', () => assistant.toggle());
+  // Phones: "Check" opens the flow at step 3 instead of the old results pane.
+  document.querySelector('[data-mob="results"]')?.addEventListener('click', (e) => {
+    e.stopImmediatePropagation();
+    document.querySelector('[data-mob="site"]')?.click();
+    flow.go(2);
+  }, true);
 
   // ---------- Entry ----------
   window.addEventListener('hashchange', () => {
@@ -268,6 +296,7 @@ export function initExperience(api) {
     update: () => {
       notchUpdate(app.lastNow, { playing: app.playing });
       plan.refresh();
+      flow.refresh();
       refreshBest();
       updateBestLinks();
       // Terrain 3D opens the Cesium view on the same site and date.

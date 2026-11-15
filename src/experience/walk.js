@@ -32,7 +32,7 @@ function nextChange(arr, times, idx = 0) {
   return null;
 }
 
-function verdicts(scan) {
+export function verdicts(scan) {
   const s = scan.series, t0 = s.times[0];
   const sunUp = s.lit[0] === 1;
   const sunSet = sunUp ? nextChange(s.lit, s.times) : null;

@@ -58,7 +58,7 @@ try {
 let globe = null;
 let polar = null;
 let xp = null;
-const xpApi = { compareSites: (...a) => compareSites(...a), app, sites: sitesData, selectSite: (...a) => selectSite(...a), setTime: (...a) => setTime(...a), switchMode: (...a) => switchMode(...a), getGlobe: () => globe, setHint: () => {} };
+const xpApi = { copyLink: () => copyScenarioLink(), compareSites: (...a) => compareSites(...a), app, sites: sitesData, selectSite: (...a) => selectSite(...a), setTime: (...a) => setTime(...a), switchMode: (...a) => switchMode(...a), getGlobe: () => globe, setHint: () => {} };
 
 export function onLayoutChange() {
   window.dispatchEvent(new Event('resize'));

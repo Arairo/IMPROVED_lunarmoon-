@@ -42,15 +42,16 @@ Status: ✅ done · 🔨 in progress · ⏳ planned
 | 3.6 | Tour and legend wording match the current controls | QA report L6, L7 | ✅ |
 | 3.7 | First-person "stand here" view with a 360° look-around in 3D | Bean Drift | ⏳ |
 | 3.8 | Named lunar features (IAU gazetteer) around the site | Bean Drift | ⏳ |
-| 3.9 | One-page mission brief to print or save as PDF | Darksight, Lunar Mission Navigator | ⏳ |
+| 3.9 | One-page mission brief to print or save as PDF (step 5 of the mission flow) | Darksight, Lunar Mission Navigator | ✅ |
 | 3.10 | Merge the Cesium Terrain 3D view into the main app as a tab instead of a separate page | UX audit | ⏳ |
 | 3.11 | Cesium header layout and overlapping labels | QA report M6 | ⏳ |
 | 3.12 | Bilingual interface (English / Bahasa Melayu) | Bean Drift (English / Chinese) | ⏳ |
+| 3.13 | Professional mode as a guided five-step mission flow (Site → Date → Check → What if → Report) in a left rail, with the 3D Moon kept in the centre; phones get Steps / Moon / Check tabs | Darksight, Penumbra (step-by-step flows) | ✅ |
 
 ## 4. Reach
 
 | # | Improvement | Reference | Status |
 |---|---|---|---|
 | 4.1 | Whole-Moon map layers (average sunlight, Earth in view, slope) | Darksight | ⏳ |
-| 4.2 | Plain-language "Ask Lumi" questions answered by the engine, never by guessing | Bean Drift (AI assistant), PolarWindow (grounded AI) | ⏳ |
+| 4.2 | Ask Lumi: a chat panel that understands typed requests (go to a site or coordinates, best date, best spot, compare, move N km, shift days, sunset/Earthset, status, explain a term, theme, tour) and answers from the engine, never by guessing. Runs offline, no AI service or key | Bean Drift (AI assistant), PolarWindow (grounded AI) | ✅ |
 | 4.3 | Public read-only API for site/date queries | Bean Drift (REST + MCP) | ⏳ |

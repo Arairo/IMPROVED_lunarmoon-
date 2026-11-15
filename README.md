@@ -6,6 +6,8 @@ Built for the NASA Space Apps Challenge, *CLPS Lunar Mission Browser*.
 
 > **This is the continued version.** The version submitted to NASA Space Apps 2026 (Kuala Lumpur) stays frozen at [Arairo/NASA_lunarmoon-](https://github.com/Arairo/NASA_lunarmoon-). Work since the event, and the plan for what comes next, is in [IMPROVEMENTS.md](IMPROVEMENTS.md).
 >
+> **Newest:** Professional mode is now a guided five-step mission flow (Site → Date → Check → What if → Report, with a printable one-page report), and **Ask Lumi** lets you type requests like "best date at the ridge in 2027", "compare ridge and IM-2" or "what is libration?". Lumi is rule-based and runs offline: it turns your words into planner actions and reads every number from the same engine, so it never makes figures up.
+>
 > **New since the event:** a "What if?" card in Professional mode (nudge the site 0.25–10 km or the date by a day, with a plain sentence saying what changed and Undo), "Find the next good date" in both modes, a ±250 m uncertainty range, JPL Horizons checks in the test suite plus a Horizons validation workflow, and phone and keyboard fixes.
 
 ---
