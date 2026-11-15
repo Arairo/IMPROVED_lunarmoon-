@@ -131,6 +131,8 @@ export function createSpotlight(steps, { label = 'Guide', onDone } = {}) {
     ensureRoot();
     active = true;
     root.classList.add('is-on');
+    // While the tour runs, the page behind it cannot take focus or clicks.
+    document.querySelectorAll('body > header, body > main, body > section, body > nav').forEach((el) => { el.inert = true; });
     addEventListener('resize', onResize);
     addEventListener('keydown', onKey);
     go(from);
@@ -139,6 +141,7 @@ export function createSpotlight(steps, { label = 'Guide', onDone } = {}) {
   function stop(done = false) {
     active = false;
     root?.classList.remove('is-on');
+    document.querySelectorAll('body > header, body > main, body > section, body > nav').forEach((el) => { el.inert = false; });
     removeEventListener('resize', onResize);
     removeEventListener('keydown', onKey);
     if (done && onDone) onDone();

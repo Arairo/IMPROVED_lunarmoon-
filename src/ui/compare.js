@@ -35,11 +35,12 @@ export function verdictFor(stats) {
 let scenarioSeq = 0;
 
 export function addScenario(app, site, startMs, label) {
-  const dup = app.scenarios.find((s) => s.site.id === site.id && s.site.lat === site.lat && s.site.lon === site.lon && s.startMs === startMs && s.windowDays === app.windowDays);
+  const configKey = JSON.stringify(app.config);
+  const dup = app.scenarios.find((s) => s.site.id === site.id && s.site.lat === site.lat && s.site.lon === site.lon && s.startMs === startMs && s.windowDays === app.windowDays && s.configKey === configKey);
   if (dup) return dup;
   const ctx = prepareSite(site, app.config);
   const sc = scanWindow(ctx, startMs, app.windowDays, app.config);
-  const item = { id: `sc-${++scenarioSeq}`, site, startMs, windowDays: app.windowDays, label, scan: sc };
+  const item = { id: `sc-${++scenarioSeq}`, site, startMs, windowDays: app.windowDays, label, scan: sc, configKey };
   app.scenarios.push(item);
   const countEl = document.getElementById('headerCompareCount');
   if (countEl) countEl.textContent = String(app.scenarios.length);

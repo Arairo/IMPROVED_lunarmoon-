@@ -527,14 +527,38 @@ function boot() {
 
   document.getElementById('tourStartBtn')?.addEventListener('click', () => tour.start());
 
-  document.getElementById('settingsOpenBtn')?.addEventListener('click', () => document.getElementById('settingsModal')?.classList.remove('hidden'));
+  // Open the Spacecraft dialog filled from the settings actually in use, so
+  // values typed and then cancelled never linger.
+  document.getElementById('settingsOpenBtn')?.addEventListener('click', () => {
+    const f = document.getElementById('settingsForm');
+    if (f) {
+      f.mode.value = app.config.power.mode;
+      f.areaM2.value = app.config.power.areaM2;
+      f.efficiency.value = +(app.config.power.efficiency * 100).toFixed(1);
+      f.loadW.value = app.config.power.loadW;
+      f.mastHeightM.value = app.config.mastHeightM;
+      f.preset.value = app.config.comms.preset;
+      f.dataRateKbps.value = Math.round(app.config.comms.dataRateBps / 1000);
+      f.minClearanceDeg.value = app.config.comms.minClearanceDeg;
+    }
+    document.getElementById('settingsModal')?.classList.remove('hidden');
+    setTimeout(() => f?.querySelector('select, input')?.focus(), 30);
+  });
+  // Esc closes whichever dialog is open.
+  window.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    for (const id of ['settingsModal', 'glossaryModal']) {
+      const m = document.getElementById(id);
+      if (m && !m.classList.contains('hidden')) { m.classList.add('hidden'); e.stopPropagation(); }
+    }
+  });
   document.getElementById('settingsCloseX')?.addEventListener('click', () => document.getElementById('settingsModal')?.classList.add('hidden'));
   document.getElementById('settingsCancelBtn')?.addEventListener('click', () => document.getElementById('settingsModal')?.classList.add('hidden'));
   document.getElementById('settingsForm')?.addEventListener('submit', (e) => {
     e.preventDefault();
     const f = e.currentTarget;
     app.config.power.mode = f.mode.value;
-    app.config.power.areaM2 = Math.max(0.1, Number(f.areaM2.value) || 2);
+    app.config.power.areaM2 = Math.max(0.1, Number.isFinite(Number(f.areaM2.value)) ? Number(f.areaM2.value) : 2);
     app.config.power.efficiency = clamp((Number(f.efficiency.value) || 29) / 100, 0.05, 0.45);
     app.config.power.loadW = Math.max(5, Number(f.loadW.value) || 120);
     app.config.mastHeightM = clamp(Number(f.mastHeightM.value) || 2, 0.5, 50);

@@ -578,3 +578,34 @@ body.xp-enter header { animation: xpHeadIn 0.7s var(--xp-ease) both; }
   .xp-best .b-note { display: none; }
 }
 .xp-viewcube { z-index: 14; }
+
+/* ---------- What if? card (Professional) ---------- */
+.xp-plan { border: 1px solid var(--xp-line-strong); border-radius: 16px; padding: 12px 12px 10px; background: var(--xp-surface-2); font-family: var(--xp-font); color: var(--xp-ink); }
+.xp-plan .p-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+.xp-plan .p-head b { font: 700 14px var(--xp-font); }
+.xp-plan .p-head span { font: 400 11.5px var(--xp-font); color: var(--xp-ink-3); }
+.xp-plan .p-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 6px 0; }
+.xp-plan .p-lbl { width: 38px; font: 600 11px var(--xp-font); letter-spacing: 0.04em; text-transform: uppercase; color: var(--xp-ink-3); }
+.xp-plan .p-btns { display: inline-flex; gap: 4px; }
+.xp-plan button { height: 28px; min-width: 32px; padding: 0 10px; border-radius: 999px; border: 1px solid var(--xp-line-strong); background: var(--xp-surface-solid); color: var(--xp-ink); font: 600 12px var(--xp-font); cursor: pointer; transition: transform 0.3s var(--xp-spring), background-color 0.2s; }
+.xp-plan button:hover { transform: scale(1.06); background: var(--xp-surface-3); }
+.xp-plan .p-find { background: var(--xp-accent); border-color: transparent; color: #fff; }
+.xp-plan .p-find:hover { background: var(--xp-accent); filter: brightness(1.1); }
+.xp-plan .p-km { display: inline-flex; align-items: center; gap: 4px; font: 500 12px var(--xp-font); color: var(--xp-ink-2); }
+.xp-plan select { height: 28px; border-radius: 8px; border: 1px solid var(--xp-line-strong); background: var(--xp-surface-solid); color: var(--xp-ink); font: 500 12px var(--xp-font); padding: 0 4px; }
+.xp-plan .p-out { margin: 8px 0 0; min-height: 0; font: 500 12.5px/1.45 var(--xp-font); color: var(--xp-ink); }
+.xp-plan .p-out:empty { display: none; }
+.xp-plan .p-out.is-new { animation: xpRise 0.4s var(--xp-ease); }
+.xp-plan .p-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 6px; }
+.xp-plan .p-range { font: 400 11.5px var(--xp-font); color: var(--xp-ink-3); margin-left: auto; text-align: right; }
+
+/* Phones: the Pro time toolbar wraps instead of running off screen, and the
+   Beginner skyline step can no longer push the page sideways. */
+@media (max-width: 720px) {
+  #clockToolbar { flex-wrap: wrap; }
+  #clockToolbar #speedSelect, #clockToolbar #nowBtn { display: none; }
+  .w-scene { grid-template-columns: minmax(0, 1fr); }
+  .w-controls { flex-wrap: wrap; }
+  .w-when { min-width: 0; }
+  .w-panel, .w-say { min-width: 0; }
+}
