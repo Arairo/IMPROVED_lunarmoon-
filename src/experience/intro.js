@@ -1,23 +1,78 @@
-// Cinematic opening: light ribbons, the Moon rising out of black, the title,
+// Cinematic opening: a lunar sunrise over a starfield (daylight sweeps across
+// the Moon while Earth rises beside it), the title,
 // then Start splits into the two modes (Beginner / Professional).
 
+import { icon } from './icons.js';
 import * as THREE from 'three';
 import { play, soundOn, toggleSound } from './sound.js';
 
-const RIBBON_COLOURS = ['#ffb300', '#ff7a00', '#ffd60a', '#38bdf8', '#2997ff', '#ffffff', '#ff453a', '#bf5af2'];
-
-function ribbonsHtml(count = 34) {
-  let html = '';
-  for (let i = 0; i < count; i++) {
-    const c = RIBBON_COLOURS[i % RIBBON_COLOURS.length];
-    const w = 2 + Math.round(Math.random() * 14);
-    const x = Math.round((Math.random() - 0.5) * 140) + 'vw';
-    const r = Math.round((Math.random() - 0.5) * 16) + 'deg';
-    const d = (Math.random() * 0.7).toFixed(2) + 's';
-    const b = (1 + Math.random() * 5).toFixed(1) + 'px';
-    html += `<i class="xp-ribbon" style="--c:${c};--w:${w}px;--x:${x};--r:${r};--d:${d};--b:${b}"></i>`;
+/**
+ * Night sky behind the intro: a few thousand stars, a faint Milky Way band and
+ * a gentle twinkle. Drawn once to an offscreen layer; only ~80 stars animate.
+ * Returns a stop() function.
+ */
+function starfield(canvas) {
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return () => {};
+  const still = matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  let raf = 0, alive = true, base = null, twinklers = [];
+  const rnd = (a, b) => a + Math.random() * (b - a);
+  function build() {
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    const w = canvas.clientWidth, h = canvas.clientHeight;
+    canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr);
+    base = document.createElement('canvas');
+    base.width = canvas.width; base.height = canvas.height;
+    const b = base.getContext('2d');
+    b.scale(dpr, dpr);
+    // Milky Way: a soft diagonal band of glow and dust.
+    const ang = -0.42, cx = w * 0.5, cy = h * 0.55;
+    const along = (t) => [cx + Math.cos(ang) * t, cy + Math.sin(ang) * t];
+    for (let k = 0; k < 26; k++) {
+      const [x, y] = along(rnd(-0.75, 0.75) * Math.hypot(w, h));
+      const r = rnd(0.08, 0.2) * Math.max(w, h);
+      const g = b.createRadialGradient(x, y, 0, x, y, r);
+      const warm = Math.random() < 0.35;
+      g.addColorStop(0, warm ? 'rgba(255, 214, 170, 0.055)' : 'rgba(150, 175, 255, 0.05)');
+      g.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      b.fillStyle = g; b.fillRect(0, 0, w, h);
+    }
+    const star = (x, y, r, a, tint) => {
+      b.fillStyle = `rgba(${tint}, ${a})`;
+      b.beginPath(); b.arc(x, y, r, 0, Math.PI * 2); b.fill();
+    };
+    const tints = ['255, 255, 255', '210, 225, 255', '255, 236, 210', '190, 210, 255'];
+    const n = Math.round((w * h) / 900);
+    for (let i = 0; i < n; i++) star(rnd(0, w), rnd(0, h), rnd(0.25, 0.9), rnd(0.15, 0.75), tints[i % 4]);
+    // Denser, finer stars along the band.
+    for (let i = 0; i < n * 1.4; i++) {
+      const [x, y] = along(rnd(-0.75, 0.75) * Math.hypot(w, h));
+      const off = (Math.random() + Math.random() + Math.random() - 1.5) * h * 0.14;
+      star(x - Math.sin(ang) * off, y + Math.cos(ang) * off, rnd(0.2, 0.6), rnd(0.1, 0.5), tints[i % 4]);
+    }
+    twinklers = Array.from({ length: Math.round(n / 14) }, () => ({ x: rnd(0, w), y: rnd(0, h), r: rnd(0.7, 1.6), p: rnd(0, 6.28), f: rnd(0.6, 1.8), dpr }));
   }
-  return html;
+  const frame = (t) => {
+    if (!alive) return;
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(base, 0, 0);
+    for (const s of twinklers) {
+      const a = 0.35 + 0.65 * (0.5 + 0.5 * Math.sin(s.p + (t / 1000) * s.f));
+      ctx.setTransform(s.dpr, 0, 0, s.dpr, 0, 0);
+      const g = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, s.r * 3);
+      g.addColorStop(0, `rgba(255, 255, 255, ${a})`);
+      g.addColorStop(1, 'rgba(255, 255, 255, 0)');
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.arc(s.x, s.y, s.r * 3, 0, Math.PI * 2); ctx.fill();
+    }
+    if (!still) raf = requestAnimationFrame(frame);
+  };
+  build();
+  raf = requestAnimationFrame(frame);
+  const onResize = () => { build(); if (still) frame(0); };
+  addEventListener('resize', onResize);
+  return () => { alive = false; cancelAnimationFrame(raf); removeEventListener('resize', onResize); };
 }
 
 /**
@@ -37,12 +92,32 @@ function spinMoon(canvas, base) {
   }
   renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
   const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(30, 1, 0.1, 20);
-  camera.position.set(0, 0, 4.1);
-  scene.add(new THREE.AmbientLight(0xffffff, 0.08));
-  const sun = new THREE.DirectionalLight(0xfff1d6, 2.6);
-  sun.position.set(4, 1.6, 2.2); // upper right, like the golden glow behind it
+  // The canvas is 1.6x the Moon's box so Earth can rise beside it; the camera
+  // is pulled back to keep the Moon the same size on screen.
+  const camera = new THREE.PerspectiveCamera(30, 1, 0.1, 30);
+  camera.position.set(0, 0, 4.1 * 1.6);
+  const ambient = new THREE.AmbientLight(0xffffff, 0.02);
+  scene.add(ambient);
+  const sun = new THREE.DirectionalLight(0xfff1d6, 2.8);
+  // Lunar sunrise: the Sun starts behind the Moon (a thin bright rim) and swings
+  // round to the upper right, sweeping daylight across the face.
+  const SUN_FROM = new THREE.Vector3(1.2, 0.5, -4.5);
+  const SUN_TO = new THREE.Vector3(4, 1.6, 2.2);
+  sun.position.copy(SUN_FROM);
   scene.add(sun);
+  // A small Earth rising over the lower-left limb (it is far behind the Moon).
+  const earthMat = new THREE.MeshStandardMaterial({ color: 0x223355, roughness: 0.8, metalness: 0, transparent: true, opacity: 0 });
+  const earth = new THREE.Mesh(new THREE.SphereGeometry(0.2, 48, 32), earthMat);
+  earth.position.set(-1.45, -1.5, -1.2);
+  earth.rotation.set(0.35, 0, 0.4);
+  scene.add(earth);
+  new THREE.TextureLoader().load(`${base}data/earth_blue_marble_4k.jpg`, (et) => {
+    if ('colorSpace' in et) et.colorSpace = THREE.SRGBColorSpace;
+    earthMat.map = et; earthMat.color.set(0xffffff); earthMat.needsUpdate = true;
+  });
+  const EARTH_FROM = new THREE.Vector3(-1.45, -1.5, -1.2);
+  const EARTH_TO = new THREE.Vector3(-1.32, -0.86, -1.2);
+  const ease = (x) => 1 - Math.pow(1 - Math.min(1, Math.max(0, x)), 3);
   const loader = new THREE.TextureLoader();
   let ready = false;
   const tex = loader.load(`${base}data/moonGlobal.jpg`, () => { ready = true; });
@@ -72,6 +147,14 @@ function spinMoon(canvas, base) {
       camera.aspect = w / h; camera.updateProjectionMatrix();
     }
     moon.rotation.y = END - TOTAL * Math.exp(-s / TAU);
+    const k = still ? 1 : ease((s - 0.5) / 3.6);
+    sun.position.lerpVectors(SUN_FROM, SUN_TO, k);
+    ambient.intensity = 0.02 + 0.06 * k;
+    const ke = still ? 1 : ease((s - 1.4) / 4.2);
+    earth.position.lerpVectors(EARTH_FROM, EARTH_TO, ke);
+    earthMat.opacity = Math.min(1, ke * 2.5);
+    earth.rotation.y += dt * 0.15;
+    canvas.parentElement?.style.setProperty('--sunrise', k.toFixed(3));
     renderer.render(scene, camera);
     if (s < TAU * 7) raf = requestAnimationFrame(frame);
   };
@@ -80,6 +163,7 @@ function spinMoon(canvas, base) {
     alive = false;
     cancelAnimationFrame(raf);
     mat.map?.dispose(); mat.dispose(); moon.geometry.dispose();
+    earthMat.map?.dispose(); earthMat.dispose(); earth.geometry.dispose();
     renderer.dispose();
     renderer.forceContextLoss?.();
   };
@@ -92,11 +176,12 @@ export function mountIntro({ onChoose, onAbout, siteCount = 29 }) {
   el.setAttribute('role', 'dialog');
   el.setAttribute('aria-label', 'Welcome to Lunar Site Planner');
   el.innerHTML = `
-    <div class="xp-ribbons">${ribbonsHtml()}</div>
-    <div class="xp-corner"><button type="button" class="xp-skip xp-sound" data-sound-label aria-pressed="${soundOn()}" aria-label="${soundOn() ? 'Mute sounds' : 'Turn sounds on'}">${soundOn() ? '🔊' : '🔇'}</button><button type="button" class="xp-skip">Skip intro</button></div>
+    <canvas class="xp-sky" aria-hidden="true"></canvas>
+    <div class="xp-corner"><button type="button" class="xp-skip xp-sound" data-sound-label aria-pressed="${soundOn()}" aria-label="${soundOn() ? 'Mute sounds' : 'Turn sounds on'}">${icon(soundOn() ? 'volume' : 'volumeOff', 16)}</button><button type="button" class="xp-skip">Skip intro</button></div>
     <div class="xp-stage">
       <div class="xp-moon-wrap">
         <div class="xp-moon-glow"></div>
+        <div class="xp-flare" aria-hidden="true"><i></i></div>
         <canvas class="xp-moon xp-moon3d" aria-hidden="true"></canvas>
       </div>
       <div class="xp-eyebrow">NASA Space Apps 2026 · Lunar south pole</div>
@@ -132,6 +217,7 @@ export function mountIntro({ onChoose, onAbout, siteCount = 29 }) {
     </div>`;
   document.body.appendChild(el);
 
+  const stopSky = starfield(el.querySelector('.xp-sky'));
   const stopSpin = spinMoon(el.querySelector('.xp-moon3d'), base);
   const start = el.querySelector('.xp-start');
   const modes = el.querySelector('.xp-modes');
@@ -162,7 +248,7 @@ export function mountIntro({ onChoose, onAbout, siteCount = 29 }) {
       play('whoosh');
       el.classList.add('is-leaving');
       onChoose(b.dataset.mode);
-      setTimeout(() => { stopSpin(); el.remove(); }, 850);
+      setTimeout(() => { stopSpin(); stopSky(); el.remove(); }, 850);
     });
   });
   el.addEventListener('keydown', (e) => {

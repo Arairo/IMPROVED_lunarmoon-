@@ -109,6 +109,32 @@ const TERMS = [
   ['earthhidden', /(earth|sun) (is )?(hidden|blocked|not visible|gone)|can'?t see (the )?(earth|sun)/],
   ['earthfixed', /earth (barely|hardly) move|why (does|is) earth|earth stay/],
   ['farside', /far side|farside|dark side/],
+  ['lunarday', /lunar day|how long (is )?(a )?(day|night)|lunar month|synodic|how long does the sun/],
+  ['distance', /how far|distance (to|from)|light.?second|delay|latency/],
+  ['clps', /\bclps\b|commercial lunar payload/],
+  ['artemis', /artemis/],
+  ['regolith', /regolith|moon dust|lunar dust|soil/],
+  ['temperature', /temperature|how (cold|hot)|freez/],
+  ['gravity', /gravity|weigh/],
+  ['crater', /what('s| is) a crater|craters? (form|made)/],
+  ['water', /\bwater\b/],
+  ['verdict', /go with care|no.?go|what does (go|caution|the colou?r|green|amber|red) mean|traffic light/],
+  ['calendar', /calendar|colou?rs? (on|in) the (calendar|days)/],
+  ['solarpower', /how much power|solar (panel|array)|watts? (do|does)|load/],
+  ['earthrise', /what('s| is) (an )?earthrise/],
+];
+
+const SMALL = [
+  ['thanks', /^(thanks?|thank you|thx|ty|cheers|nice|great|awesome|cool|perfect|ok(ay)?|got it)\b[\s\w!.]*$/],
+  ['bye', /^(bye|goodbye|see you|cya|good night|gn)\b/],
+  ['how', /\bhow are you\b|\bhow('s| is) it going\b|\bwhat'?s up\b|\bsup\b/],
+  ['who', /\bwho are you\b|\bwhat are you\b|\byour name\b|\bwho'?s lumi\b|\bare you (an? )?(ai|bot|robot|chatgpt|gpt|human|real)\b/],
+  ['made', /\bwho (made|built|created|designed) (you|this|the app|it)\b|\bwhich team\b|\bdell monitors\b/],
+  ['app', /\bwhat (is|does) (this|the) (app|website|site|tool|planner)\b|\bwhat is lunar site planner\b|\bwhat am i looking at\b/],
+  ['joke', /\bjoke\b|\bmake me laugh\b|\bsomething funny\b/],
+  ['fact', /\bfun fact\b|\btell me (something|a fact)\b|\bsurprise me\b/],
+  ['love', /\b(i love you|you('re| are) (cute|cool|great|amazing|the best|awesome|smart))\b/],
+  ['rude', /\b(you('re| are) (dumb|stupid|useless|bad)|stupid bot|shut up)\b/],
 ];
 
 /** Parse a request into { type, ... }. */
@@ -117,7 +143,16 @@ export function parseRequest(text, sites, nowMs = Date.now()) {
   const found = findSites(text, sites);
   const minDays = (() => { const m = /(\d+)\s*\+?\s*(?:full\s+)?days?/.exec(t); return m ? Math.min(30, Math.max(1, +m[1])) : null; })();
 
-  if (/^\s*(help|hi|hello|hey|what can you do|\?)\s*[!?.]*\s*$/.test(t)) return { type: 'help' };
+  if (/^\s*(help|what can you do|what can i (ask|do)|commands|options|\?)\s*[!?.]*\s*$/.test(t)) return { type: 'help' };
+  if (/^\s*(hi+|hello+|hey+|yo|hiya|howdy|good (morning|afternoon|evening)|greetings|salam|assalamualaikum)( there| lumi| everyone| all)?\s*[!.]*\s*$/.test(t)) return { type: 'small', kind: 'hello' };
+  for (const [kind, re] of SMALL) if (re.test(t.trim())) return { type: 'small', kind };
+  // Steps of the mission flow and report actions.
+  const stepWords = { site: 0, sites: 0, date: 1, dates: 1, check: 2, verdict: 2, 'what if': 3, whatif: 3, report: 4 };
+  const st = /\b(?:go to|open|show( me)?|take me to)?\s*(?:the\s+)?(?:step\s*([1-5])|(site|date|check|what if|report) step)\b/.exec(t);
+  if (st) return { type: 'step', step: st[2] ? +st[2] - 1 : stepWords[st[3]] };
+  if (/\b(print|save|download|export)\b.*\b(report|pdf)\b|\b(make|create|give me) (a |the )?report\b/.test(t)) return { type: 'report' };
+  if (/\b(copy|share|send)\b.*\b(link|url|scenario)\b/.test(t)) return { type: 'copyLink' };
+  if (/\b(open|show)\b.*\bcalendar\b|\bpick a (day|date)\b/.test(t)) return { type: 'step', step: 1 };
   if (/\b(dark|light) (mode|theme)\b/.test(t)) return { type: 'theme', value: /\bdark\b/.test(t) ? 'dark' : 'light' };
   if (/\b(start|show|give me) (the |a )?(tour|walkthrough)\b|\bguide me\b|\bshow me around\b|\bhow (do|does) (i|this|it) work\b/.test(t)) return { type: 'tour' };
   if (/\bbeginner\b/.test(t)) return { type: 'beginner' };
@@ -144,7 +179,7 @@ export function parseRequest(text, sites, nowMs = Date.now()) {
     return { type: 'bestSpot', flown: /\b(flown|landed|previous|already|past)\b/.test(t) };
   }
 
-  if (/\b(why|what is|what's|whats|what are|explain|meaning|define|how come)\b/.test(t)) {
+  if (/\b(why|what is|what's|whats|what are|what does|explain|meaning|mean|define|how come|how (far|cold|hot|long|much|big|strong)|is there|are there|tell me about|does|do you know)\b/.test(t)) {
     const term = TERMS.find(([, re]) => re.test(t));
     if (term) return { type: 'explain', term: term[0] };
   }

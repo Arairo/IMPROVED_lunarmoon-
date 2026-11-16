@@ -47,11 +47,16 @@ Status: ✅ done · 🔨 in progress · ⏳ planned
 | 3.11 | Cesium header layout and overlapping labels | QA report M6 | ⏳ |
 | 3.12 | Bilingual interface (English / Bahasa Melayu) | Bean Drift (English / Chinese) | ⏳ |
 | 3.13 | Professional mode as a guided five-step mission flow (Site → Date → Check → What if → Report) in a left rail, with the 3D Moon kept in the centre; phones get Steps / Moon / Check tabs | Darksight, Penumbra (step-by-step flows) | ✅ |
+| 3.14 | Landing calendar: each day coloured for the chosen site (green = Sun and Earth together for 3+ days, amber = power only, red = no sunlight), in Pro step 2 and in Beginner | User request | ✅ |
+| 3.15 | Welcome chooser on first entry to Pro: tutorial video, guided tour or skip | User request | ✅ |
+| 3.16 | Top bar reorganised: Ask Lumi stands out; Help menu (video, tour, controls); Settings menu (theme, sound, notes, spacecraft, Beginner); Terrain 3D moved to the view tabs | Design-system guidance (global actions right, preferences under Settings) | ✅ |
+| 3.17 | One line-icon set instead of emoji; layered soft shadows; Lumi with a contact shadow; rounded timeline bars with a smooth power curve and hover read-outs | UX audit | ✅ |
+| 3.18 | Intro: lunar sunrise (starfield and Milky Way, daylight sweeping across the Moon, gold flare, Earth rising) instead of rainbow ribbons | User request | ✅ |
 
 ## 4. Reach
 
 | # | Improvement | Reference | Status |
 |---|---|---|---|
 | 4.1 | Whole-Moon map layers (average sunlight, Earth in view, slope) | Darksight | ⏳ |
-| 4.2 | Ask Lumi: a chat panel that understands typed requests (go to a site or coordinates, best date, best spot, compare, move N km, shift days, sunset/Earthset, status, explain a term, theme, tour) and answers from the engine, never by guessing. Runs offline, no AI service or key | Bean Drift (AI assistant), PolarWindow (grounded AI) | ✅ |
+| 4.2 | Ask Lumi: a chat panel that understands typed requests (go to a site or coordinates, best date, best spot, compare, move N km, shift days, sunset/Earthset, status, explain a term, theme, tour, flow steps, print the report, copy the link), small talk (hello, thanks, who are you, jokes, fun facts) and ~30 explained topics, answered from the engine, never by guessing. Runs offline, no AI service or key | Bean Drift (AI assistant), PolarWindow (grounded AI) | ✅ |
 | 4.3 | Public read-only API for site/date queries | Bean Drift (REST + MCP) | ⏳ |

@@ -31,6 +31,19 @@ const EXPLAIN = {
   battery: 'When the Sun sets, the lander runs on its battery. The longest night in the window tells you how big the battery must be. Near the pole a ridge can stay lit for weeks while a crater a few kilometres away stays dark.',
   earthhidden: 'Earth (or the Sun) is hidden when it sits below the local skyline: the hills and crater rims around the site. Near the pole they hover just a few degrees above level, so even modest terrain can block them. Try a nearby ridge, or a few days later.',
   earthfixed: 'The Moon always shows the same face to Earth, so from any spot Earth hangs in nearly the same place in the sky. It only drifts a few degrees as the Moon wobbles (libration). On the far side, Earth never rises at all.',
+  lunarday: 'One lunar day, from one sunrise to the next, lasts about 29.5 Earth days. Most places get about two weeks of sunlight and then two weeks of night. Near the poles it’s different: the Sun skims round the horizon, so high ridges can stay lit for weeks while crater floors never see it.',
+  distance: 'The Moon is about 384,400 km away on average. A radio signal takes about 1.3 seconds to get there, so every “hello?” to a lander has a round trip of roughly 2.6 seconds.',
+  clps: 'CLPS (Commercial Lunar Payload Services) is NASA buying rides to the Moon for its experiments on landers built by companies. Intuitive Machines’ IM-1 and IM-2 and Firefly’s Blue Ghost Mission 1 are CLPS missions, and they’re all in the site list.',
+  artemis: 'Artemis is NASA’s programme to send astronauts back to the Moon, this time aiming for the south pole region, where sunlight on the ridges and ice in the shadowed craters make it worth the trouble. Choosing where and when to land there is exactly what this planner is about.',
+  regolith: 'Regolith is the Moon’s loose top layer: dust and broken rock made by billions of years of impacts. With no wind or water to smooth it, the grains stay sharp and cling to everything, including solar panels and spacesuits.',
+  temperature: 'With no air to hold heat, the Moon swings hard: around +120 °C in sunlight at the equator and about −130 °C at night. Crater floors at the poles that never see the Sun are among the coldest places measured in the Solar System, below −230 °C.',
+  gravity: 'Gravity on the Moon is about one-sixth of Earth’s (1.62 m/s²), so a 60 kg person would feel like 10 kg. It helps landing, but dust kicked up by the engine flies a long way.',
+  crater: 'Craters are holes made by asteroids and comets hitting the Moon. With no weather to wear them down they last for billions of years, which is why the Moon is covered in them. Near the poles their rims cast very long shadows.',
+  water: 'Yes! In 2009 NASA’s LCROSS crashed a rocket stage into Cabeus crater and saw water in the plume. More ice is thought to sit in permanently shadowed craters near the poles. Water means drinking water, oxygen and rocket fuel for future crews. (LCROSS and Cabeus are in the site list.)',
+  verdict: 'The traffic lights are our own rules of thumb, not a NASA standard. <b>Power</b> is red if the Sun is down at touchdown, amber if it sets within a week or only part of it shows, green otherwise. <b>Earth contact</b> is red if Earth is hidden, amber if it sets within 3 days or is less than 2° above the hills, green otherwise. The overall light is the worse of the two.',
+  calendar: 'In step 2 each day is coloured for the site you picked, landing at the same time of day. <b>Green</b>: the Sun and Earth stay up together for at least 3 days. <b>Amber</b>: the Sun is up but Earth is hidden or sets sooner. <b>Red</b>: the Sun is down, so no solar power. The little bar shows how long Sun and Earth stay up together (full = 14+ days).',
+  solarpower: '',
+  earthrise: 'An Earthrise is Earth coming up over the Moon’s horizon, made famous by the Apollo 8 photo in 1968. From the surface Earth barely moves in the sky, so you only see it rise from places near the edge of the near side, where the Moon’s wobble lifts it over the hills. Say “show me the Earthrise” and I’ll point the camera at it.',
   farside: 'The far side is the half of the Moon that always faces away from Earth (it is not darker: it gets just as much sunlight). Earth never rises there, so landers like Chang’e 4 need a relay satellite to talk home.',
 };
 
@@ -51,7 +64,7 @@ export function createAssistant(api) {
   const chips = panel.querySelector('.l-chips');
   const input = panel.querySelector('input');
 
-  const SUGGEST = ['Is it GO right now?', 'Best date at the ridge in 2027', 'Take me to Apollo 11', 'Compare ridge and IM-2', 'Move 1 km north', 'Why does Earth barely move?', 'Show me the Earthrise'];
+  const SUGGEST = ['Is it GO right now?', 'Best date at the ridge in 2027', 'Take me to Apollo 11', 'Compare ridge and IM-2', 'Move 1 km north', 'What does GO WITH CARE mean?', 'Show me the Earthrise', 'Fun fact', 'Who are you?'];
   const renderChips = (list = SUGGEST) => {
     chips.innerHTML = list.map((s) => `<button type="button">${esc(s)}</button>`).join('');
     chips.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => ask(b.textContent)));
@@ -100,9 +113,11 @@ export function createAssistant(api) {
 
   function respond(q) {
     const r = parseRequest(q, sites, app.timeMs);
+    if (r.type !== 'unknown') misses = 0;
     switch (r.type) {
       case 'help':
-        return add('lumi', 'Hi! I can move around the Moon, find good landing dates, compare sites and explain what’s going on. Try one of these, or just type a site name:');
+        return add('lumi', 'Here’s what I can do:<ul><li><b>Go places</b>: “Apollo 11”, “-89.45, -137.3”</li><li><b>Find dates</b>: “best date at the ridge in 2027”</li><li><b>Check</b>: “is it GO?”, “when is sunset?”</li><li><b>What if</b>: “move 2 km north”, “3 days later”, “compare ridge and IM-2”</li><li><b>Explain</b>: “what is libration?”, “how cold is it?”</li><li><b>Run the app</b>: “step 2”, “print the report”, “dark mode”</li></ul>',
+          [{ label: 'Is it GO?', run: () => ask('is it GO?') }, { label: 'Best spot', run: () => ask('best spot') }, { label: 'Fun fact', run: () => ask('fun fact') }]);
       case 'goto': {
         if (r.date !== null) { app.windowStartMs = app.timeMs = r.date; }
         selectSite(r.site, true);
@@ -171,8 +186,27 @@ export function createAssistant(api) {
       }
       case 'status':
         return add('lumi', `${statusText(r.focus)}<br>${summary30()}`);
-      case 'explain':
-        return add('lumi', EXPLAIN[r.term] || 'Good question! I don’t have a good answer for that one yet.');
+      case 'explain': {
+        if (r.term === 'solarpower') {
+          const p = app.config.power;
+          const peak = Math.round(p.areaM2 * p.efficiency * 1361);
+          return add('lumi', `It depends on your spacecraft. Right now it has ${p.areaM2} m² of panels at ${Math.round(p.efficiency * 100)}% efficiency, so in full sunlight they make about <b>${peak} W</b>. The lander needs <b>${p.loadW} W</b> to keep running; anything below that drains the battery. You can change these in Settings → Spacecraft assumptions.`,
+            [{ label: 'Will I have power here?', run: () => ask('will I have power') }]);
+        }
+        const more = { verdict: [{ label: 'Is it GO right now?', run: () => ask('is it GO?') }], calendar: [{ label: 'Open the calendar', run: () => ask('step 2') }], water: [{ label: 'Take me to LCROSS', run: () => ask('take me to LCROSS') }], clps: [{ label: 'Take me to IM-2', run: () => ask('take me to IM-2') }], earthrise: [{ label: 'Show me the Earthrise', run: () => ask('show me the earthrise') }] }[r.term] || [];
+        return add('lumi', EXPLAIN[r.term] || 'Good question! I don’t have a good answer for that one yet.', more);
+      }
+      case 'small': return smallTalk(r.kind);
+      case 'step':
+        actions.step?.(r.step);
+        return add('lumi', `Here’s step ${r.step + 1}: <b>${['Site', 'Date', 'Check', 'What if', 'Report'][r.step]}</b>.`);
+      case 'report':
+        actions.step?.(4);
+        actions.print?.();
+        return add('lumi', 'Your one-page report is opening in a new tab, ready to print or save as PDF. (If nothing opened, allow pop-ups for this site.)');
+      case 'copyLink':
+        actions.copyLink?.();
+        return add('lumi', 'Copied a link to this exact site, date and settings. Anyone who opens it sees the same scenario.');
       case 'look':
         actions.look?.(r.body);
         return add('lumi', r.body === 'earth' ? 'Standing behind the lander, looking towards Earth across the real horizon. The dotted lines link the best spots to Earth.' : 'Standing behind the lander, looking towards the Sun across the real horizon.');
@@ -182,8 +216,48 @@ export function createAssistant(api) {
       case 'terrain': actions.terrain?.(); return add('lumi', 'Opening the Terrain 3D view on this site and date.');
       case 'play': actions.play?.(r.on); return add('lumi', r.on ? 'Playing: watch the Sun circle the sky.' : 'Paused.');
       default:
+        misses += 1;
+        if (misses > 1) return add('lumi', 'Sorry, I’m a simple helper that runs right here in your browser, so I only understand certain kinds of requests. Tap one of these to see what I can do:', [
+          { label: 'Is it GO right now?', run: () => ask('is it GO?') }, { label: 'Find a good date', run: () => ask('best date') },
+          { label: 'Best spot', run: () => ask('best spot') }, { label: 'What is libration?', run: () => ask('what is libration') }]);
         return add('lumi', 'I didn’t catch that. I can go to a site (“Apollo 11”), find dates (“best date at the ridge in 2027”), compare (“compare ridge and IM-2”), nudge (“move 1 km north”) or explain things (“what is libration?”).');
     }
+  }
+
+  let misses = 0;
+  let jokeAt = 0, factAt = 0;
+  const JOKES = [
+    'Why did the astronaut break up with the Moon? It needed space. (Lots of it: 384,400 km.)',
+    'How do you throw a party on the Moon? You planet. Then you check the Sun angle with me first.',
+    'The Moon restaurant has great food, but no atmosphere.',
+    'Why is the Moon always tired? Because it’s been up all night. Well, at the poles, up for weeks.',
+  ];
+  const FACTS = [
+    'Near the south pole the Sun never climbs more than about 1.5° above a level horizon. That’s why a hill a few hundred metres high can block it.',
+    'From the Moon, Earth hangs in almost the same spot in the sky all the time. It only wobbles a few degrees as the Moon rocks (libration).',
+    'The Apollo 11 astronauts left a mirror on the Moon that scientists still bounce lasers off to measure the distance to within centimetres.',
+    'Some crater floors near the poles haven’t seen sunlight for billions of years.',
+    'A lunar day lasts about 29.5 Earth days, so a lander at the equator gets two weeks of sunshine and then two weeks of freezing night.',
+  ];
+  function smallTalk(kind) {
+    const name = siteName();
+    const joke = kind === 'joke' ? JOKES[jokeAt++ % JOKES.length] : '';
+    const fact = kind === 'fact' ? FACTS[factAt++ % FACTS.length] : '';
+    const map = {
+      hello: [`Hi there! 👋 We’re looking at <b>${name}</b>. Want to check if it’s a GO, or find a good landing date?`, [{ label: 'Is it GO?', run: () => ask('is it GO?') }, { label: 'Find a good date', run: () => ask('best date') }]],
+      thanks: ['You’re welcome! Anything else you want to check?', []],
+      bye: ['Bye for now! I’ll be right here under the ✨ button if you need me.', []],
+      how: ['I’m great, thanks: lots of sunshine on the ridge today. ☀️ How’s the mission planning going?', []],
+      who: ['I’m <b>Lumi</b>, the planner’s helper. I’m not a chatbot like ChatGPT: I’m a set of rules that runs right here in your browser, so I work offline and never make numbers up. I turn what you type into planner actions and read every figure from the same engine you see on screen.', [{ label: 'What can you do?', run: () => ask('help') }]],
+      made: ['Lunar Site Planner was made by Team <b>Dell Monitors</b> from Kuala Lumpur for the NASA Space Apps Challenge 2026 (“Lunar Landing Site Navigator”).', [{ label: 'About the project', run: () => actions.about?.() }]],
+      app: ['It’s a planner for choosing <b>where</b> and <b>when</b> to land on the Moon. For any site and date it works out whether the lander gets sunlight for power and Earth in view for radio, using NASA LOLA terrain and real ephemerides. Follow the five steps on the left: Site → Date → Check → What if → Report.', [{ label: 'Start the tour', run: () => ask('start the tour') }]],
+      joke: [joke, [{ label: 'Another one', run: () => ask('tell me a joke') }]],
+      fact: [fact, [{ label: 'Another fact', run: () => ask('fun fact') }]],
+      love: ['Aww, thank you! 💛 You’re a great mission planner yourself.', []],
+      rude: ['Sorry I let you down! I only understand certain kinds of requests. Try “help” to see them, or rephrase and I’ll do my best.', [{ label: 'Help', run: () => ask('help') }]],
+    }[kind];
+    misses = 0;
+    return add('lumi', map[0], map[1]);
   }
 
   function ask(q) {

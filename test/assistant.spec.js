@@ -65,6 +65,26 @@ test('Ask Lumi answers status, explanations and app commands', () => {
   assert.equal(ask('start the tour').type, 'tour');
   assert.equal(ask('open terrain 3d').type, 'terrain');
   assert.deepEqual(ask('pause'), { type: 'play', on: false });
-  assert.equal(ask('hello').type, 'help');
+  assert.equal(ask('help').type, 'help');
+  assert.deepEqual(ask('hello'), { type: 'small', kind: 'hello' });
   assert.equal(ask('blah blah').type, 'unknown');
+});
+
+test('Ask Lumi handles small talk, flow steps and more questions', () => {
+  assert.equal(ask('thanks!').kind, 'thanks');
+  assert.equal(ask('who are you').kind, 'who');
+  assert.equal(ask('are you chatgpt?').kind, 'who');
+  assert.equal(ask('tell me a joke').kind, 'joke');
+  assert.equal(ask('what is this app').kind, 'app');
+  assert.equal(ask('bye').kind, 'bye');
+  assert.equal(ask('hello what is libration').term, 'libration', 'a greeting with a question answers the question');
+  assert.deepEqual(ask('step 3'), { type: 'step', step: 2 });
+  assert.deepEqual(ask('open the report step'), { type: 'step', step: 4 });
+  assert.equal(ask('print the report').type, 'report');
+  assert.equal(ask('copy link').type, 'copyLink');
+  assert.equal(ask('how far is the moon').term, 'distance');
+  assert.equal(ask('how long is a lunar day').term, 'lunarday');
+  assert.equal(ask('is there water on the moon').term, 'water');
+  assert.equal(ask('what does go with care mean').term, 'verdict');
+  assert.equal(ask('will I have power').focus, 'power', 'status questions still work');
 });

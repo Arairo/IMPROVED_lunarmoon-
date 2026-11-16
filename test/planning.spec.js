@@ -40,3 +40,20 @@ test('windowStats and positionRange return fractions in [0, 1]', () => {
   const r = positionRange(RIDGE, T0, DEFAULT_CONFIG);
   assert.ok(r.sun[0] <= r.sun[1] && r.earth[0] <= r.earth[1]);
 });
+
+test('landingCalendar rates each day with the same rules as findNextWindow', async () => {
+  const { landingCalendar } = await import('../src/core/planning.js');
+  const cal = landingCalendar(RIDGE, T0, 35, DEFAULT_CONFIG, { hourUtc: 22 });
+  assert.equal(cal.length, 35);
+  for (const d of cal) {
+    assert.ok(['green', 'amber', 'red'].includes(d.rating));
+    if (d.rating === 'red') assert.equal(d.sun, false);
+    if (d.rating === 'green') assert.ok(d.sun && d.earth && d.bothH >= 72);
+  }
+  // Day 0 matches findNextWindow from the same instant.
+  const nw = findNextWindow(RIDGE, cal[0].ms, DEFAULT_CONFIG, { minDays: 3 });
+  if (cal[0].rating === 'green') assert.ok(nw && nw.ms - cal[0].ms < 2 * 3600000);
+  // Over a full lunar day the ridge has at least one green and the crater floor none.
+  assert.ok(cal.some((d) => d.rating === 'green'));
+  assert.ok(landingCalendar(FLOOR, T0, 35, DEFAULT_CONFIG).every((d) => d.rating === 'red'));
+});

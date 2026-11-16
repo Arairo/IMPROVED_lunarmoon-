@@ -2,6 +2,7 @@
 // Browsers only allow sound after a click or key press, so the cinematic
 // "ta-dum" plays when Start is pressed (like Netflix after choosing a profile).
 // Muted state is remembered ('lsp.sound' = 'off').
+import { icon } from './icons.js';
 
 let ctx = null;
 let master = null;
@@ -12,12 +13,18 @@ export function soundOn() {
 
 export function setSound(on) {
   try { localStorage.setItem('lsp.sound', on ? 'on' : 'off'); } catch {}
+  syncSoundLabels();
+  window.dispatchEvent(new Event('lsp-sound'));
+  if (on) play('tick');
+}
+/** Refresh every sound button's icon and label (no sound played). */
+export function syncSoundLabels() {
+  const on = soundOn();
   document.querySelectorAll('[data-sound-label]').forEach((b) => {
-    b.textContent = on ? '🔊' : '🔇';
+    b.innerHTML = icon(on ? 'volume' : 'volumeOff', 16);
     b.setAttribute('aria-pressed', String(on));
     b.setAttribute('aria-label', on ? 'Mute sounds' : 'Turn sounds on');
   });
-  if (on) play('tick');
 }
 export const toggleSound = () => setSound(!soundOn());
 

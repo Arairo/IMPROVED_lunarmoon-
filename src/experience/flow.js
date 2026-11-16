@@ -8,6 +8,8 @@ import { findNextWindow, windowStats } from '../core/planning.js';
 import { SYNODIC_MONTH_DAYS } from '../core/constants.js';
 import { fmtLatLon, fmtHours } from '../ui/format.js';
 import { play } from './sound.js';
+import { createCalendar } from './calendar.js';
+import { icon } from './icons.js';
 
 const DAY = 86400000;
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
@@ -38,7 +40,7 @@ export function mountFlow({ app, setTime, switchMode, getBestSpots, actions }) {
       </ol>
     </div>
     <div class="f-body">${STEPS.map((s, i) => `<section class="f-step" data-step="${i}" hidden><p class="f-lead">${s.lead}</p><div class="f-slot"></div></section>`).join('')}</div>
-    <div class="f-nav"><button type="button" class="f-back">← Back</button><button type="button" class="f-next">Next</button></div>`;
+    <div class="f-nav"><button type="button" class="f-back">${icon('chevronLeft', 16)} Back</button><button type="button" class="f-next">Next</button></div>`;
   const slot = (i) => rail.querySelector(`.f-step[data-step="${i}"] .f-slot`);
 
   // 1 · Site: the original site picker, plus a shortcut to the best spots.
@@ -50,23 +52,32 @@ export function mountFlow({ app, setTime, switchMode, getBestSpots, actions }) {
   // 2 · Date
   slot(1).innerHTML = `
     <div class="f-date"><small>Touchdown (start of the window)</small><b data-date></b><span data-local></span></div>
-    <label class="f-field">Pick a date and time (UTC)<input type="datetime-local" data-dt step="60"/></label>
-    <div class="f-pills" data-quick>
-      <button type="button" data-slip="0">Mission date</button>
-      <button type="button" data-slip="1">+1 month</button>
-      <button type="button" data-slip="3">+3 months</button>
-      <button type="button" data-slip="6">+6 months</button>
-    </div>
+    <div class="f-card f-calcard"><b>Pick a day</b><small class="f-sub">Colours are for this site, landing at the same time of day.</small><div data-cal></div></div>
     <div class="f-card">
       <b>Not sure? Let the planner find one.</b>
       <div class="f-row f-find"><button type="button" class="f-primary" data-find>Find the next good date</button>
       <label>Sun + Earth for <select data-min><option>1</option><option selected>3</option><option>7</option><option>14</option></select> days</label></div>
       <p class="f-note" data-find-out aria-live="polite"></p>
     </div>
+    <details class="f-more"><summary>Exact time and quick jumps</summary>
+    <label class="f-field">Date and time (UTC)<input type="datetime-local" data-dt step="60"/></label>
+    <div class="f-pills" data-quick style="margin-top:10px">
+      <button type="button" data-slip="0">Mission date</button>
+      <button type="button" data-slip="1">+1 month</button>
+      <button type="button" data-slip="3">+3 months</button>
+      <button type="button" data-slip="6">+6 months</button>
+    </div></details>
     <label class="f-field">How far ahead to look
       <span class="f-pills" data-win><button type="button" data-w="15">15 days</button><button type="button" data-w="30">1 lunar day</button><button type="button" data-w="90">3 months</button><button type="button" data-w="365">1 year</button></span>
     </label>`;
   const s2 = slot(1);
+  const cal = createCalendar({
+    getSite: () => app.site,
+    getConfig: () => app.config,
+    getSelectedMs: () => app.windowStartMs,
+    onPick: (ms) => { setTime(ms, true); play('tick'); },
+  });
+  s2.querySelector('[data-cal]').appendChild(cal.el);
   s2.querySelector('[data-dt]').addEventListener('change', (e) => {
     if (!e.target.value) return;
     const ms = Date.parse(`${e.target.value}:00Z`);
@@ -90,6 +101,7 @@ export function mountFlow({ app, setTime, switchMode, getBestSpots, actions }) {
     const lasts = ((res.endMs - res.ms) / DAY).toFixed(1);
     if (res.ms - app.timeMs < 2 * 3600000) { out.textContent = `Good news: this date already works. The Sun and Earth stay up together for ${lasts} days.`; play('go'); return; }
     setTime(res.ms, true);
+    cal.show(res.ms);
     out.textContent = `Found: ${when(res.ms)}. The Sun and Earth stay up together for ${lasts} days.`;
     play('go');
   });
@@ -141,7 +153,7 @@ export function mountFlow({ app, setTime, switchMode, getBestSpots, actions }) {
     });
     rail.querySelector('.f-back').style.visibility = i === 0 ? 'hidden' : 'visible';
     const next = rail.querySelector('.f-next');
-    next.textContent = i === STEPS.length - 1 ? 'Start again' : `Next: ${STEPS[i + 1].title} →`;
+    next.innerHTML = i === STEPS.length - 1 ? 'Start again' : `Next: ${STEPS[i + 1].title} ${icon('chevronRight', 16)}`;
     next.onclick = i === STEPS.length - 1 ? () => { visited.clear(); go(0); } : null;
     rail.querySelector('.f-body').scrollTop = 0;
     keys.best = keys.date = keys.verdict = '';
@@ -242,7 +254,7 @@ export function mountFlow({ app, setTime, switchMode, getBestSpots, actions }) {
     sub('whatif', 'Nudge, slip, compare');
     sub('report', 'Share or print');
     if (current === 0) renderBest();
-    if (current === 1) renderDate();
+    if (current === 1) { renderDate(); cal.refresh(); }
     if (current === 2) renderVerdict();
     if (current === 4) {
       const k = `${app.site.lat},${app.site.lon}|${app.windowStartMs}|${app.windowDays}|${JSON.stringify(app.config)}|${getBestSpots().length}`;
@@ -252,5 +264,5 @@ export function mountFlow({ app, setTime, switchMode, getBestSpots, actions }) {
   let reportKey = '';
 
   go(0, { quiet: true });
-  return { refresh, go, renderBest: () => { if (current === 0) renderBest(); } };
+  return { refresh, go, print: () => printReport(), renderBest: () => { if (current === 0) renderBest(); } };
 }

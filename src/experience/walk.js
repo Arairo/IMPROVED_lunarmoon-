@@ -7,8 +7,10 @@ import { horizonAt } from '../core/horizon.js';
 import { SYNODIC_MONTH_DAYS, clamp } from '../core/constants.js';
 import { esc, fmtLatLon, fmtHours } from '../ui/format.js';
 import { setLumi } from './lumi.js';
-import { play } from './sound.js';
+import { play, syncSoundLabels } from './sound.js';
 import { findNextWindow } from '../core/planning.js';
+import { createCalendar } from './calendar.js';
+import { icon } from './icons.js';
 
 const DAY = 86400000;
 const FEATURED = [
@@ -128,9 +130,9 @@ export function createWalk({ app, sites, onOpenPro, onExit, onToggleTheme, onTog
   root.innerHTML = `
     <div class="w-top">
       <div class="w-brand"><svg width="20" height="20" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="16" cy="8" r="2.5" fill="#ffb300"/></svg> Lunar Site Planner</div>
-      <div class="w-progress" aria-hidden="true"><i></i></div>
-      <button type="button" class="xp-chip xp-icon-btn" data-a="sound" data-sound-label aria-label="Mute sounds" title="Sound on / off">🔊</button>
-      <button type="button" class="xp-chip xp-icon-btn" data-a="theme" data-theme-label aria-label="Switch light or dark mode" title="Light / dark">◐</button>
+      <div class="w-progress" aria-hidden="true"><i></i></div><span class="w-count" aria-live="polite"></span>
+      <button type="button" class="xp-chip xp-icon-btn" data-a="sound" data-sound-label aria-label="Mute sounds" title="Sound on / off"></button>
+      <button type="button" class="xp-chip xp-icon-btn" data-a="theme" data-theme-label aria-label="Switch light or dark mode" title="Light / dark"></button>
       <button type="button" class="xp-chip" data-a="pro">Professional mode</button>
     </div>
     <div class="w-main"><div class="w-scene"></div></div>
@@ -146,6 +148,7 @@ export function createWalk({ app, sites, onOpenPro, onExit, onToggleTheme, onTog
   root.querySelector('[data-a="pro"]').addEventListener('click', () => onOpenPro(st.site, st.startMs, false));
   root.querySelector('[data-a="theme"]').addEventListener('click', onToggleTheme);
   root.querySelector('[data-a="sound"]').addEventListener('click', () => onToggleSound?.());
+  syncSoundLabels();
   backBtn.addEventListener('click', () => go(st.step - 1));
   nextBtn.addEventListener('click', () => STEPS[st.step].next ? STEPS[st.step].next() : go(st.step + 1));
 
@@ -201,14 +204,19 @@ export function createWalk({ app, sites, onOpenPro, onExit, onToggleTheme, onTog
     {
       mood: 'happy',
       render: () => `${say('When do we touch down?', `We’re landing at <b>${esc(st.site.name)}</b>. Now pick a day. A lunar day lasts about a month, so the date really matters.`)}
-        <div class="w-content"><div class="w-row">${DATES.map((d) => `<button type="button" class="w-pill ${st.startMs === d.ms ? 'is-picked' : ''}" data-ms="${d.ms}">${d.label}<br><small style="font-weight:500;opacity:.7">${fmtDate(d.ms)}</small></button>`).join('')}</div>
+        <div class="w-content"><div class="w-calbox"><b>Tap a day</b><span>Green days are great for <b>${esc(st.site.short || st.site.name)}</b>: sunlight and Earth together for 3+ days.</span><div data-cal></div></div>
+          <div class="w-row" style="margin-top:14px">${DATES.map((d) => `<button type="button" class="w-pill ${st.startMs === d.ms ? 'is-picked' : ''}" data-ms="${d.ms}">${d.label}<br><small style="font-weight:500;opacity:.7">${fmtDate(d.ms)}</small></button>`).join('')}</div>
           <div class="w-more"><label for="wDate">Or pick any date and time (UTC, the time used for space missions)</label>
             <input id="wDate" type="datetime-local" class="w-input" value="${new Date(st.startMs).toISOString().slice(0, 16)}"/>
             <p class="w-note" data-local>Your local time: ${new Date(st.startMs).toLocaleString()}</p></div>
-          <div class="w-row" style="margin-top:14px"><button type="button" class="xp-btn xp-btn-ghost" data-a="findDate">✨ Find the next good date for me</button></div>
+          <div class="w-row" style="margin-top:14px"><button type="button" class="xp-btn xp-btn-ghost" data-a="findDate">${icon('sparkles', 16)} Find the next good date for me</button></div>
           <p class="w-note" data-find-out aria-live="polite"></p></div>`,
       bind: () => {
-        const showLocal = () => { scene.querySelector('[data-local]').textContent = `Your local time: ${new Date(st.startMs).toLocaleString()}`; };
+        const cal = createCalendar({ getSite: () => st.site, getConfig: () => app.config, getSelectedMs: () => st.startMs, compact: true,
+          onPick: (ms) => { st.startMs = ms; scene.querySelector('#wDate').value = new Date(ms).toISOString().slice(0, 16); scene.querySelectorAll('[data-ms]').forEach((c) => c.classList.remove('is-picked')); showLocal(); play('tick'); } });
+        scene.querySelector('[data-cal]').appendChild(cal.el);
+        const showLocal = () => { scene.querySelector('[data-local]').textContent = `Your local time: ${new Date(st.startMs).toLocaleString()}`; cal.refresh(); };
+        cal.refresh();
         scene.querySelectorAll('[data-ms]').forEach((b) => b.addEventListener('click', () => {
           st.startMs = Number(b.dataset.ms);
           scene.querySelectorAll('[data-ms]').forEach((c) => c.classList.toggle('is-picked', c === b));
@@ -246,7 +254,7 @@ export function createWalk({ app, sites, onOpenPro, onExit, onToggleTheme, onTog
       mood: 'wow',
       render: () => st.scan ? `${say('Let’s look around.', 'This is the whole skyline, all the way round. The ground shape is real NASA terrain data. Drag the slider to move through the next 30 days, or press play.')}
         <div class="w-content"><div class="w-panel"><div data-sky>${skyline(st.ctx, st.scan).svg}</div>
-          <div class="w-controls"><button type="button" class="xp-btn xp-btn-primary w-play" data-a="play" aria-label="Play">▶</button>
+          <div class="w-controls"><button type="button" class="xp-btn xp-btn-primary w-play" data-a="play" aria-label="Play">${icon('play', 18)}</button>
             <input type="range" min="0" max="${st.scan.series.times.length - 1}" value="${st.idx}" aria-label="Time over the next 30 days"/>
             <span class="w-when"></span></div>
           <p class="w-live" aria-live="polite"></p></div>
@@ -271,7 +279,7 @@ export function createWalk({ app, sites, onOpenPro, onExit, onToggleTheme, onTog
         };
         play.addEventListener('click', () => {
           st.playing = !st.playing;
-          play.textContent = st.playing ? '❚❚' : '▶';
+          play.innerHTML = st.playing ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>' : icon('play', 18);
           if (st.playing) raf = requestAnimationFrame(loop); else cancelAnimationFrame(raf);
         });
         upd();
@@ -465,6 +473,7 @@ export function createWalk({ app, sites, onOpenPro, onExit, onToggleTheme, onTog
     nextBtn.disabled = step.ready ? !step.ready() : false;
     backBtn.style.visibility = i === 0 ? 'hidden' : 'visible';
     root.querySelector('.w-progress i').style.width = `${(i / (STEPS.length - 1)) * 100}%`;
+    root.querySelector('.w-count').textContent = `Step ${i + 1} of ${STEPS.length}`;
   }
 
   function go(i) {

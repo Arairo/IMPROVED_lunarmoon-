@@ -8,8 +8,13 @@ import { mountNotch, notchBusy, notchUpdate } from './notch.js';
 import { createSpotlight } from './spotlight.js';
 import { createWalk } from './walk.js';
 import { findBestSpots } from './bestSpots.js';
-import { soundOn, toggleSound } from './sound.js';
+import { soundOn, toggleSound, setSound, syncSoundLabels, play } from './sound.js';
+import { icon } from './icons.js';
+import { createMenu } from './menu.js';
 import { openAbout } from './about.js';
+import { lumiSvg } from './lumi.js';
+
+const lumiFace = () => lumiSvg('happy', 26);
 import { mountPlanCard } from './plan.js';
 import { mountFlow } from './flow.js';
 import { createAssistant } from './assistant.js';
@@ -23,7 +28,7 @@ const store = {
 export function applyTheme(theme) {
   document.documentElement.dataset.theme = theme;
   store.set('lsp.theme', theme);
-  document.querySelectorAll('[data-theme-label]').forEach((b) => { b.textContent = theme === 'dark' ? '☀︎' : '☾'; });
+  document.querySelectorAll('[data-theme-label]').forEach((b) => { b.innerHTML = icon(theme === 'dark' ? 'sun' : 'moon', 16); });
   window.dispatchEvent(new Event('lsp-theme'));
 }
 export const toggleTheme = () => applyTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark');
@@ -37,9 +42,26 @@ const GESTURES = `<div class="xp-gestures">
   <div class="xp-gesture"><div class="xp-mouse m-mid"><span class="w"></span></div><b>Zoom</b>Scroll wheel<br><span class="xp-key">Ctrl</span> + middle-drag</div>
 </div>`;
 
+function openClip(src, poster, title) {
+  const box = document.createElement('div');
+  box.className = 'xp-video';
+  box.setAttribute('role', 'dialog');
+  box.setAttribute('aria-label', title);
+  box.innerHTML = `<div class="v-card"><div class="v-head"><b>${title}</b><span><a href="${src}" download class="xp-link">Download MP4</a>
+      <button type="button" class="xp-chip xp-icon-btn" data-v="close" aria-label="Close video">✕</button></span></div>
+      <video src="${src}" poster="${poster}" controls autoplay playsinline></video></div>`;
+  document.body.appendChild(box);
+  const close = () => { box.querySelector('video')?.pause(); box.remove(); removeEventListener('keydown', onKey); };
+  const onKey = (e) => { if (e.key === 'Escape') close(); };
+  addEventListener('keydown', onKey);
+  box.addEventListener('click', (e) => { if (e.target === box || e.target.closest('[data-v="close"]')) close(); });
+  setTimeout(() => box.querySelector('[data-v="close"]')?.focus(), 50);
+}
+
 /** Narrated tour of Professional mode (subtitles burned in), in a pop-up player. */
-export function openVideo() {
+export function openVideo(kind = 'tour') {
   const base = import.meta.env.BASE_URL;
+  if (kind === 'promo') return openClip(`${base}tutorial/lunar-site-planner-promo.mp4`, `${base}tutorial/promo-poster.jpg`, 'Lunar Site Planner in 48 seconds');
   const box = document.createElement('div');
   box.className = 'xp-video';
   box.setAttribute('role', 'dialog');
@@ -64,23 +86,59 @@ export function initExperience(api) {
   document.getElementById('globeViewport')?.appendChild(notch);
 
   // ---------- Header tools (Pro mode) ----------
+  // Global actions on the right: Ask Lumi (stands out), Help (video, tour,
+  // controls) and Settings (theme, sound, notes, spacecraft, Beginner). The old
+  // header buttons stay in the DOM, hidden, so their existing handlers still run.
   const headerRight = document.querySelector('header > div:last-child');
+  const clickOld = (id) => document.getElementById(id)?.click();
   if (headerRight) {
+    ['learnToggleBtn', 'tourStartBtn', 'settingsOpenBtn'].forEach((id) => document.getElementById(id)?.classList.add('xp-orig'));
     const tools = document.createElement('div');
     tools.className = 'xp-headtools';
     tools.innerHTML = `
-      <button type="button" class="xp-chip is-accent" data-x="lumi" title="Ask Lumi: type what you want to do or know">✨ Ask Lumi</button>
-      <button type="button" class="xp-chip" data-x="video" title="Watch the 85-second narrated tour of Professional mode">▶ Video</button>
-      <button type="button" class="xp-chip" data-x="beginner" title="Switch to the guided Beginner walk">Beginner</button>
-      <a class="xp-chip" data-x="terrain" href="./planner.html#from=pro" title="Open this site and date over real LOLA 3D terrain with shadows (CesiumJS)">Terrain 3D ↗</a>
-      <button type="button" class="xp-chip xp-icon-btn" data-x="sound" data-sound-label aria-label="Mute sounds" title="Sound on / off">🔊</button>
-      <button type="button" class="xp-chip xp-icon-btn" data-x="theme" data-theme-label aria-label="Switch light or dark mode" title="Light / dark"></button>`;
+      <button type="button" class="xp-lumi-btn" data-x="lumi" title="Ask Lumi: type what you want to do or know">
+        <span class="lb-ava">${lumiFace()}</span><span class="lb-txt">Ask Lumi</span><span class="lb-key">${icon('sparkles', 14)}</span>
+      </button>
+      <button type="button" class="xp-chip" data-x="help" aria-haspopup="menu" aria-expanded="false">${icon('help', 16)}<span class="xp-hide-sm">Help</span></button>
+      <button type="button" class="xp-chip xp-icon-btn" data-x="settings" aria-haspopup="menu" aria-expanded="false" aria-label="Settings" title="Settings">${icon('settings', 16)}</button>`;
     headerRight.prepend(tools);
-    tools.querySelector('[data-x="beginner"]').addEventListener('click', () => setMode('beginner'));
-    tools.querySelector('[data-x="video"]').addEventListener('click', () => openVideo());
-    tools.querySelector('[data-x="theme"]').addEventListener('click', toggleTheme);
-    tools.querySelector('[data-x="sound"]').addEventListener('click', toggleSound);
+
+    createMenu(tools.querySelector('[data-x="help"]'), () => [
+      { icon: 'video', label: 'Watch the tutorial video', sub: '85 seconds, narrated', run: () => openVideo() },
+      { icon: 'route', label: 'Guided tour', sub: 'Lumi points things out, one by one', run: () => proTour.start() },
+      { icon: 'mouse', label: 'Mouse and keyboard controls', sub: 'Spin, pan and zoom the Moon', run: () => controlsCoach.start() },
+      { icon: 'play', label: 'Watch the promo', sub: '48 seconds, with music', run: () => openVideo('promo') },
+      { sep: true },
+      { icon: 'sparkles', label: 'Ask Lumi a question', run: () => document.querySelector('[data-x="lumi"]')?.click() },
+      { icon: 'info', label: 'About this project', run: () => openAbout({ onVideo: openVideo }) },
+    ]);
+    createMenu(tools.querySelector('[data-x="settings"]'), () => {
+      const dark = document.documentElement.dataset.theme === 'dark';
+      const notes = document.getElementById('learnToggleBtn')?.getAttribute('aria-pressed') === 'true';
+      return [
+        { head: 'Appearance' },
+        { seg: [{ label: 'Light', icon: 'sun', on: !dark, run: () => applyTheme('light') }, { label: 'Dark', icon: 'moon', on: dark, run: () => applyTheme('dark') }] },
+        { icon: soundOn() ? 'volume' : 'volumeOff', label: 'Sound effects', toggle: soundOn(), run: () => setSound(!soundOn()), keepOpen: true },
+        { icon: 'info', label: 'Plain-English notes', sub: 'Extra explanations in the assessment', toggle: notes, run: () => clickOld('learnToggleBtn'), keepOpen: true },
+        { sep: true },
+        { head: 'Mission' },
+        { icon: 'sliders', label: 'Spacecraft assumptions…', sub: 'Solar array, load, mast height, radio', run: () => clickOld('settingsOpenBtn') },
+        { icon: 'graduation', label: 'Switch to Beginner mode', run: () => setMode('beginner') },
+      ];
+    });
     applyTheme(document.documentElement.dataset.theme);
+  }
+
+  // Terrain 3D sits with the other views (3D Moon, South-Pole Map).
+  const viewTabs = document.getElementById('tabPolarBtn')?.parentElement;
+  if (viewTabs) {
+    const t = document.createElement('a');
+    t.dataset.x = 'terrain';
+    t.href = './planner.html#from=pro';
+    t.className = 'xp-viewtab';
+    t.title = 'Open this site and date over real LOLA 3D terrain with shadows (CesiumJS)';
+    t.innerHTML = `${icon('mountain', 14)} Terrain 3D ${icon('external', 12)}`;
+    viewTabs.appendChild(t);
   }
 
   // ---------- Globe view cluster + gesture hint ----------
@@ -136,7 +194,7 @@ export function initExperience(api) {
     { target: '#clockToolbar', mood: 'think', title: 'Travel through time', body: 'Press Play to watch the Sun circle the sky, or scrub the timeline below. Step 2 (Date) is where you set the touchdown date.', why: 'At the south pole the Sun circles the whole horizon once every 29.5 days. Play at 6 h/s to watch it skim the ridges.' },
     { target: '#timelineWrap', mood: 'happy', title: 'The operations timeline', body: 'Each row is a resource over the window: sunlight, power, Earth in view, Deep Space Network coverage and the direct-to-Earth link. Drag across it to scrub time.' },
     { target: '[data-x="lumi"]', pad: 6, mood: 'wow', title: 'Ask Lumi', body: 'Stuck? Type what you want: “best date at the ridge in 2027”, “compare ridge and IM-2”, “move 1 km north” or “what is libration?”.', why: 'Lumi runs in your browser with no AI service: it turns your words into planner actions and reads every number from the same engine you see on screen.' },
-    { target: '.xp-headtools', mood: 'happy', title: 'Make it yours', body: 'Switch between light and dark, watch the video tour, or hop back to the Beginner walk any time. Press ? on the globe to see the controls again.' },
+    { target: '[data-x="help"]', pad: 6, mood: 'happy', title: 'Help is always here', body: 'Help has the tutorial video, this tour and the mouse controls. Settings (the gear) has light and dark mode, sound, the spacecraft assumptions and the Beginner walk.' },
   ], { label: 'Tour' });
 
   // Replace the old tour button with the spotlight tour.
@@ -180,6 +238,7 @@ export function initExperience(api) {
     setTimeout(() => {
       window.dispatchEvent(new Event('resize'));
       if (tour) proTour.start();
+      else if (store.get('lsp.proWelcome') !== '1') showWelcome();
       else if (!store.get('lsp.controlsSeen')) {
         // A gentle hint instead of a blocking pop-up; "?" on the globe opens the full controls guide.
         store.set('lsp.controlsSeen', '1');
@@ -190,6 +249,46 @@ export function initExperience(api) {
   }
 
   applyTheme(document.documentElement.dataset.theme);
+
+  // ---------- First visit to Professional mode: how would you like to start? ----------
+  function showWelcome() {
+    if (document.querySelector('.xp-welcome')) return;
+    const base = import.meta.env.BASE_URL;
+    const box = document.createElement('div');
+    box.className = 'xp-welcome';
+    box.setAttribute('role', 'dialog');
+    box.setAttribute('aria-modal', 'true');
+    box.setAttribute('aria-labelledby', 'xpWelcomeTitle');
+    box.innerHTML = `<div class="wl-card">
+        <div class="wl-head"><span class="wl-ava">${lumiSvg('wow', 64)}</span>
+          <div><h2 id="xpWelcomeTitle">Welcome to Professional mode</h2><p>Plan a landing in five steps. How would you like to start?</p></div></div>
+        <div class="wl-opts">
+          <button type="button" class="wl-opt is-video" data-w="video">
+            <span class="wl-thumb" style="background-image:url('${base}tutorial/pro-tutorial-poster.jpg')"><span class="wl-play">${icon('play', 22)}</span><span class="wl-dur">1:25</span></span>
+            <b>Watch the tutorial video</b><small>A narrated 85-second walkthrough</small></button>
+          <button type="button" class="wl-opt" data-w="tour"><span class="wl-ic">${icon('route', 26)}</span><b>Take the guided tour</b><small>Lumi shows you each part, about a minute</small></button>
+          <button type="button" class="wl-opt" data-w="skip"><span class="wl-ic">${icon('chevronRight', 26)}</span><b>Skip, I’ll explore</b><small>Everything is under Help later</small></button>
+        </div>
+        <label class="wl-again"><input type="checkbox" data-again checked> Don’t ask me again</label>
+      </div>`;
+    document.body.appendChild(box);
+    requestAnimationFrame(() => box.classList.add('is-on'));
+    play('pop');
+    const close = (choice) => {
+      if (box.querySelector('[data-again]').checked) store.set('lsp.proWelcome', '1');
+      box.classList.remove('is-on');
+      setTimeout(() => box.remove(), 300);
+      removeEventListener('keydown', onKey);
+      if (choice === 'video') openVideo();
+      else if (choice === 'tour') proTour.start();
+      else { api.setHint?.('Drag to spin · Shift-drag to pan · Scroll to zoom · Help has the video and tour'); setTimeout(() => api.setHint?.(null), 6000); }
+    };
+    const onKey = (e) => { if (e.key === 'Escape') close('skip'); };
+    addEventListener('keydown', onKey);
+    box.querySelectorAll('[data-w]').forEach((b) => b.addEventListener('click', () => close(b.dataset.w)));
+    box.addEventListener('click', (e) => { if (e.target === box) close('skip'); });
+    setTimeout(() => box.querySelector('[data-w="video"]')?.focus(), 80);
+  }
 
   // ---------- Best landing spots (friend's idea #1) ----------
   const best = { key: '', cancel: null, timer: 0, spots: [] };
@@ -264,6 +363,9 @@ export function initExperience(api) {
     tour: () => proTour.start(),
     beginner: () => setMode('beginner'),
     play: (on) => { if (app.playing !== on) document.getElementById('playPauseBtn')?.click(); },
+    step: (i) => { document.querySelector('[data-mob="site"]')?.offsetParent && matchMedia('(max-width: 1023px)').matches && document.querySelector('[data-mob="site"]').click(); flow.go(i); },
+    print: () => flow.print(),
+    about: () => openAbout({ onVideo: openVideo }),
   };
   const flow = mountFlow({ app, setTime, switchMode, getBestSpots: () => best.spots, actions });
   const assistant = createAssistant({ app, sites, selectSite, setTime, switchMode, getGlobe, compareSites: (l) => api.compareSites?.(l), getBestSpots: () => best.spots, actions });

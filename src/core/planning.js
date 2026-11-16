@@ -102,3 +102,35 @@ export function positionRange(site, startMs, config, { metres = 250, days = 30 }
   const span = (k) => [Math.min(...all.map((s) => s[k])), Math.max(...all.map((s) => s[k]))];
   return { sun: span('sun'), earth: span('earth') };
 }
+
+/**
+ * Landing calendar: for each UTC day from `fromMs` (midnight), how good a
+ * touchdown at `hourUtc` that day would be. Each day gets
+ *   both  – hours the Sun and Earth then stay up together (capped at `capDays`),
+ *   sun   – whether the Sun is up at touchdown,
+ *   earth – whether Earth's centre is above the terrain at touchdown,
+ *   rating – 'green' (Sun + Earth for ≥ minDays), 'amber' (Sun up, Earth hidden or
+ *            together for less than minDays), 'red' (Sun down: no power).
+ * Same rules as "Find the next good date", sampled every `stepMs` (2 h).
+ */
+export function landingCalendar(site, fromMs, days, config, { hourUtc = 12, minDays = 3, capDays = 14, stepMs = 2 * HOUR } = {}) {
+  const d0 = Math.floor(fromMs / DAY) * DAY;
+  const start = d0 + hourUtc * HOUR;
+  const ctx = prepareSite(site, null, config);
+  const sc = scan(ctx, { startMs: start, endMs: start + (days + capDays) * DAY, stepMs }, config, { withDsn: false });
+  const { times, lit, los } = sc.series;
+  const n = times.length;
+  const run = new Int32Array(n + 1);
+  for (let i = n - 1; i >= 0; i--) run[i] = lit[i] && los[i] ? run[i + 1] + 1 : 0;
+  const out = [];
+  for (let k = 0; k < days; k++) {
+    const i = Math.round((k * DAY) / stepMs);
+    if (i >= n) break;
+    const bothH = Math.min(capDays * 24, (run[i] * stepMs) / HOUR);
+    const sun = !!lit[i];
+    const earth = !!los[i];
+    const rating = !sun ? 'red' : bothH >= minDays * 24 ? 'green' : 'amber';
+    out.push({ ms: times[i], dayMs: d0 + k * DAY, sun, earth, bothH, rating });
+  }
+  return out;
+}
