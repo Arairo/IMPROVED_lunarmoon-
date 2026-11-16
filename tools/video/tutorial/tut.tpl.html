@@ -1,0 +1,226 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: #000; }
+  body { font-family: 'Inter', -apple-system, system-ui, sans-serif; color: #f5f5f7; -webkit-font-smoothing: antialiased; }
+  #stars { position: absolute; inset: 0; }
+  .layer { position: absolute; inset: 0; }
+  .full { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .stage { position: absolute; inset: 0; perspective: 2200px; perspective-origin: 50% 45%; }
+  .win { position: absolute; left: 0; top: 0; width: 1600px; height: 1000px; transform-origin: 0 0; border-radius: 18px; overflow: hidden;
+    box-shadow: 0 60px 140px rgba(0,0,0,.65), 0 20px 50px rgba(0,0,0,.45), 0 0 0 1px rgba(255,255,255,.08); background: #0b0f17; }
+  .win img { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .txt { position: absolute; left: 0; right: 0; text-align: center; }
+  .w { display: inline-block; }
+  .grad, .grad .w { background: linear-gradient(180deg, #ffffff 30%, #a9b0c2); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .kick { position: absolute; left: 110px; top: 50%; width: 520px; margin-top: -170px; display: flex; flex-direction: column; align-items: flex-start; gap: 20px; z-index: 6; }
+  .kick .n { font: 800 28px 'Inter'; color: #2997ff; padding: 6px 14px; border-radius: 12px; background: rgba(41,151,255,.14); }
+  .kick .h { font: 800 72px 'Inter'; letter-spacing: -0.035em; line-height: 1.02; padding-bottom: .06em; }
+  .kick .s { font: 500 27px/1.4 'Inter'; color: #a1a6b3; margin-top: 12px; }
+  .scrim { position: absolute; left: 0; top: 0; bottom: 0; width: 900px; background: linear-gradient(90deg, rgba(0,0,0,.92) 0%, rgba(0,0,0,.72) 48%, transparent 100%); z-index: 5; }
+  .callout { position: absolute; border-radius: 18px; border: 3px solid #2997ff; box-shadow: 0 0 0 6px rgba(41,151,255,.18), 0 0 40px rgba(41,151,255,.55); z-index: 20; pointer-events: none; }
+  .callout b { position: absolute; left: -3px; top: -46px; padding: 6px 14px; border-radius: 10px; background: #2997ff; color: #fff; font: 700 22px 'Inter'; white-space: nowrap; }
+  .cursor { position: absolute; width: 36px; height: 36px; z-index: 50; filter: drop-shadow(0 4px 8px rgba(0,0,0,.6)); }
+  .ripple { position: absolute; width: 90px; height: 90px; margin: -45px 0 0 -45px; border-radius: 50%; border: 3px solid rgba(255,255,255,.9); z-index: 49; }
+  .cap { position: absolute; left: 50%; bottom: 46px; transform: translateX(-50%); max-width: 1500px; padding: 16px 28px; border-radius: 22px; background: rgba(12,14,20,.78); backdrop-filter: blur(24px) saturate(160%); border: 1px solid rgba(255,255,255,.12);
+    box-shadow: 0 20px 50px rgba(0,0,0,.5); font: 600 34px/1.3 'Inter'; letter-spacing: -0.01em; text-align: center; z-index: 80; white-space: nowrap; }
+  .chip { position: absolute; left: 50%; top: 40px; transform: translateX(-50%); padding: 10px 20px; border-radius: 999px; background: rgba(12,14,20,.7); border: 1px solid rgba(255,255,255,.14); font: 700 22px 'Inter'; z-index: 70; backdrop-filter: blur(16px); }
+  .vign { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at 50% 45%, transparent 55%, rgba(0,0,0,.5) 100%); z-index: 60; }
+  .si { position: absolute; right: 26px; top: 20px; font: 500 15px 'Inter'; color: rgba(255,255,255,.42); z-index: 99; }
+  .logo { width: 96px; height: 96px; border-radius: 24px; background: #0b0f17; display: grid; place-items: center; box-shadow: 0 20px 50px rgba(0,0,0,.6), inset 0 0 0 1px rgba(255,255,255,.12); margin: 0 auto 26px; }
+  .url { display: inline-block; margin-top: 30px; padding: 14px 28px; border-radius: 999px; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.18); font: 600 28px 'Inter'; color: #fff; }
+</style></head>
+<body>
+<canvas id="stars" width="1920" height="1080"></canvas>
+<div id="root"></div>
+<div class="vign"></div>
+<div class="cap" id="cap" style="opacity:0"></div>
+<div class="si">SI-assisted · AI narration (Kokoro TTS) · built with Claude Code</div>
+<script>
+const LINES = __LINES__;
+const A = (n) => `../promo/cap/${n}`;
+const W = 1920, H = 1080;
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const lerp = (a, b, k) => a + (b - a) * k;
+const ease = (k) => (k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2);
+const out = (k) => 1 - Math.pow(1 - k, 3);
+const prog = (t, a, b) => clamp((t - a) / (b - a));
+function kf(u, frames) {
+  if (u <= frames[0][0]) return { ...frames[0][1] };
+  for (let i = 0; i < frames.length - 1; i++) {
+    const [t0, p0] = frames[i], [t1, p1] = frames[i + 1];
+    if (u <= t1) { const k = ease((u - t0) / (t1 - t0)); const o = {}; for (const key in p0) o[key] = lerp(p0[key], p1[key] ?? p0[key], k); return o; }
+  }
+  return { ...frames[frames.length - 1][1] };
+}
+const root = document.getElementById('root');
+const el = (html) => { const d = document.createElement('div'); d.innerHTML = html.trim(); return d.firstChild; };
+(() => {
+  const c = document.getElementById('stars').getContext('2d'); const r = (a, b) => a + Math.random() * (b - a);
+  const g = c.createRadialGradient(W * .5, H * .55, 0, W * .5, H * .55, W * .7); g.addColorStop(0, '#0b1020'); g.addColorStop(1, '#000'); c.fillStyle = g; c.fillRect(0, 0, W, H);
+  for (let i = 0; i < 1500; i++) { c.fillStyle = `rgba(255,255,255,${r(.08, .55)})`; c.beginPath(); c.arc(r(0, W), r(0, H), r(.3, 1.1), 0, 7); c.fill(); }
+})();
+
+// ---------- timeline from the narration ----------
+const LEAD = 1.2, GAP = 0.65, TAIL = 4.2;
+let t0 = LEAD; const T = {};
+LINES.forEach((l, i) => { T[l.id] = { start: t0 - (i === 0 ? LEAD : 0.35), voice: t0, end: t0 + l.dur + GAP, dur: l.dur, text: l.text }; t0 += l.dur + GAP; });
+T.outro.end += TAIL;
+const DURATION = T.outro.end;
+
+// Caption chunks: split at sentence and clause breaks, max ~11 words, timed by length.
+const CAPS = [];
+LINES.forEach((l) => {
+  const parts = l.text.replace(/([.!?:,])\s+/g, '$1|').split('|');
+  const chunks = [];
+  for (const p of parts) {
+    const words = p.split(' ');
+    if (chunks.length && (chunks[chunks.length - 1] + ' ' + p).split(' ').length <= 9 && !/[.!?:]$/.test(chunks[chunks.length - 1])) chunks[chunks.length - 1] += ' ' + p;
+    else if (words.length > 12) { const h = Math.ceil(words.length / 2); chunks.push(words.slice(0, h).join(' '), words.slice(h).join(' ')); }
+    else chunks.push(p);
+  }
+  const total = chunks.reduce((a, c) => a + c.length + 6, 0);
+  let s = T[l.id].voice;
+  chunks.forEach((c) => { const d = (l.dur * (c.length + 6)) / total; CAPS.push({ s, e: s + d, text: c }); s += d; });
+});
+window.CAPS = CAPS; window.T = T;
+
+// ---------- building blocks ----------
+function placeWin(w, p) {
+  const s = p.s, px = p.cx * 1600, py = p.cy * 1000;
+  w.style.transform = `translate(${W / 2 + (p.dx || 0)}px, ${H / 2 + (p.dy || 0)}px) rotateX(${p.rx || 0}deg) rotateY(${p.ry || 0}deg) scale(${s}) translate(${-px}px, ${-py}px)`;
+  w.style.opacity = p.o ?? 1;
+}
+const toScreen = (p, x, y) => [W / 2 + (p.dx || 0) + (x - p.cx) * 1600 * p.s, H / 2 + (p.dy || 0) + (y - p.cy) * 1000 * p.s];
+function kicker(n, h, sub) { return el(`<div class="kick"><div class="scrim" style="left:-110px;top:-700px;bottom:-700px;position:absolute;z-index:-1"></div><span class="n">${n}</span><div><div class="h grad">${h}</div><div class="s">${sub}</div></div></div>`); }
+function animKicker(k, t, tin, tout) {
+  const a = out(prog(t, tin, tin + 0.6)), b = ease(prog(t, tout - 0.45, tout));
+  k.style.opacity = a * (1 - b); k.style.transform = `translateX(${(1 - a) * -40}px)`; k.style.filter = `blur(${(1 - a) * 10 + b * 8}px)`;
+}
+const show = (n, on) => { n.style.display = on ? '' : 'none'; };
+const S = [];
+const CUR_SVG = '<svg class="cursor" viewBox="0 0 24 24"><path d="M4 2l16 10-7 1.5L16 21l-3 1.5-3-7.5-6 5z" fill="#fff" stroke="#000" stroke-width="1.2" stroke-linejoin="round"/></svg>';
+
+/**
+ * Generic app-window scene.
+ * cfg: { id, imgs:[name...], swaps:[[u, index]], cam:[[u,{...}]], kick:[n,h,sub], callouts:[[u0,u1,[x0,y0,x1,y1],label]], click:{at:u, x, y}, frames }
+ */
+function winScene(cfg) {
+  const sc = T[cfg.id];
+  const st = el('<div class="stage"></div>');
+  const w = el('<div class="win"></div>');
+  const ims = cfg.imgs.map((n, i) => { const im = el(`<img src="${A(n)}">`); im.style.opacity = i === 0 ? 1 : 0; w.appendChild(im); return im; });
+  st.appendChild(w); root.appendChild(st);
+  const k = cfg.kick ? kicker(...cfg.kick) : null; if (k) root.appendChild(k);
+  const calls = (cfg.callouts || []).map((c) => { const d = el(`<div class="callout">${c[3] ? `<b>${c[3]}</b>` : ''}</div>`); root.appendChild(d); return d; });
+  let cur, rip; if (cfg.click) { cur = el(CUR_SVG); rip = el('<div class="ripple"></div>'); root.appendChild(rip); root.appendChild(cur); }
+  const a = sc.start, b = sc.end + 0.35, len = b - a;
+  S.push((t) => {
+    const on = t >= a && t < b + 0.01;
+    [st, k, cur, rip, ...calls].forEach((n) => n && show(n, on));
+    if (!on) return;
+    const u = (t - a) / len;
+    const p = kf(u, cfg.cam);
+    p.o = Math.min(p.o ?? 1, prog(t, a, a + 0.45), 1 - prog(t, b - 0.4, b));
+    placeWin(w, p);
+    // image swaps (fade 0.25 s) and optional flipbook
+    if (cfg.swaps) { let idx = 0; cfg.swaps.forEach(([su, i]) => { if (u >= su) idx = i; }); ims.forEach((im, i) => { const sw = cfg.swaps.find((x) => x[1] === i); const tin = sw ? a + sw[0] * len : a; im.style.opacity = i === 0 ? 1 : i <= idx ? prog(t, tin, tin + 0.25) : 0; }); }
+    if (cfg.frames) { const f = clamp((u - cfg.frames.u0) / (cfg.frames.u1 - cfg.frames.u0)) * (ims.length - 2) + 1; const i = Math.floor(f), fr = f - i; ims.forEach((im, j) => { im.style.opacity = j === 0 ? 1 : u < cfg.frames.u0 ? 0 : j === i ? 1 : j === i + 1 ? fr : 0; }); }
+    if (k) animKicker(k, t, a + 0.3, b - 0.05);
+    calls.forEach((d, i) => {
+      const [u0, u1, r] = cfg.callouts[i];
+      const [x0, y0] = toScreen(p, r[0], r[1]), [x1, y1] = toScreen(p, r[2], r[3]);
+      const kin = out(prog(u, u0, u0 + 0.06)), kout = prog(u, u1 - 0.04, u1);
+      d.style.left = `${x0 - 8}px`; d.style.top = `${y0 - 8}px`; d.style.width = `${x1 - x0 + 16}px`; d.style.height = `${y1 - y0 + 16}px`;
+      d.style.opacity = (kin * (1 - kout) * (p.o ?? 1)).toFixed(3); d.style.transform = `scale(${lerp(1.06, 1, kin)})`;
+    });
+    if (cfg.click) {
+      const c = cfg.click; const [tx, ty] = toScreen(p, c.x, c.y);
+      const km = ease(prog(u, c.at - 0.14, c.at));
+      cur.style.left = `${lerp(W - 260, tx, km)}px`; cur.style.top = `${lerp(H - 220, ty, km)}px`;
+      cur.style.opacity = prog(u, c.at - 0.2, c.at - 0.14) * (1 - prog(u, 0.93, 0.99));
+      const kr = prog(u, c.at, c.at + 0.08); rip.style.left = `${tx + 6}px`; rip.style.top = `${ty + 6}px`; rip.style.opacity = u > c.at ? 1 - kr : 0; rip.style.transform = `scale(${0.3 + kr * 1.2})`;
+    }
+  });
+}
+
+// ---------- scenes ----------
+// Intro: sunrise behind a title card
+{
+  const sc = T.intro; const g = el('<div class="layer"></div>');
+  const ims = ['intro0', 'intro1', 'intro2', 'intro3'].map((n) => { const i = el(`<img class="full" src="${A(n + '.png')}">`); g.appendChild(i); return i; });
+  const kick = el('<div class="txt" style="top:640px;font:700 24px Inter;letter-spacing:.14em;text-transform:uppercase;color:#ffb300">Tutorial</div>');
+  const ttl = el('<div class="txt grad" style="top:690px;font:800 108px Inter;letter-spacing:-0.035em">Professional mode</div>');
+  const sub = el('<div class="txt" style="top:830px;font:500 32px Inter;color:#c7c9d1">Plan a Moon landing in five steps</div>');
+  [kick, ttl, sub].forEach((n) => g.appendChild(n)); root.appendChild(g);
+  S.push((t) => {
+    const on = t < sc.end + 0.4; show(g, on); if (!on) return;
+    const z = lerp(1.0, 1.12, t / sc.end);
+    const wts = [1 - prog(t, 0.8, 2.0), Math.min(prog(t, 0.8, 2.0), 1 - prog(t, 2.4, 3.6)), Math.min(prog(t, 2.4, 3.6), 1 - prog(t, 4.0, 5.4)), prog(t, 4.0, 5.4)];
+    ims.forEach((im, i) => { im.style.opacity = wts[i]; im.style.transform = `scale(${z}) translateY(${-t * 4}px)`; });
+    const k1 = out(prog(t, 1.0, 2.2)); ttl.style.opacity = k1; ttl.style.filter = `blur(${(1 - k1) * 14}px)`; ttl.style.transform = `scale(${lerp(1.12, 1, k1)})`;
+    kick.style.opacity = out(prog(t, 0.6, 1.4)); sub.style.opacity = out(prog(t, 1.8, 2.8));
+    g.style.opacity = 1 - prog(t, sc.end - 0.3, sc.end + 0.4);
+  });
+}
+winScene({ id: 'layout', imgs: ['site.png'], cam: [[0, { cx: .5, cy: .5, s: .62, rx: 20, ry: -16, dy: 160, o: 1 }], [0.14, { cx: .5, cy: .5, s: .9, rx: 0, ry: 0, dy: -40 }], [1, { cx: .5, cy: .5, s: .92, dy: -40 }]],
+  callouts: [[0.16, 0.42, [0, .085, .233, .885], 'Mission flow'], [0.42, 0.7, [.235, .12, 1, .72], '3D Moon'], [0.7, 0.98, [.235, .73, 1, .99], 'Timeline']] });
+winScene({ id: 'site', imgs: ['site.png'], kick: ['01', 'Site', 'Search, filter, type coordinates, or take a best spot.'],
+  cam: [[0, { cx: .5, cy: .5, s: .92, dx: 0, dy: -40 }], [0.18, { cx: .12, cy: .42, s: 1.75, dx: 330, dy: -30 }], [1, { cx: .12, cy: .5, s: 1.8, dx: 330, dy: -30 }]],
+  callouts: [[0.5, 0.95, [.008, .23, .23, .31], 'Best spots']] });
+winScene({ id: 'globe', imgs: ['site.png'], cam: [[0, { cx: .12, cy: .5, s: 1.8, dx: 330, dy: -30 }], [0.16, { cx: .6, cy: .38, s: 1.45, dx: 0, dy: -40 }], [1, { cx: .6, cy: .36, s: 1.55, dx: 0, dy: -40 }]],
+  callouts: [[0.62, 0.98, [.425, .085, .64, .135], 'Live status']] });
+winScene({ id: 'date', imgs: ['date.png', 'date2.png'], swaps: [[0.8, 1]], kick: ['02', 'Date', 'Green days have sunlight and Earth together for 3+ days.'],
+  cam: [[0, { cx: .5, cy: .5, s: .9, dy: -40 }], [0.16, { cx: .12, cy: .58, s: 1.95, dx: 330, dy: -40 }], [1, { cx: .125, cy: .6, s: 2.0, dx: 330, dy: -40 }]],
+  click: { at: 0.8, x: 0.144, y: 0.636 } });
+winScene({ id: 'find', imgs: ['find0.png', 'find1.png'], swaps: [[0.55, 1]],
+  cam: [[0, { cx: .125, cy: .6, s: 2.0, dx: 330, dy: -40 }], [0.25, { cx: .12, cy: .58, s: 2.15, dx: 330, dy: -40 }], [1, { cx: .12, cy: .6, s: 2.2, dx: 330, dy: -40 }]],
+  click: { at: 0.55, x: 0.075, y: 0.566 } });
+winScene({ id: 'check', imgs: ['check.png'], kick: ['03', 'Check', 'A verdict at touchdown: one light for power, one for Earth.'],
+  cam: [[0, { cx: .5, cy: .5, s: .9, dy: -40 }], [0.16, { cx: .12, cy: .32, s: 1.85, dx: 330, dy: -20 }], [1, { cx: .12, cy: .36, s: 1.9, dx: 330, dy: -20 }]] });
+winScene({ id: 'play', imgs: ['check.png', ...Array.from({ length: 48 }, (_, i) => `tl${String(i).padStart(2, '0')}.png`)], frames: { u0: 0.15, u1: 0.95 },
+  cam: [[0, { cx: .12, cy: .36, s: 1.9, dx: 330, dy: -20 }], [0.14, { cx: .5, cy: .5, s: .9, dx: 0, dy: -40 }], [1, { cx: .55, cy: .55, s: 1.0, dx: 0, dy: -40 }]],
+  callouts: [[0.3, 0.95, [.235, .73, 1, .99], 'Timeline']] });
+winScene({ id: 'whatif', imgs: ['whatif.png'], kick: ['04', 'What if', 'Nudge the site or the date and read what changes.'],
+  cam: [[0, { cx: .5, cy: .5, s: .9, dy: -40 }], [0.18, { cx: .115, cy: .42, s: 1.95, dx: 330, dy: -30 }], [1, { cx: .115, cy: .45, s: 2.0, dx: 330, dy: -30 }]] });
+winScene({ id: 'compare', imgs: ['cmp1.png', 'cmp2.png'], swaps: [[0.6, 1]],
+  cam: [[0, { cx: .45, cy: .5, s: .8, rx: 10, ry: -10, dy: -20 }], [0.14, { cx: .44, cy: .46, s: 1.12, dy: -30 }], [0.56, { cx: .44, cy: .5, s: 1.16, dy: -30 }], [0.62, { cx: .45, cy: .45, s: 1.12, dy: -30 }], [1, { cx: .45, cy: .48, s: 1.16, dy: -30 }]],
+  callouts: [[0.16, 0.55, [.055, .235, .8, .335], 'The winner'], [0.66, 0.98, [.08, .05, .835, .75], 'Every measure, to scale']] });
+winScene({ id: 'report', imgs: ['report.png'], kick: ['05', 'Report', 'One page to print, save as PDF, or share as a link.'],
+  cam: [[0, { cx: .5, cy: .5, s: .9, dy: -40 }], [0.2, { cx: .115, cy: .45, s: 1.75, dx: 330, dy: -30 }], [1, { cx: .115, cy: .55, s: 1.8, dx: 330, dy: -30 }]] });
+winScene({ id: 'lumi', imgs: ['lumi0.png', 'lumi1.png', 'lumi2.png'], swaps: [[0.35, 1], [0.6, 2]], kick: ['✦', 'Ask Lumi', 'Plain English in, real numbers out.'],
+  cam: [[0, { cx: .5, cy: .5, s: .9, dy: -40 }], [0.2, { cx: .845, cy: .62, s: 1.55, dx: 330, dy: -30 }], [1, { cx: .845, cy: .64, s: 1.62, dx: 330, dy: -30 }]] });
+// Outro: Help menu, then end card
+{
+  const sc = T.outro;
+  winScene({ id: 'outro', imgs: ['help.png'], cam: [[0, { cx: .5, cy: .5, s: .9, dy: -40 }], [0.12, { cx: .82, cy: .2, s: 1.7, dx: -60, dy: 0 }], [0.5, { cx: .82, cy: .2, s: 1.75, dx: -60, dy: 0 }], [0.62, { cx: .82, cy: .2, s: 1.75, dx: -60, dy: 0, o: 0 }], [1, { cx: .82, cy: .2, s: 1.75, o: 0 }]],
+    callouts: [[0.14, 0.55, [.715, .025, .99, .19], 'Help']] });
+  const g = el(`<div class="layer"><img class="full" src="${A('intro3.png')}" style="filter:brightness(.5)"><div class="txt" style="top:320px">
+    <div class="logo"><svg width="58" height="58" viewBox="0 0 32 32" fill="none" stroke-width="2.5"><circle cx="16" cy="16" r="12" stroke="#f8fafc"/><path d="M4 18h24" stroke="#94a3b8"/><circle cx="21" cy="10" r="3" fill="#fbbf24"/></svg></div>
+    <div class="grad" style="font:800 96px Inter;letter-spacing:-0.035em">Happy landing!</div>
+    <div style="margin-top:12px;font:500 30px Inter;color:#c7c9d1">Lunar Site Planner · Team Dell Monitors</div>
+    <div class="url">arairo.github.io/IMPROVED_lunarmoon-</div></div></div>`);
+  root.appendChild(g);
+  S.push((t) => {
+    const a = sc.start + (sc.end - sc.start) * 0.55; const on = t > a; show(g, on); if (!on) return;
+    const k = out(prog(t, a, a + 1.4)); g.style.opacity = k; g.firstChild.style.transform = `scale(${lerp(1.1, 1, k)})`;
+    g.style.opacity = Math.min(k, 1 - prog(t, DURATION - 0.8, DURATION));
+  });
+}
+// Captions
+const cap = document.getElementById('cap');
+function renderCap(t) {
+  const c = CAPS.find((x) => t >= x.s - 0.05 && t < x.e + 0.15);
+  if (!c) { cap.style.opacity = 0; return; }
+  if (cap.textContent !== c.text) cap.textContent = c.text;
+  const a = prog(t, c.s - 0.05, c.s + 0.15), b = prog(t, c.e, c.e + 0.15);
+  const next = CAPS[CAPS.indexOf(c) + 1];
+  const joined = next && next.s - c.e < 0.05; // back-to-back chunks swap without fading the pill
+  cap.style.opacity = joined ? Math.max(a, 1) : a * (1 - b);
+}
+window.DURATION = DURATION;
+window.render = (t) => { S.forEach((f) => f(t)); renderCap(t); };
+window.ready = async () => { await document.fonts.ready; await Promise.all([...document.images].map((i) => i.decode().catch(() => {}))); return true; };
+render(0);
+</script></body></html>

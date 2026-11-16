@@ -98,6 +98,21 @@ function drawStrip(canvas, sc, days, { rows = 3 } = {}) {
 
 let bound = false;
 
+/** The three-step guide shown at the top of the lab; it ticks off as you go. */
+function guideHtml(app) {
+  const n = app.scenarios.length;
+  const base = app.scenarios.find((x) => x.id === app.compareBaseId) || app.scenarios[0];
+  const st1 = n >= 2 ? 'done' : 'now';
+  const st2 = n < 2 ? '' : app.compareBaseChosen ? 'done' : 'now';
+  const st3 = n >= 2 ? 'now' : '';
+  const tick = (st, k) => `<span class="g-n">${st === 'done' ? icon('check', 14) : k}</span>`;
+  return `<ol class="cl-guide">
+    <li class="${st1}" data-g="1">${tick(st1, 1)}<div><b>Add plans</b><small>${n === 0 ? 'Use the buttons above, or a quick start below.' : n === 1 ? '1 added. Add at least one more to compare.' : `${n} plans added. Add more any time.`}</small></div></li>
+    <li class="${st2}" data-g="2">${tick(st2, 2)}<div><b>Pick a baseline</b><small>${n < 2 ? 'The plan you measure the others against.' : `Now: <b>${esc(base.label)}</b>. Tap ${icon('star', 12)} on a card to change it.`}</small></div></li>
+    <li class="${st3}" data-g="3">${tick(st3, 3)}<div><b>Read the differences</b><small>${n < 2 ? 'Winner, cards, bars and a day-by-day view appear here.' : 'Green = better than the baseline, red = worse. Longer bar = more.'}</small></div></li>
+  </ol>`;
+}
+
 /**
  * Render the lab into `container`. `onOpen(scenario)` opens a scenario in the
  * planner; `addScenario(app, site, startMs, label)` adds one (from compare.js).
@@ -131,7 +146,7 @@ export function renderCompareLab(container, app, onOpen, addScenario) {
 
   const list = app.scenarios;
   if (!list.length) {
-    container.innerHTML = `<div class="cl-empty">
+    container.innerHTML = `${guideHtml(app)}<div class="cl-empty">
         <div class="cl-empty-ico">${icon('scale', 34)}</div>
         <h3>Put plans side by side</h3>
         <p>See exactly how much a launch delay, a different site or a nearby ridge changes your power and radio contact.</p>
@@ -142,6 +157,7 @@ export function renderCompareLab(container, app, onOpen, addScenario) {
           <button type="button" data-q="current"><span class="q-ico" style="--c:#bf5af2">${icon('mapPin', 22)}</span><b>Start with this site</b><small>Add the current site and date, then add more</small></button>
         </div></div>`;
     bindQuick();
+    bindGuide();
     return;
   }
 
@@ -224,17 +240,17 @@ export function renderCompareLab(container, app, onOpen, addScenario) {
       <thead><tr><th>Scenario</th>${cols.map((c) => `<th>${c}</th>`).join('')}</tr></thead>
       <tbody>${list.map((s) => { const st = s.scan.stats; const ge = (k, o) => (st[o] && st[k] > 0 ? '≥ ' : ''); return `<tr><td><i style="background:${s.color}"></i>${esc(s.label)}</td><td>${fmtPct(st.litFraction)}</td><td>${fmtPct(bothFraction(s))}</td><td>${Math.round(st.avgPowerW)} W</td><td>${ge('longestDarkH', 'longestDarkOpenEnded')}${fmtHours(st.longestDarkH)}</td><td>${ge('batteryKWh', 'batteryOpenEnded')}${st.batteryKWh.toFixed(1)} kWh</td><td>${fmtPct(st.earthCentreFraction)}</td><td>${fmtPct(st.dteFraction)}</td><td>${ge('longestBlackoutH', 'longestBlackoutOpenEnded')}${fmtHours(st.longestBlackoutH)}</td></tr>`; }).join('')}</tbody></table></div></details>`;
 
-  container.innerHTML = `${winner}
-    <h3 class="cl-h">Scenarios <small>Deltas are against the baseline (${icon('star', 12)}). Tap ${icon('star', 12)} on any card to change it.</small></h3>
+  container.innerHTML = `${guideHtml(app)}${winner}
+    <h3 class="cl-h"><span class="h-n">2</span>Your plans <small>Each number is compared with the baseline (${icon('star', 12)} ${esc(base.label)}). Tap ${icon('star', 12)} on another card to measure from it instead.</small></h3>
     <div class="cl-cards">${cards}</div>
-    <h3 class="cl-h">Side by side <small>Longer bar = more. ${icon('trophy', 12)} marks the best for each measure.</small></h3>
+    <h3 class="cl-h"><span class="h-n">3</span>Side by side <small>Longer bar = more. ${icon('trophy', 12)} marks the best for each measure.</small></h3>
     <div class="cl-bars">${bars}</div>
-    <h3 class="cl-h">Day by day <small>Each row starts at its touchdown, so you can see when each plan has power and radio.</small></h3>
+    <h3 class="cl-h"><span class="h-n">3</span>Day by day <small>Each row starts at its touchdown, so you can see when each plan has power and radio.</small></h3>
     ${daysView}
     ${table}`;
 
   container.querySelectorAll('[data-open]').forEach((b) => b.addEventListener('click', () => { const sc = list.find((x) => x.id === b.dataset.open); if (sc) onOpen(sc); }));
-  container.querySelectorAll('[data-base]').forEach((b) => b.addEventListener('click', () => { app.compareBaseId = b.dataset.base; rerender(); }));
+  container.querySelectorAll('[data-base]').forEach((b) => b.addEventListener('click', () => { app.compareBaseId = b.dataset.base; app.compareBaseChosen = true; rerender(); }));
   container.querySelectorAll('[data-rm]').forEach((b) => b.addEventListener('click', () => {
     app.scenarios = app.scenarios.filter((x) => x.id !== b.dataset.rm);
     setCount();
@@ -247,6 +263,13 @@ export function renderCompareLab(container, app, onOpen, addScenario) {
     container.querySelectorAll('.cm-bar, .cc-meter span').forEach((b) => { const w = b.style.width; b.style.width = '0'; requestAnimationFrame(() => { b.style.width = w; }); });
   });
 
+  bindGuide();
+  function bindGuide() {
+    container.querySelectorAll('[data-g]').forEach((li) => li.addEventListener('click', () => {
+      const target = { 1: '.cl-head', 2: '.cl-cards', 3: '.cl-bars' }[li.dataset.g];
+      document.querySelector(target)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }));
+  }
   function bindQuick() {
     container.querySelectorAll('[data-q]').forEach((b) => b.addEventListener('click', () => {
       const q = b.dataset.q;

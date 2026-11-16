@@ -67,7 +67,7 @@ export function openVideo(kind = 'tour') {
   box.setAttribute('role', 'dialog');
   box.setAttribute('aria-label', 'Video tour of Professional mode');
   box.innerHTML = `<div class="v-card">
-      <div class="v-head"><b>Professional mode in 85 seconds</b>
+      <div class="v-head"><b>Professional mode in two minutes</b>
         <span><a href="${base}tutorial/pro-tutorial.mp4" download class="xp-link">Download MP4</a>
         <button type="button" class="xp-chip xp-icon-btn" data-v="close" aria-label="Close video">✕</button></span></div>
       <video src="${base}tutorial/pro-tutorial.mp4" poster="${base}tutorial/pro-tutorial-poster.jpg" controls autoplay playsinline></video>
@@ -104,8 +104,8 @@ export function initExperience(api) {
     headerRight.prepend(tools);
 
     createMenu(tools.querySelector('[data-x="help"]'), () => [
-      { icon: 'video', label: 'Watch the tutorial video', sub: '85 seconds, narrated', run: () => openVideo() },
-      { icon: 'route', label: 'Guided tour', sub: 'Lumi points things out, one by one', run: () => proTour.start() },
+      { icon: 'video', label: 'Watch the tutorial video', sub: 'Two minutes, narrated', run: () => openVideo() },
+      { icon: 'route', label: 'Guided tour of this page', sub: 'Lumi points things out, one by one', run: () => (app.mode === 'compare' ? startCmpTour() : proTour.start()) },
       { icon: 'mouse', label: 'Mouse and keyboard controls', sub: 'Spin, pan and zoom the Moon', run: () => controlsCoach.start() },
       { icon: 'play', label: 'Watch the promo', sub: '48 seconds, with music', run: () => openVideo('promo') },
       { icon: 'scale', label: 'Compare Lab tour', sub: 'How to read a side-by-side comparison', run: () => startCmpTour() },
@@ -200,13 +200,15 @@ export function initExperience(api) {
 
   // ---------- Compare Lab tour ----------
   const cmpTour = createSpotlight([
-    { target: null, mood: 'happy', title: 'Welcome to the Compare Lab', body: 'Here you put whole plans side by side: different sites, different dates, or both. I’ll show you how to read it in under a minute.' },
-    { target: '.cl-actions', mood: 'think', title: 'Add scenarios', body: 'Add the site and date you’re on, any other site from the menu, three launch slips (+1, +2, +3 lunar months) or the sunniest ridges nearby.', why: 'A lunar day lasts about 29.5 Earth days, so a slip of exactly one lunar month brings the same Sun angle back, but Earth’s wobble (libration) and the Sun’s seasonal tilt still change the answer.' },
-    { target: '.cl-winner', mood: 'wow', title: 'The winner', body: 'The best plan overall, ranked by how long it has power and radio at the same time, then by link time and the shortest night.' },
-    { target: '.cl-cards', mood: 'happy', title: 'One card per plan', body: 'The big number is the share of time with both sunlight and Earth in view. The coloured chip shows how far it is above or below your baseline.', why: 'Tap the star on any card to make it the baseline. Every difference on the page is then measured from that plan.' },
-    { target: '.cl-bars', mood: 'think', title: 'See the size of each difference', body: 'Every measure gets its own bar chart, so a 2-point change looks small and a 40-point change looks huge. The trophy marks the best plan for that measure.' },
-    { target: '.cl-days', mood: 'wow', title: 'Day by day', body: 'Each row starts at its own touchdown. Green is power and radio together, amber is power only. Gaps are nights.' },
-    { target: '.cl-head', mood: 'happy', title: 'Take it with you', body: 'Export everything to CSV for a report, or tap Open on any card to jump back to the planner with that site and date.' },
+    { target: null, mood: 'happy', title: 'The Compare Lab in three steps', body: 'Compare answers one question: which plan is better, and by how much? I’ve added an example (your site launched on time and 1, 2 and 3 months late) so you can see it work.' },
+    { target: '.cl-guide', mood: 'think', title: 'Your three steps', body: '1 Add plans, 2 pick a baseline, 3 read the differences. They stay at the top of the page and tick off as you go. Click one to jump to that part.' },
+    { target: '.cl-actions', mood: 'happy', title: 'Step 1: add plans', body: '“This site & date” adds what’s open in the planner. “Add any site” picks another place. “Launch slips” adds the same site 1, 2 and 3 months late. “Sunnier spots nearby” adds the best-lit ridges.', why: 'A plan is a site plus a touchdown date. Comparing the same site on different dates answers “what if we launch late?”; comparing different sites on the same date answers “where should we land?”.' },
+    { target: '.cl-card.is-base', mood: 'think', title: 'Step 2: pick a baseline', body: 'The baseline (gold star) is the plan you measure the others against, usually the one you’re planning now. Tap the star on any other card to switch.' },
+    { target: '.cl-winner', mood: 'wow', title: 'Step 3: read the differences', body: 'Start here. The winner has the most time with sunlight and Earth in view together, which means power and radio at the same time.' },
+    { target: '.cl-cards', mood: 'happy', title: 'The big number on each card', body: 'It’s the share of time with power and radio together. The chip next to it says how many points it gains (green) or loses (red) against the baseline.' },
+    { target: '.cl-bars', mood: 'think', title: 'Every measure, to scale', body: 'One chart per measure (sunlight, Earth in view, power, longest night, battery). Longer bar = more, so you can see at a glance whether a difference is tiny or huge. The trophy marks the best.' },
+    { target: '.cl-days', mood: 'wow', title: 'Day by day', body: 'Each row starts at its own touchdown. Green is power and radio together, amber is power only, gaps are nights. Great for spotting when trouble starts.' },
+    { target: '.cl-card [data-open]', pad: 8, mood: 'happy', title: 'Back to the planner', body: 'Tap this arrow on any card to open that plan in the planner. Export CSV (top right) saves the whole comparison for a report.' },
   ], { label: 'Compare tour' });
   const startCmpTour = () => {
     store.set('lsp.cmpTourSeen', '1');
@@ -263,7 +265,7 @@ export function initExperience(api) {
     setTimeout(() => {
       window.dispatchEvent(new Event('resize'));
       if (tour) proTour.start();
-      else if (store.get('lsp.proWelcome') !== '1') showWelcome();
+      else if (store.get('lsp.proWelcome2') !== '1') showWelcome();
       else if (!store.get('lsp.controlsSeen')) {
         // A gentle hint instead of a blocking pop-up; "?" on the globe opens the full controls guide.
         store.set('lsp.controlsSeen', '1');
@@ -276,44 +278,78 @@ export function initExperience(api) {
   applyTheme(document.documentElement.dataset.theme);
 
   // ---------- First visit to Professional mode: how would you like to start? ----------
-  function showWelcome() {
+  /**
+   * A "how would you like to start?" chooser. Shown every time until the
+   * person ticks "Don't show this again" (stored under `key`). Skip is always
+   * one obvious click (or Esc).
+   */
+  function chooser({ key, title, sub, mood = 'wow', opts, onPick }) {
     if (document.querySelector('.xp-welcome')) return;
-    const base = import.meta.env.BASE_URL;
     const box = document.createElement('div');
     box.className = 'xp-welcome';
     box.setAttribute('role', 'dialog');
     box.setAttribute('aria-modal', 'true');
     box.setAttribute('aria-labelledby', 'xpWelcomeTitle');
     box.innerHTML = `<div class="wl-card">
-        <div class="wl-head"><span class="wl-ava">${lumiSvg('wow', 64)}</span>
-          <div><h2 id="xpWelcomeTitle">Welcome to Professional mode</h2><p>Plan a landing in five steps. How would you like to start?</p></div></div>
-        <div class="wl-opts">
-          <button type="button" class="wl-opt is-video" data-w="video">
-            <span class="wl-thumb" style="background-image:url('${base}tutorial/pro-tutorial-poster.jpg')"><span class="wl-play">${icon('play', 22)}</span><span class="wl-dur">1:25</span></span>
-            <b>Watch the tutorial video</b><small>A narrated 85-second walkthrough</small></button>
-          <button type="button" class="wl-opt" data-w="tour"><span class="wl-ic">${icon('route', 26)}</span><b>Take the guided tour</b><small>Lumi shows you each part, about a minute</small></button>
-          <button type="button" class="wl-opt" data-w="skip"><span class="wl-ic">${icon('chevronRight', 26)}</span><b>Skip, I’ll explore</b><small>Everything is under Help later</small></button>
-        </div>
-        <label class="wl-again"><input type="checkbox" data-again checked> Don’t ask me again</label>
+        <button type="button" class="wl-skip" data-w="skip">Skip ${icon('x', 16)}</button>
+        <div class="wl-head"><span class="wl-ava">${lumiSvg(mood, 64)}</span>
+          <div><h2 id="xpWelcomeTitle">${title}</h2><p>${sub}</p></div></div>
+        <div class="wl-opts">${opts}</div>
+        <div class="wl-foot"><label class="wl-again"><input type="checkbox" data-again> Don’t show this again</label>
+          <button type="button" class="wl-skip2" data-w="skip">Skip for now</button></div>
+        <p class="wl-note">You can always find these under ${icon('help', 13)} Help.</p>
       </div>`;
     document.body.appendChild(box);
     requestAnimationFrame(() => box.classList.add('is-on'));
     play('pop');
     const close = (choice) => {
-      if (box.querySelector('[data-again]').checked) store.set('lsp.proWelcome', '1');
+      if (box.querySelector('[data-again]').checked) store.set(key, '1');
       box.classList.remove('is-on');
       setTimeout(() => box.remove(), 300);
       removeEventListener('keydown', onKey);
-      if (choice === 'video') openVideo();
-      else if (choice === 'tour') proTour.start();
-      else { api.setHint?.('Drag to spin · Shift-drag to pan · Scroll to zoom · Help has the video and tour'); setTimeout(() => api.setHint?.(null), 6000); }
+      onPick(choice);
     };
     const onKey = (e) => { if (e.key === 'Escape') close('skip'); };
     addEventListener('keydown', onKey);
     box.querySelectorAll('[data-w]').forEach((b) => b.addEventListener('click', () => close(b.dataset.w)));
     box.addEventListener('click', (e) => { if (e.target === box) close('skip'); });
-    setTimeout(() => box.querySelector('[data-w="video"]')?.focus(), 80);
+    setTimeout(() => box.querySelector('.wl-opt')?.focus(), 80);
   }
+  const PRO_KEY = 'lsp.proWelcome2', CMP_KEY = 'lsp.cmpWelcome';
+  function showWelcome() {
+    const base = import.meta.env.BASE_URL;
+    chooser({
+      key: PRO_KEY,
+      title: 'Welcome to Professional mode',
+      sub: 'Plan a landing in five steps. How would you like to start?',
+      opts: `<button type="button" class="wl-opt is-video" data-w="video">
+            <span class="wl-thumb" style="background-image:url('${base}tutorial/pro-tutorial-poster.jpg')"><span class="wl-play">${icon('play', 22)}</span><span class="wl-dur">2:00</span></span>
+            <b>Watch the tutorial video</b><small>A narrated two-minute walkthrough</small></button>
+          <button type="button" class="wl-opt" data-w="tour"><span class="wl-ic">${icon('route', 26)}</span><b>Take the guided tour</b><small>Lumi shows you each part, about a minute</small></button>`,
+      onPick: (c) => {
+        if (c === 'video') openVideo();
+        else if (c === 'tour') proTour.start();
+        else { api.setHint?.('Drag to spin · Shift-drag to pan · Scroll to zoom · Help has the video and tour'); setTimeout(() => api.setHint?.(null), 6000); }
+      },
+    });
+  }
+  function showCompareWelcome() {
+    chooser({
+      key: CMP_KEY,
+      mood: 'think',
+      title: 'Welcome to the Compare Lab',
+      sub: 'Put two or more plans side by side and see how big each difference is. How would you like to start?',
+      opts: `<button type="button" class="wl-opt" data-w="example"><span class="wl-ic">${icon('calendar', 26)}</span><b>Show me an example</b><small>Your site, launched on time and 1, 2 and 3 months late</small></button>
+          <button type="button" class="wl-opt" data-w="tour"><span class="wl-ic">${icon('route', 26)}</span><b>Take the guided tour</b><small>Lumi walks you through the three steps</small></button>`,
+      onPick: (c) => {
+        if (c === 'example') { if (app.scenarios.length < 2) document.getElementById('cmpSlipBtn')?.click(); }
+        else if (c === 'tour') startCmpTour();
+      },
+    });
+  }
+  document.getElementById('modeCompareBtn')?.addEventListener('click', () => {
+    if (store.get(CMP_KEY) !== '1') setTimeout(showCompareWelcome, 250);
+  });
 
   // ---------- Best landing spots (friend's idea #1) ----------
   const best = { key: '', cancel: null, timer: 0, spots: [] };
@@ -385,7 +421,7 @@ export function initExperience(api) {
     lumi: () => assistant.open(),
     look: (body) => getGlobe()?.lookAlong?.(body),
     theme: (v) => applyTheme(v),
-    tour: () => proTour.start(),
+    tour: () => (app.mode === 'compare' ? startCmpTour() : proTour.start()),
     beginner: () => setMode('beginner'),
     play: (on) => { if (app.playing !== on) document.getElementById('playPauseBtn')?.click(); },
     step: (i) => { document.querySelector('[data-mob="site"]')?.offsetParent && matchMedia('(max-width: 1023px)').matches && document.querySelector('[data-mob="site"]').click(); flow.go(i); },

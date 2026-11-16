@@ -42,7 +42,7 @@ export function openAbout({ onVideo } = {}) {
         ${team}
         <section><h3>How we used AI</h3><p>We used Claude Code (Anthropic) as a coding assistant to write and test the app’s code and text. The narration voice in our tutorial videos is AI-generated (Kokoro text-to-speech), the promo’s music was synthesised in code, and the videos carry an “SI-assisted” label. The science engine was checked against NASA JPL Horizons, and every data source is listed above. No NASA logos or branding are used.</p></section>
         <div class="a-links"><a class="xp-chip" href="${REPO}" target="_blank" rel="noopener">Source code on GitHub</a>
-          <button type="button" class="xp-chip" data-v="video">▶ 85-second video tour</button>
+          <button type="button" class="xp-chip" data-v="video">▶ Two-minute tutorial</button>
           <button type="button" class="xp-chip" data-v="promo">▶ 48-second promo</button></div>
       </div>
     </div>`;

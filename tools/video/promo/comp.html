@@ -1,0 +1,306 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: #000; }
+  body { font-family: 'Inter', -apple-system, system-ui, sans-serif; color: #f5f5f7; -webkit-font-smoothing: antialiased; }
+  #stars { position: absolute; inset: 0; }
+  .layer { position: absolute; inset: 0; will-change: transform, opacity; }
+  .full { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .stage { position: absolute; inset: 0; perspective: 2200px; perspective-origin: 50% 45%; }
+  .win { position: absolute; left: 0; top: 0; width: 1600px; height: 1000px; transform-origin: 0 0; border-radius: 18px; overflow: hidden;
+    box-shadow: 0 60px 140px rgba(0,0,0,.65), 0 20px 50px rgba(0,0,0,.45), 0 0 0 1px rgba(255,255,255,.08); background: #0b0f17; }
+  .win img { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .phone { position: absolute; width: 390px; height: 844px; border-radius: 58px; padding: 14px; background: linear-gradient(145deg, #2a2d35, #0d0f14); box-shadow: 0 50px 120px rgba(0,0,0,.7), inset 0 0 0 2px rgba(255,255,255,.12); transform-origin: 50% 50%; }
+  .phone .scr { position: relative; width: 100%; height: 100%; border-radius: 44px; overflow: hidden; background: #000; }
+  .phone .scr img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .phone .notch { position: absolute; left: 50%; top: 10px; width: 120px; height: 34px; margin-left: -60px; border-radius: 20px; background: #000; z-index: 2; }
+  .card { position: absolute; border-radius: 22px; overflow: hidden; box-shadow: 0 50px 120px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.08); background: #0b0f17; }
+  .card img { position: absolute; left: 0; top: 0; }
+  .txt { position: absolute; left: 0; right: 0; text-align: center; }
+  .big { font-weight: 800; font-size: 92px; letter-spacing: -0.035em; line-height: 1.04; }
+  .mid { font-weight: 700; font-size: 64px; letter-spacing: -0.03em; line-height: 1.08; }
+  .sub { font-weight: 500; font-size: 34px; letter-spacing: -0.01em; color: #c7c9d1; }
+  .w { display: inline-block; will-change: transform, opacity, filter; }
+  .grad .w, .gold .w, .blue .w { background: inherit; -webkit-background-clip: text; background-clip: text; color: transparent; padding-bottom: 0.08em; }
+  .scrim { position: absolute; left: 0; top: 0; bottom: 0; width: 900px; background: linear-gradient(90deg, rgba(0,0,0,.92) 0%, rgba(0,0,0,.75) 45%, transparent 100%); z-index: 5; pointer-events: none; }
+  .grad { background: linear-gradient(180deg, #ffffff 30%, #a9b0c2); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .gold { background: linear-gradient(180deg, #ffe08a, #ffb300 60%, #ff8a00); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .blue { background: linear-gradient(180deg, #9fdcff, #38a0ff 60%, #2f6bff); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .kick { position: absolute; left: 110px; top: 50%; width: 560px; margin-top: -130px; display: flex; flex-direction: column; align-items: flex-start; gap: 22px; z-index: 6; }
+  .kick .n { font: 800 30px 'Inter'; color: #2997ff; letter-spacing: 0.02em; padding: 6px 14px; border-radius: 12px; background: rgba(41,151,255,.14); }
+  .kick .h { font: 800 76px 'Inter'; letter-spacing: -0.035em; line-height: 1.02; padding-bottom: 0.06em; }
+  .kick .s { font: 500 28px/1.4 'Inter'; color: #a1a6b3; margin-top: 14px; }
+  .cursor { position: absolute; width: 34px; height: 34px; z-index: 50; filter: drop-shadow(0 4px 8px rgba(0,0,0,.6)); }
+  .ripple { position: absolute; width: 90px; height: 90px; margin: -45px 0 0 -45px; border-radius: 50%; border: 3px solid rgba(255,255,255,.9); z-index: 49; }
+  .vign { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at 50% 45%, transparent 55%, rgba(0,0,0,.55) 100%); z-index: 90; }
+  .flash { position: absolute; inset: 0; background: #fff; z-index: 95; pointer-events: none; }
+  .si { position: absolute; right: 26px; bottom: 20px; font: 500 15px 'Inter'; color: rgba(255,255,255,.45); z-index: 99; }
+  .end .logo { width: 96px; height: 96px; border-radius: 24px; background: #0b0f17; display: grid; place-items: center; box-shadow: 0 20px 50px rgba(0,0,0,.6), inset 0 0 0 1px rgba(255,255,255,.12); margin: 0 auto 28px; }
+  .url { display: inline-block; margin-top: 34px; padding: 16px 30px; border-radius: 999px; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.18); font: 600 30px 'Inter'; color: #fff; backdrop-filter: blur(20px); }
+  .glow { position: absolute; border-radius: 50%; filter: blur(80px); }
+</style></head>
+<body>
+<canvas id="stars" width="1920" height="1080"></canvas>
+<div id="root"></div>
+<div class="vign"></div>
+<div class="flash" id="flash" style="opacity:0"></div>
+<div class="si" id="si">SI-assisted · built with Claude Code · music synthesised in code</div>
+<script>
+const A = (n) => `cap/${n}`;
+const W = 1920, H = 1080;
+// ---------- helpers ----------
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const lerp = (a, b, k) => a + (b - a) * k;
+const ease = (k) => (k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2); // cubic in-out
+const out = (k) => 1 - Math.pow(1 - k, 3);
+const outBack = (k) => { const c1 = 1.4, c3 = c1 + 1; return 1 + c3 * Math.pow(k - 1, 3) + c1 * Math.pow(k - 1, 2); };
+const prog = (t, a, b) => clamp((t - a) / (b - a));
+// keyframes: [[t, {props}], ...] -> eased interpolation
+function kf(t, frames) {
+  if (t <= frames[0][0]) return { ...frames[0][1] };
+  for (let i = 0; i < frames.length - 1; i++) {
+    const [t0, p0] = frames[i], [t1, p1] = frames[i + 1];
+    if (t <= t1) { const k = ease((t - t0) / (t1 - t0)); const o = {}; for (const key in p0) o[key] = lerp(p0[key], p1[key] ?? p0[key], k); return o; }
+  }
+  return { ...frames[frames.length - 1][1] };
+}
+const root = document.getElementById('root');
+const el = (html) => { const d = document.createElement('div'); d.innerHTML = html.trim(); return d.firstChild; };
+
+// ---------- stars background ----------
+(() => {
+  const c = document.getElementById('stars').getContext('2d');
+  const r = (a, b) => a + Math.random() * (b - a);
+  const g = c.createRadialGradient(W * .5, H * .55, 0, W * .5, H * .55, W * .7);
+  g.addColorStop(0, '#0b1020'); g.addColorStop(1, '#000'); c.fillStyle = g; c.fillRect(0, 0, W, H);
+  for (let i = 0; i < 1600; i++) { c.fillStyle = `rgba(255,255,255,${r(.08, .6)})`; c.beginPath(); c.arc(r(0, W), r(0, H), r(.3, 1.1), 0, 7); c.fill(); }
+})();
+
+// ---------- scene builders ----------
+// Words that blur and rise in, one by one.
+function words(text, cls, delayStep = 0.08) {
+  const node = el(`<div class="txt ${cls}"></div>`);
+  text.split(' ').forEach((w, i) => { const s = document.createElement('span'); s.className = 'w'; s.textContent = w; s.dataset.i = i; node.appendChild(s); node.appendChild(document.createTextNode(' ')); });
+  node._step = delayStep;
+  return node;
+}
+function animWords(node, t, tin, tout, dur = 0.7) {
+  const spans = node.querySelectorAll('.w');
+  spans.forEach((s) => {
+    const k = out(prog(t, tin + s.dataset.i * node._step, tin + s.dataset.i * node._step + dur));
+    const ko = tout ? ease(prog(t, tout, tout + 0.45)) : 0;
+    s.style.opacity = (k * (1 - ko)).toFixed(3);
+    s.style.transform = `translateY(${(1 - k) * 34 - ko * 20}px) scale(${1 - (1 - k) * 0.04})`;
+    s.style.filter = `blur(${((1 - k) * 14 + ko * 10).toFixed(1)}px)`;
+  });
+  node.style.display = t < tin - 0.1 || (tout && t > tout + 0.6) ? 'none' : '';
+}
+function win(img) { const w = el(`<div class="win"><img src="${A(img)}"></div>`); return w; }
+// Place a 1600x1000 window: centre (cx, cy) of the image at screen centre, scale s, tilt rx/ry, offset dx/dy.
+function placeWin(w, p) {
+  const s = p.s, px = p.cx * 1600, py = p.cy * 1000;
+  w.style.transform = `translate(${W / 2 + (p.dx || 0)}px, ${H / 2 + (p.dy || 0)}px) rotateX(${p.rx || 0}deg) rotateY(${p.ry || 0}deg) scale(${s}) translate(${-px}px, ${-py}px)`;
+  w.style.opacity = p.o ?? 1;
+  w.style.borderRadius = `${18 / s}px`;
+}
+function kicker(n, h, sub) { return el(`<div class="kick"><div class="scrim" style="left:-110px;top:-600px;bottom:-600px;position:absolute;z-index:-1"></div><span class="n">${n}</span><div><div class="h grad">${h}</div><div class="s">${sub}</div></div></div>`); }
+function animKicker(k, t, tin, tout) {
+  const a = out(prog(t, tin, tin + 0.6)), b = ease(prog(t, tout - 0.4, tout));
+  k.style.opacity = a * (1 - b); k.style.transform = `translateX(${(1 - a) * -40}px)`; k.style.filter = `blur(${(1 - a) * 10 + b * 8}px)`;
+}
+const show = (n, on) => { n.style.display = on ? '' : 'none'; };
+
+// ---------- Scenes ----------
+const S = [];
+// S1 cold open: sunrise stills cross-fading with a slow push-in
+{
+  const g = el('<div class="layer"></div>');
+  const ims = ['intro0', 'intro1', 'intro2', 'intro3'].map((n) => { const i = el(`<img class="full" src="${A(n + '.png')}">`); g.appendChild(i); return i; });
+  const t1 = words('Every Moon landing', 'big grad', 0.12); t1.style.top = '700px';
+  const t2 = words('starts with two questions.', 'big grad', 0.1); t2.style.top = '812px';
+  g.appendChild(t1); g.appendChild(t2); root.appendChild(g);
+  S.push((t) => {
+    show(g, t < 5.4);
+    if (t >= 5.4) return;
+    const z = lerp(1.0, 1.16, t / 5.4);
+    const wts = [1 - prog(t, 0.8, 1.8), Math.min(prog(t, 0.8, 1.8), 1 - prog(t, 2.0, 3.0)), Math.min(prog(t, 2.0, 3.0), 1 - prog(t, 3.2, 4.4)), prog(t, 3.2, 4.4)];
+    ims.forEach((im, i) => { im.style.opacity = wts[i]; im.style.transform = `scale(${z}) translateY(${-t * 6}px)`; });
+    g.style.opacity = 1 - prog(t, 4.9, 5.4);
+    animWords(t1, t, 0.7, 4.6); animWords(t2, t, 1.6, 4.7);
+  });
+}
+// S2 the two questions
+{
+  const g = el('<div class="layer"></div>');
+  const sunGlow = el('<div class="glow" style="left:260px;top:180px;width:700px;height:420px;background:rgba(255,170,0,.35)"></div>');
+  const earthGlow = el('<div class="glow" style="left:960px;top:520px;width:700px;height:420px;background:rgba(40,140,255,.35)"></div>');
+  const q1 = words('Will the Sun keep it powered?', 'big gold', 0.07); q1.style.top = '360px';
+  const q2 = words('Will Earth stay in view?', 'big blue', 0.07); q2.style.top = '520px';
+  [sunGlow, earthGlow, q1, q2].forEach((n) => g.appendChild(n)); root.appendChild(g);
+  S.push((t) => {
+    show(g, t > 4.8 && t < 9.4);
+    if (t <= 4.8 || t >= 9.4) return;
+    sunGlow.style.opacity = prog(t, 5.0, 6.0) * (1 - prog(t, 8.6, 9.2));
+    earthGlow.style.opacity = prog(t, 6.2, 7.2) * (1 - prog(t, 8.6, 9.2));
+    animWords(q1, t, 5.1, 8.6); animWords(q2, t, 6.3, 8.7);
+    const s = lerp(1, 1.05, prog(t, 5, 9.2)); g.style.transform = `scale(${s})`;
+  });
+}
+// S3 title over the lit Moon
+{
+  const g = el('<div class="layer"></div>');
+  const bg = el(`<img class="full" src="${A('intro3.png')}">`);
+  const ttl = el('<div class="txt big grad" style="top:640px;font-size:120px">Lunar Site Planner</div>');
+  const sub = words('Plan a Moon landing in five steps.', 'sub', 0.06); sub.style.top = '800px';
+  [bg, ttl, sub].forEach((n) => g.appendChild(n)); root.appendChild(g);
+  S.push((t) => {
+    show(g, t > 8.8 && t < 13.6);
+    if (t <= 8.8 || t >= 13.6) return;
+    const k = out(prog(t, 9.0, 10.6));
+    bg.style.transform = `scale(${lerp(1.5, 1.04, k) + (t - 9) * 0.01}) translateY(${lerp(120, 0, k)}px)`;
+    bg.style.opacity = prog(t, 8.8, 9.3);
+    const kt = out(prog(t, 9.3, 10.4));
+    ttl.style.opacity = kt; ttl.style.transform = `scale(${lerp(1.18, 1, kt)})`; ttl.style.filter = `blur(${(1 - kt) * 16}px)`; ttl.style.letterSpacing = `${lerp(0.02, -0.035, kt)}em`;
+    animWords(sub, t, 10.4);
+    g.style.opacity = 1 - prog(t, 13.1, 13.6);
+    document.getElementById('flash').style.opacity = (0.55 * (1 - prog(t, 9.0, 9.6)) * (t > 9 ? 1 : 0)).toFixed(3);
+  });
+}
+// S4 Site: window flies in tilted, settles, zooms into the step rail
+{
+  const st = el('<div class="stage"></div>'); const w = win('site.png'); st.appendChild(w);
+  const k = kicker('01', 'Pick where.', 'Apollo, CLPS, Chandrayaan-3 … or any point on the Moon.');
+  root.appendChild(st); root.appendChild(k);
+  S.push((t) => {
+    show(st, t > 13.0 && t < 18.6); show(k, t > 13.0 && t < 18.6);
+    if (t <= 13.0 || t >= 18.6) return;
+    placeWin(w, kf(t, [[13.0, { cx: .5, cy: .5, s: .5, rx: 24, ry: -24, dx: 420, dy: 260, o: 0 }], [14.4, { cx: .5, cy: .5, s: .7, rx: 6, ry: -8, dx: 330, dy: 30, o: 1 }],
+      [15.2, { cx: .5, cy: .5, s: .72, rx: 0, ry: -4, dx: 330, dy: 30, o: 1 }], [17.0, { cx: .13, cy: .33, s: 1.75, rx: 0, ry: 0, dx: 330, dy: 0, o: 1 }], [18.6, { cx: .14, cy: .35, s: 1.85, rx: 0, ry: 0, dx: 330, dy: 0, o: 0 }]]));
+    animKicker(k, t, 13.5, 18.4);
+  });
+}
+// S5 Date: calendar zoom, cursor clicks a green day
+{
+  const st = el('<div class="stage"></div>'); const w = win('date.png'); const w2img = el(`<img src="${A('date2.png')}" style="opacity:0">`); w.appendChild(w2img); st.appendChild(w);
+  const k = kicker('02', 'Pick when.', 'Every day coloured for your site: green means sunlight and Earth together.');
+  const cur = el('<svg class="cursor" viewBox="0 0 24 24"><path d="M4 2l16 10-7 1.5L16 21l-3 1.5-3-7.5-6 5z" fill="#fff" stroke="#000" stroke-width="1.2" stroke-linejoin="round"/></svg>');
+  const rip = el('<div class="ripple"></div>');
+  root.appendChild(st); root.appendChild(k); root.appendChild(rip); root.appendChild(cur);
+  S.push((t) => {
+    const on = t > 18.2 && t < 23.6; show(st, on); show(k, on); show(cur, on); show(rip, on);
+    if (!on) return;
+    const p = kf(t, [[18.2, { cx: .5, cy: .5, s: .8, o: 0, dx: 330, dy: 20 }], [18.8, { cx: .5, cy: .5, s: .74, o: 1, dx: 330, dy: 20 }], [20.0, { cx: .12, cy: .6, s: 1.95, o: 1, dx: 330, dy: 0 }], [22.6, { cx: .125, cy: .6, s: 2.05, o: 1, dx: 330, dy: 0 }], [23.6, { cx: .3, cy: .55, s: 1.4, o: 0, dx: 330, dy: 0 }]]);
+    placeWin(w, p);
+    w2img.style.opacity = prog(t, 21.1, 21.3);
+    // cursor in screen space: target = the 20th calendar cell in image coords
+    const target = { x: 0.144, y: 0.636 }; // approx position of the clicked day in date.png
+    const tx = W / 2 + (p.dx || 0) + (target.x - p.cx) * 1600 * p.s, ty = H / 2 + (p.dy || 0) + (target.y - p.cy) * 1000 * p.s;
+    const kc = ease(prog(t, 20.1, 21.0));
+    cur.style.left = `${lerp(1500, tx, kc)}px`; cur.style.top = `${lerp(900, ty, kc)}px`;
+    cur.style.opacity = prog(t, 19.8, 20.2) * (1 - prog(t, 22.8, 23.2));
+    const kr = prog(t, 21.0, 21.6); rip.style.left = `${tx + 6}px`; rip.style.top = `${ty + 6}px`; rip.style.opacity = t > 21 ? (1 - kr) : 0; rip.style.transform = `scale(${0.3 + kr * 1.2})`;
+    animKicker(k, t, 18.6, 23.4);
+  });
+}
+// S6 Check: verdict zoom, then a time-lapse of the Sun moving
+{
+  const st = el('<div class="stage"></div>'); const w = win('check.png');
+  const frames = []; for (let i = 0; i < 48; i++) { const im = el(`<img src="${A('tl' + String(i).padStart(2, '0') + '.png')}" style="opacity:0">`); w.appendChild(im); frames.push(im); }
+  st.appendChild(w);
+  const k = kicker('03', 'Know if it’s a GO.', 'Power and radio, judged at touchdown, on real NASA terrain.');
+  const k2 = words('Then watch the Sun circle the sky.', 'mid grad', 0.06); k2.style.top = '930px';
+  root.appendChild(st); root.appendChild(k); root.appendChild(k2);
+  S.push((t) => {
+    const on = t > 23.2 && t < 29.4; show(st, on); show(k, on);
+    if (!on) { k2.style.display = 'none'; return; }
+    placeWin(w, kf(t, [[23.2, { cx: .5, cy: .5, s: .8, o: 0, dx: 330, dy: 40, ry: 10 }], [23.9, { cx: .13, cy: .33, s: 1.7, o: 1, dx: 330, dy: 0, ry: 0 }], [25.3, { cx: .13, cy: .35, s: 1.8, o: 1, dx: 330, dy: 0, ry: 0 }],
+      [26.2, { cx: .5, cy: .5, s: .82, o: 1, dx: 0, dy: -30, ry: 0 }], [28.9, { cx: .52, cy: .5, s: .86, o: 1, dy: -30, ry: 0 }], [29.4, { cx: .55, cy: .5, s: .9, o: 0, dy: -30, ry: 0 }]]));
+    // flipbook with cross-fade between neighbouring frames (smooth)
+    const f = clamp((t - 26.0) / 2.9) * 47; const i = Math.floor(f), a = f - i;
+    frames.forEach((im, j) => { im.style.opacity = t < 26 ? 0 : j === i ? 1 : j === i + 1 ? a : 0; });
+    animKicker(k, t, 23.6, 25.9);
+    animWords(k2, t, 26.3, 29.0);
+  });
+}
+// S7 Ask Lumi
+{
+  const st = el('<div class="stage"></div>'); const w = win('lumi0.png');
+  const l1 = el(`<img src="${A('lumi1.png')}" style="opacity:0">`), l2 = el(`<img src="${A('lumi2.png')}" style="opacity:0">`);
+  w.appendChild(l1); w.appendChild(l2); st.appendChild(w);
+  const k = kicker('✦', 'Just ask Lumi.', 'Type it in plain English. Every answer comes from the planner’s own maths.');
+  k.querySelector('.n').style.background = 'linear-gradient(135deg,#2f7bff,#b14dff)'; k.querySelector('.n').style.color = '#fff';
+  root.appendChild(st); root.appendChild(k);
+  S.push((t) => {
+    const on = t > 29.0 && t < 34.4; show(st, on); show(k, on);
+    if (!on) return;
+    placeWin(w, kf(t, [[29.0, { cx: .5, cy: .5, s: .7, o: 0, dx: 330, dy: 60, ry: -12 }], [29.8, { cx: .5, cy: .5, s: .72, o: 1, dx: 330, dy: 20, ry: 0 }], [31.0, { cx: .845, cy: .62, s: 1.6, o: 1, dx: 330, dy: 0, ry: 0 }], [33.6, { cx: .845, cy: .64, s: 1.7, o: 1, dx: 330, dy: 0 }], [34.4, { cx: .8, cy: .6, s: 1.5, o: 0, dx: 330, dy: 0 }]]));
+    l1.style.opacity = prog(t, 30.9, 31.4); l2.style.opacity = prog(t, 32.0, 32.3);
+    animKicker(k, t, 29.4, 34.2);
+  });
+}
+// S8 What if + Report as two floating cards
+{
+  const g = el('<div class="layer"></div>');
+  const mk = (img, x0, y0, cw, ch) => { const c = el(`<div class="card" style="width:${cw}px;height:${ch}px"><img src="${A(img)}" style="width:${1600 * 1.75}px;height:${1000 * 1.75}px;left:${-x0 * 1.75}px;top:${-y0 * 1.75}px"></div>`); g.appendChild(c); return c; };
+  const c1 = mk('whatif.png', 6, 226, 600, 540);
+  const c2 = mk('report.png', 0, 205, 600, 700);
+  const k = el('<div class="txt mid grad" style="top:96px">Test the what-ifs. Share the plan.</div>');
+  const s2 = el('<div class="txt sub" style="top:178px">Move 1 km, slip a day, compare sites, print a one-page report.</div>');
+  g.appendChild(k); g.appendChild(s2); root.appendChild(g);
+  S.push((t) => {
+    const on = t > 34.0 && t < 38.8; show(g, on); if (!on) return;
+    const a = outBack(prog(t, 34.3, 35.3)), b = outBack(prog(t, 34.7, 35.7)), o = 1 - prog(t, 38.3, 38.8);
+    c1.style.left = `${lerp(-700, 300, a)}px`; c1.style.top = '300px'; c1.style.transform = `rotate(${lerp(-8, -3, a) + (t - 35) * 0.2}deg)`; c1.style.opacity = o;
+    c2.style.left = `${lerp(2000, 1010, b)}px`; c2.style.top = `${270 - (t - 35) * 6}px`; c2.style.transform = `rotate(${lerp(8, 2.5, b) - (t - 35) * 0.2}deg)`; c2.style.opacity = o;
+    const kt = out(prog(t, 34.2, 35.0)); k.style.opacity = kt * o; k.style.transform = `translateY(${(1 - kt) * 30}px)`;
+    const ks = out(prog(t, 34.6, 35.4)); s2.style.opacity = ks * o;
+  });
+}
+// S9 Devices: desktop (light) + phones (Beginner)
+{
+  const g = el('<div class="layer"></div>');
+  const st = el('<div class="stage"></div>'); const w = win('light.png'); st.appendChild(w); g.appendChild(st);
+  const ph = (img) => { const p = el(`<div class="phone"><div class="scr"><div class="notch"></div><img src="${A(img)}"></div></div>`); g.appendChild(p); return p; };
+  const p1 = ph('phone1.png'), p2 = ph('phone2.png');
+  const k = el('<div class="txt mid grad" style="top:70px">Beginner or Pro. Light or dark. Laptop or phone.</div>');
+  g.appendChild(k); root.appendChild(g);
+  S.push((t) => {
+    const on = t > 38.4 && t < 43.2; show(g, on); if (!on) return;
+    const o = 1 - prog(t, 42.7, 43.2);
+    placeWin(w, kf(t, [[38.4, { cx: .5, cy: .5, s: .55, o: 0, dx: -180, dy: 120, ry: 14 }], [39.4, { cx: .5, cy: .5, s: .62, o: 1, dx: -200, dy: 110, ry: 8 }], [43.2, { cx: .5, cy: .5, s: .64, o: 1, dx: -210, dy: 110, ry: 6 }]]));
+    w.style.opacity = Math.min(prog(t, 38.4, 39.2), o);
+    const a = outBack(prog(t, 38.9, 39.9)), b = outBack(prog(t, 39.2, 40.2));
+    p1.style.left = '1180px'; p1.style.top = `${lerp(1200, 150, a)}px`; p1.style.transform = `scale(.86) rotate(${-4 + (t - 40) * 0.3}deg)`; p1.style.opacity = o;
+    p2.style.left = '1480px'; p2.style.top = `${lerp(1250, 210, b)}px`; p2.style.transform = `scale(.8) rotate(${5 - (t - 40) * 0.3}deg)`; p2.style.opacity = o;
+    const kt = out(prog(t, 38.6, 39.4)); k.style.opacity = kt * o; k.style.filter = `blur(${(1 - kt) * 10}px)`;
+  });
+}
+// S10 End card
+{
+  const g = el('<div class="layer end"></div>');
+  const bg = el(`<img class="full" src="${A('intro3.png')}" style="filter:brightness(.55)">`);
+  const box = el(`<div class="txt" style="top:300px">
+    <div class="logo"><svg width="58" height="58" viewBox="0 0 32 32" fill="none" stroke-width="2.5"><circle cx="16" cy="16" r="12" stroke="#f8fafc"/><path d="M4 18h24" stroke="#94a3b8"/><circle cx="21" cy="10" r="3" fill="#fbbf24"/></svg></div>
+    <div class="big grad" style="font-size:104px">Lunar Site Planner</div>
+    <div class="sub" style="margin-top:14px">Where the Sun keeps you powered and Earth keeps you connected.</div>
+    <div class="url">arairo.github.io/IMPROVED_lunarmoon-</div>
+    <div class="sub" style="margin-top:34px;font-size:24px;color:#8e93a0">Team Dell Monitors · Kuala Lumpur · NASA Space Apps Challenge 2026</div></div>`);
+  g.appendChild(bg); g.appendChild(box); root.appendChild(g);
+  S.push((t) => {
+    const on = t > 42.8; show(g, on); if (!on) return;
+    const k = out(prog(t, 42.8, 44.2));
+    bg.style.opacity = prog(t, 42.8, 43.4); bg.style.transform = `scale(${lerp(1.12, 1.0, k)})`;
+    box.style.opacity = out(prog(t, 43.2, 44.2)); box.style.transform = `translateY(${(1 - out(prog(t, 43.2, 44.4))) * 40}px) scale(${lerp(.96, 1, out(prog(t, 43.2, 44.4)))})`;
+    box.style.filter = `blur(${(1 - out(prog(t, 43.2, 44.0))) * 12}px)`;
+    root.parentElement.style.setProperty('--fade', '1');
+    document.getElementById('root').style.opacity = 1 - prog(t, 47.4, 48.0);
+  });
+}
+window.DURATION = 48.0;
+window.CUES = { duration: 48.0, title: 9.0, groove: 13.0, end: 42.8, whoosh: [5.0, 13.0, 18.2, 23.2, 29.0, 34.0, 38.4] };
+window.render = (t) => { S.forEach((f) => f(t)); document.getElementById('si').style.opacity = t > 43.5 ? 1 : 0.0; };
+window.ready = async () => { await document.fonts.ready; await Promise.all([...document.images].map((i) => i.decode().catch(() => {}))); return true; };
+render(0);
+</script>
+</body></html>
