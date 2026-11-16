@@ -52,6 +52,7 @@ Status: ✅ done · 🔨 in progress · ⏳ planned
 | 3.16 | Top bar reorganised: Ask Lumi stands out; Help menu (video, tour, controls); Settings menu (theme, sound, notes, spacecraft, Beginner); Terrain 3D moved to the view tabs | Design-system guidance (global actions right, preferences under Settings) | ✅ |
 | 3.17 | One line-icon set instead of emoji; layered soft shadows; Lumi with a contact shadow; rounded timeline bars with a smooth power curve and hover read-outs | UX audit | ✅ |
 | 3.18 | Intro: lunar sunrise (starfield and Milky Way, daylight sweeping across the Moon, gold flare, Earth rising) instead of rainbow ribbons | User request | ✅ |
+| 3.19 | Compare Lab rebuilt: winner banner, ranked scenario cards with big deltas against a chosen baseline, a bar chart per measure, a day-by-day strip view, quick-start presets, “add any site”, and its own guided tour | User request | ✅ |
 
 ## 4. Reach
 

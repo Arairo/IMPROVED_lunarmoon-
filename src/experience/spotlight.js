@@ -124,7 +124,15 @@ export function createSpotlight(steps, { label = 'Guide', onDone } = {}) {
     i = idx;
     const step = steps[i];
     const wait = step.before ? step.before() : 0;
-    setTimeout(() => show(i), typeof wait === 'number' ? wait : 0);
+    setTimeout(() => {
+      // Bring an off-screen target into view first (e.g. lower sections of the Compare Lab).
+      const el = step.target ? (typeof step.target === 'function' ? step.target() : document.querySelector(step.target)) : null;
+      const r = el?.getBoundingClientRect();
+      if (r && (r.top < 0 || r.bottom > innerHeight)) {
+        el.scrollIntoView({ block: r.height > innerHeight * 0.7 ? 'start' : 'center', behavior: 'smooth' });
+        setTimeout(() => show(i), 450);
+      } else show(i);
+    }, typeof wait === 'number' ? wait : 0);
   }
 
   function start(from = 0) {

@@ -108,6 +108,7 @@ export function initExperience(api) {
       { icon: 'route', label: 'Guided tour', sub: 'Lumi points things out, one by one', run: () => proTour.start() },
       { icon: 'mouse', label: 'Mouse and keyboard controls', sub: 'Spin, pan and zoom the Moon', run: () => controlsCoach.start() },
       { icon: 'play', label: 'Watch the promo', sub: '48 seconds, with music', run: () => openVideo('promo') },
+      { icon: 'scale', label: 'Compare Lab tour', sub: 'How to read a side-by-side comparison', run: () => startCmpTour() },
       { sep: true },
       { icon: 'sparkles', label: 'Ask Lumi a question', run: () => document.querySelector('[data-x="lumi"]')?.click() },
       { icon: 'info', label: 'About this project', run: () => openAbout({ onVideo: openVideo }) },
@@ -196,6 +197,30 @@ export function initExperience(api) {
     { target: '[data-x="lumi"]', pad: 6, mood: 'wow', title: 'Ask Lumi', body: 'Stuck? Type what you want: “best date at the ridge in 2027”, “compare ridge and IM-2”, “move 1 km north” or “what is libration?”.', why: 'Lumi runs in your browser with no AI service: it turns your words into planner actions and reads every number from the same engine you see on screen.' },
     { target: '[data-x="help"]', pad: 6, mood: 'happy', title: 'Help is always here', body: 'Help has the tutorial video, this tour and the mouse controls. Settings (the gear) has light and dark mode, sound, the spacecraft assumptions and the Beginner walk.' },
   ], { label: 'Tour' });
+
+  // ---------- Compare Lab tour ----------
+  const cmpTour = createSpotlight([
+    { target: null, mood: 'happy', title: 'Welcome to the Compare Lab', body: 'Here you put whole plans side by side: different sites, different dates, or both. I’ll show you how to read it in under a minute.' },
+    { target: '.cl-actions', mood: 'think', title: 'Add scenarios', body: 'Add the site and date you’re on, any other site from the menu, three launch slips (+1, +2, +3 lunar months) or the sunniest ridges nearby.', why: 'A lunar day lasts about 29.5 Earth days, so a slip of exactly one lunar month brings the same Sun angle back, but Earth’s wobble (libration) and the Sun’s seasonal tilt still change the answer.' },
+    { target: '.cl-winner', mood: 'wow', title: 'The winner', body: 'The best plan overall, ranked by how long it has power and radio at the same time, then by link time and the shortest night.' },
+    { target: '.cl-cards', mood: 'happy', title: 'One card per plan', body: 'The big number is the share of time with both sunlight and Earth in view. The coloured chip shows how far it is above or below your baseline.', why: 'Tap the star on any card to make it the baseline. Every difference on the page is then measured from that plan.' },
+    { target: '.cl-bars', mood: 'think', title: 'See the size of each difference', body: 'Every measure gets its own bar chart, so a 2-point change looks small and a 40-point change looks huge. The trophy marks the best plan for that measure.' },
+    { target: '.cl-days', mood: 'wow', title: 'Day by day', body: 'Each row starts at its own touchdown. Green is power and radio together, amber is power only. Gaps are nights.' },
+    { target: '.cl-head', mood: 'happy', title: 'Take it with you', body: 'Export everything to CSV for a report, or tap Open on any card to jump back to the planner with that site and date.' },
+  ], { label: 'Compare tour' });
+  const startCmpTour = () => {
+    store.set('lsp.cmpTourSeen', '1');
+    document.getElementById('cmpTourBtn')?.classList.remove('is-new');
+    if (app.mode !== 'compare') switchMode('compare');
+    if (app.scenarios.length < 2) document.getElementById('cmpSlipBtn')?.click();
+    setTimeout(() => cmpTour.start(), 350);
+  };
+  const cmpTourBtn = document.getElementById('cmpTourBtn');
+  if (cmpTourBtn) {
+    cmpTourBtn.innerHTML = `${icon('route', 15)} Tour`;
+    if (store.get('lsp.cmpTourSeen') !== '1') cmpTourBtn.classList.add('is-new');
+    cmpTourBtn.addEventListener('click', startCmpTour);
+  }
 
   // Replace the old tour button with the spotlight tour.
   const oldTour = document.getElementById('tourStartBtn');

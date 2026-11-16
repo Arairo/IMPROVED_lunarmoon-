@@ -2,6 +2,7 @@
 import { esc, fmtHours, fmtLatLon, pct } from './format.js';
 import { SYNODIC_MONTH_DAYS } from '../core/constants.js';
 import { prepareSite, scanWindow } from '../core/analysis.js';
+import { renderCompareLab } from './compareLab.js';
 
 export const COLUMNS = [
   { key: 'litFraction', label: 'Sunlit', fmt: (v) => pct(v, 1), better: 'high', tol: 0.03 },
@@ -43,78 +44,14 @@ export function addScenario(app, site, startMs, label) {
   const item = { id: `sc-${++scenarioSeq}`, site, startMs, windowDays: app.windowDays, label, scan: sc, configKey };
   app.scenarios.push(item);
   const countEl = document.getElementById('headerCompareCount');
-  if (countEl) countEl.textContent = String(app.scenarios.length);
+  if (countEl) { countEl.textContent = String(app.scenarios.length); countEl.classList.add('has-items'); }
+  const btn = document.getElementById('modeCompareBtn');
+  if (btn) { btn.classList.remove('is-bump'); void btn.offsetWidth; btn.classList.add('is-bump'); }
   return item;
 }
 
 export function renderCompareTable(container, app, onOpenScenario) {
-  if (!container) return;
-  if (!app.scenarios.length) {
-    container.innerHTML = `<div class="text-center py-8 text-xs text-slate-500">No scenarios added yet. Click <strong>+ Add Current Site &amp; Date</strong>, <strong>Schedule Slip ×3</strong>, or <strong>Add best-lit alternatives</strong> above to compare trade-offs!</div>`;
-    return;
-  }
-  container.innerHTML = `
-    <table class="w-full text-xs border-collapse">
-      <thead>
-        <tr class="border-b border-slate-200 text-slate-500 text-right">
-          <th class="text-left py-2 px-2">Scenario</th>
-          <th class="py-2 px-2">Sunlit %</th>
-          <th class="py-2 px-2">Avg Power</th>
-          <th class="py-2 px-2">Longest Dark</th>
-          <th class="py-2 px-2">Battery Est.</th>
-          <th class="py-2 px-2" title="Earth's centre above the terrain">Earth in view</th>
-          <th class="py-2 px-2">DTE Link</th>
-          <th class="py-2 px-2">Screening</th>
-          <th class="py-2 px-2"></th>
-        </tr>
-      </thead>
-      <tbody>
-        ${app.scenarios.map((s) => {
-          const st = s.scan.stats;
-          const v = verdictFor(st);
-          const badgeClass = v.status === 'go' ? 'bg-emerald-100 text-emerald-800'
-                           : v.status === 'marginal' ? 'bg-amber-100 text-amber-800'
-                           : 'bg-red-100 text-red-800';
-          const lat = s.site.lat != null ? s.site.lat : 0;
-          const lon = s.site.lon != null ? s.site.lon : 0;
-          const darkGe = st.longestDarkOpenEnded && st.longestDarkH > 0 ? '≥ ' : '';
-          const batGe = st.batteryOpenEnded && st.batteryKWh > 0 ? '≥ ' : '';
-          return `
-            <tr class="border-b border-slate-100 hover:bg-slate-50 text-right mono">
-              <td class="text-left py-2.5 px-2 font-sans">
-                <button type="button" data-open-sc="${s.id}" class="font-bold text-blue-600 hover:underline text-left">${esc(s.label)}</button>
-                <div class="mono text-[10px] text-slate-400">${fmtLatLon(lat, lon, 2)} · ${new Date(s.startMs).toISOString().slice(0, 10)} · ${s.windowDays}d</div>
-              </td>
-              <td class="py-2 px-2">${pct(st.litFraction, 1)}</td>
-              <td class="py-2 px-2">${st.avgPowerW.toFixed(0)} W</td>
-              <td class="py-2 px-2">${darkGe}${fmtHours(st.longestDarkH)}</td>
-              <td class="py-2 px-2">${batGe}${st.batteryKWh.toFixed(1)} kWh</td>
-              <td class="py-2 px-2">${pct(st.earthCentreFraction, 1)}</td>
-              <td class="py-2 px-2">${pct(st.dteFraction, 1)}</td>
-              <td class="py-2 px-2 font-sans"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${badgeClass}">${v.text}</span></td>
-              <td class="py-2 px-2 font-sans"><button type="button" data-rm-sc="${s.id}" class="text-slate-400 hover:text-red-600">✕</button></td>
-            </tr>
-          `;
-        }).join('')}
-      </tbody>
-    </table>
-  `;
-
-  container.querySelectorAll('[data-open-sc]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const sc = app.scenarios.find((x) => x.id === btn.dataset.openSc);
-      if (sc) onOpenScenario(sc);
-    });
-  });
-
-  container.querySelectorAll('[data-rm-sc]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      app.scenarios = app.scenarios.filter((x) => x.id !== btn.dataset.rmSc);
-      const countEl = document.getElementById('headerCompareCount');
-      if (countEl) countEl.textContent = String(app.scenarios.length);
-      renderCompareTable(container, app, onOpenScenario);
-    });
-  });
+  renderCompareLab(container, app, onOpenScenario, addScenario);
 }
 
 export function scenariosToCsv(scenarios) {

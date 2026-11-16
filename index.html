@@ -231,23 +231,27 @@
     </aside>
   </main>
 
-  <!-- VIEW 2: SCENARIO COMPARE LAB -->
-  <section id="compareView" class="hidden flex-1 overflow-y-auto bg-slate-50 p-4 sm:p-6 select-text">
-    <div class="max-w-6xl mx-auto bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
-      <div class="p-4 border-b border-slate-200 flex items-center justify-between gap-3 flex-wrap bg-slate-50/60">
-        <div>
-          <h2 class="text-base font-bold text-slate-900">Scenario Comparison Lab</h2>
-          <p class="text-xs text-slate-500">Compare sites side by side, test launch slips of one to three lunar months, or add the best-lit LOLA alternatives near the south pole.</p>
+  <!-- VIEW 2: COMPARE LAB -->
+  <section id="compareView" class="hidden flex-1 overflow-y-auto select-text">
+    <div class="cl-wrap">
+      <div class="cl-head">
+        <div class="cl-title">
+          <span class="cl-kicker">Compare Lab</span>
+          <h2>Which plan works best?</h2>
+          <p>Put sites and dates side by side and see how big each difference really is.</p>
         </div>
-        <div class="flex items-center gap-2 flex-wrap">
-          <button type="button" id="cmpAddCurrentBtn" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-900 text-white hover:bg-slate-800">+ Add Current Site &amp; Date</button>
-          <button type="button" id="cmpSlipBtn" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100">Schedule Slip ×3 (+1, +2, +3 mo)</button>
-          <button type="button" id="cmpNearbyBtn" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100"><span class="inline-flex items-center gap-1"><svg class="xp-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg> Add best-lit alternatives</span></button>
-          <button type="button" id="cmpExportBtn" class="px-2.5 py-1.5 rounded-lg text-xs font-medium border border-slate-300 bg-white hover:bg-slate-50">Export CSV</button>
-          <button type="button" id="cmpClearBtn" class="px-2.5 py-1.5 rounded-lg text-xs font-medium border border-slate-300 bg-white text-red-600 hover:bg-red-50">Clear</button>
+        <div class="cl-actions">
+          <button type="button" id="cmpAddCurrentBtn" class="cl-btn is-primary">+ This site &amp; date</button>
+          <select id="cmpAddSiteSel" class="cl-select" aria-label="Add any site to the comparison"></select>
+          <button type="button" id="cmpSlipBtn" class="cl-btn">Launch slips +1, +2, +3 mo</button>
+          <button type="button" id="cmpNearbyBtn" class="cl-btn">Sunnier spots nearby</button>
+          <span class="cl-sep"></span>
+          <button type="button" id="cmpTourBtn" class="cl-btn is-ghost">Tour</button>
+          <button type="button" id="cmpExportBtn" class="cl-btn is-ghost">Export CSV</button>
+          <button type="button" id="cmpClearBtn" class="cl-btn is-ghost is-danger">Clear</button>
         </div>
       </div>
-      <div id="compareTableContainer" class="p-4 overflow-x-auto"></div>
+      <div id="compareTableContainer"></div>
     </div>
   </section>
 
