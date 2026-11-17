@@ -1,0 +1,13 @@
+{
+ "description": "Terrain skyline of every map-layer cell (same cells and order as layers.json: global, then south, then north), 2 m mast, LOLA terrain.",
+ "azimuths": 36,
+ "azimuthStartDeg": 0,
+ "stepDeg": 0.25,
+ "dtype": "int8",
+ "unit": "elevation = value x stepDeg degrees; azimuth k = k x 360 / azimuths, clockwise from north",
+ "cells": {
+  "global": 64800,
+  "south": 33856,
+  "north": 33856
+ }
+}

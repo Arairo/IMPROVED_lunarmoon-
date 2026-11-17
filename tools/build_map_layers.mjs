@@ -11,7 +11,10 @@
 //   global   360 x 180, 1° cells, lat +89.5..-89.5, lon -179.5..179.5
 //   south    184 x 184, 5 km cells, south-polar stereographic, ±460 km (lat < ~-75°)
 //   north    184 x 184, 5 km cells, north-polar stereographic, ±460 km
-// Each grid stores sun % and earth % as Uint8 (value / 2 = percent).
+// Each grid stores sun %, earth % and both % (Sun and Earth up together) as
+// Uint8 (value / 2 = percent). public/data/layer_skylines.{bin,json} keeps every
+// cell's skyline (36 azimuths, int8 in 0.25° steps) so the browser can draw the
+// map for any moment or any 30-day window.
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
@@ -20,7 +23,7 @@ import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const R = 1737400, DEG = Math.PI / 180;
-const AZ = 72, MAST = 2;
+const AZ = 72, MAST = 2, SKY_AZ = 36, SKY_STEP = 0.25;
 const CAP_N = 184, CAP_CELL = 5000, CAP_HALF = (CAP_N * CAP_CELL) / 2;
 
 // Cell centres for the three grids, flattened: [lat, lon] pairs.
@@ -62,18 +65,25 @@ async function main() {
       const w = new Worker(fileURLToPath(import.meta.url), { workerData: { cells: list.slice(k * chunk, (k + 1) * chunk), sun, earth } });
       w.on('message', resolve); w.on('error', reject);
     })));
-    const sunPct = new Uint8Array(list.length), earthPct = new Uint8Array(list.length);
+    const sunPct = new Uint8Array(list.length), earthPct = new Uint8Array(list.length), bothPct = new Uint8Array(list.length);
+    const sky = new Int8Array(list.length * SKY_AZ);
     let o = 0;
-    for (const p of parts) { sunPct.set(p.sun, o); earthPct.set(p.earth, o); o += p.sun.length; }
-    out[kind] = { sunPct, earthPct };
+    for (const p of parts) { sunPct.set(p.sun, o); earthPct.set(p.earth, o); bothPct.set(p.both, o); sky.set(p.sky, o * SKY_AZ); o += p.sun.length; }
+    out[kind] = { sunPct, earthPct, bothPct, sky };
     console.log(`${kind}: ${list.length} cells in ${((Date.now() - started) / 1000).toFixed(1)} s`);
   }
-  const bufs = [out.global.sunPct, out.global.earthPct, out.south.sunPct, out.south.earthPct, out.north.sunPct, out.north.earthPct];
+  const bufs = [out.global.sunPct, out.global.earthPct, out.south.sunPct, out.south.earthPct, out.north.sunPct, out.north.earthPct, out.global.bothPct, out.south.bothPct, out.north.bothPct];
+  fs.writeFileSync(path.join(root, 'public/data/layer_skylines.bin'), Buffer.concat(['global', 'south', 'north'].map((k) => Buffer.from(out[k].sky.buffer))));
+  fs.writeFileSync(path.join(root, 'public/data/layer_skylines.json'), JSON.stringify({
+    description: 'Terrain skyline of every map-layer cell (same cells and order as layers.json: global, then south, then north), 2 m mast, LOLA terrain.',
+    azimuths: SKY_AZ, azimuthStartDeg: 0, stepDeg: SKY_STEP, dtype: 'int8', unit: 'elevation = value x stepDeg degrees; azimuth k = k x 360 / azimuths, clockwise from north',
+    cells: { global: 64800, south: CAP_N * CAP_N, north: CAP_N * CAP_N },
+  }, null, 1));
   fs.writeFileSync(path.join(root, 'public/data/layers.bin'), Buffer.concat(bufs.map((b) => Buffer.from(b.buffer))));
   const meta = {
     description: `Share of ${year} with the Sun's centre (sun) and Earth's centre (earth) above the local LOLA terrain skyline, 2 m mast, 6-hour sampling. Values are uint8 = percent x 2.`,
     year, stepHours: 6, mastM: MAST, azimuths: AZ,
-    order: ['global.sun', 'global.earth', 'south.sun', 'south.earth', 'north.sun', 'north.earth'],
+    order: ['global.sun', 'global.earth', 'south.sun', 'south.earth', 'north.sun', 'north.earth', 'global.both', 'south.both', 'north.both'],
     global: { width: 360, height: 180, cellDeg: 1, rowOrder: 'row 0 at lat 89.5, column 0 at lon -179.5' },
     south: { size: CAP_N, cellM: CAP_CELL, halfExtentM: CAP_HALF, projection: 'south-polar stereographic: x = rho sin(lon), y = rho cos(lon), row 0 at +y' },
     north: { size: CAP_N, cellM: CAP_CELL, halfExtentM: CAP_HALF, projection: 'north-polar stereographic: x = rho sin(lon), y = -rho cos(lon), row 0 at +y' },
@@ -94,7 +104,8 @@ async function work() {
   const terrain = createTerrain([grid('sp_fine'), grid('sp_coarse')], createGlobalGrid(gmeta, new Int16Array(fs.readFileSync(path.join(dataDir, 'global_dem.bin')).buffer.slice(0))));
   const { cells: list, sun, earth } = workerData;
   const T = sun.length / 3;
-  const sunOut = new Uint8Array(list.length), earthOut = new Uint8Array(list.length);
+  const sunOut = new Uint8Array(list.length), earthOut = new Uint8Array(list.length), bothOut = new Uint8Array(list.length);
+  const skyOut = new Int8Array(list.length * SKY_AZ);
   const hz = new Float32Array(AZ);
   for (let k = 0; k < list.length; k++) {
     const [lat, lon] = list[k];
@@ -129,11 +140,16 @@ async function work() {
       const f = (az / 360) * AZ, i0 = Math.floor(f) % AZ, i1 = (i0 + 1) % AZ, t = f - Math.floor(f);
       return el > hz[i0] * (1 - t) + hz[i1] * t;
     };
-    for (let i = 0; i < T; i++) { if (test(sun, i)) ns++; if (test(earth, i)) ne++; }
+    let nb = 0;
+    for (let i = 0; i < T; i++) { const a = test(sun, i), b = test(earth, i); if (a) ns++; if (b) ne++; if (a && b) nb++; }
     sunOut[k] = Math.round((ns / T) * 200);
     earthOut[k] = Math.round((ne / T) * 200);
+    bothOut[k] = Math.round((nb / T) * 200);
+    // Every other azimuth (10° apart) for the browser, which interpolates between them.
+    const per = AZ / SKY_AZ;
+    for (let j = 0; j < SKY_AZ; j++) skyOut[k * SKY_AZ + j] = Math.max(-127, Math.min(127, Math.round(hz[j * per] / SKY_STEP)));
   }
-  parentPort.postMessage({ sun: sunOut, earth: earthOut });
+  parentPort.postMessage({ sun: sunOut, earth: earthOut, both: bothOut, sky: skyOut });
 }
 
 if (isMainThread) main().catch((e) => { console.error(e); process.exit(1); });

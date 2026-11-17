@@ -144,7 +144,7 @@ export function initExperience(api) {
     t.innerHTML = `${icon('mountain', 14)} Terrain 3D ${icon('external', 12)}`;
     viewTabs.appendChild(t);
   }
-  const mapLayers = mountLayers({ getGlobe, viewTabs });
+  const mapLayers = mountLayers({ getGlobe, viewTabs, app });
 
   // ---------- Globe view cluster + gesture hint ----------
   const gv = document.getElementById('globeViewport');

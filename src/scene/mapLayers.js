@@ -9,7 +9,7 @@ import { getGlobalDem, loadGlobalDem, setGlobalDem } from '../core/globalDem.js'
 
 const R = 1737400;
 const DEG = Math.PI / 180;
-const CAP_LAT = 76; // use the 5 km polar grids poleward of this
+const CAP_LAT = 75.2; // use the 5 km polar grids poleward of this
 
 let cache = null;
 export async function loadLayers(baseUrl) {
@@ -25,7 +25,7 @@ export async function loadLayers(baseUrl) {
 export function parseLayers(meta, bytes) {
   const G = meta.global.width * meta.global.height;
   const C = meta.south.size * meta.south.size;
-  const sizes = { 'global.sun': G, 'global.earth': G, 'south.sun': C, 'south.earth': C, 'north.sun': C, 'north.earth': C };
+  const sizes = { 'global.sun': G, 'global.earth': G, 'global.both': G, 'south.sun': C, 'south.earth': C, 'south.both': C, 'north.sun': C, 'north.earth': C, 'north.both': C };
   const out = { meta, global: {}, south: {}, north: {} };
   let o = 0;
   for (const key of meta.order) {
@@ -73,7 +73,7 @@ export function slopeAt(dem, lat, lon) {
 }
 
 const lerp = (a, b, t) => a + (b - a) * t;
-function ramp(stops, v) {
+export function ramp(stops, v) {
   if (v <= stops[0][0]) return stops[0][1];
   for (let i = 1; i < stops.length; i++) {
     if (v <= stops[i][0]) {
@@ -98,6 +98,11 @@ export const LAYERS = [
     note: 'The near side always sees Earth, the far side never does. Near the limb and at the poles, libration and terrain decide.',
   },
   {
+    id: 'both', label: 'Sun + Earth together', unit: '%', sub: 'Sunlight for power and Earth in view for radio, at the same time',
+    stops: [[0, [10, 14, 30, 205]], [10, [20, 83, 45, 200]], [30, [22, 163, 74, 200]], [50, [74, 222, 128, 205]], [70, [220, 252, 231, 220]]],
+    note: 'What a lander needs most: power and a radio link together. Mid-latitudes on the near side get about half the time; the far side gets none.',
+  },
+  {
     id: 'shadow', label: 'Never sunlit (2027)', unit: '', sub: 'Polar areas with no sunlight all year (5 km cells)',
     stops: [[0, [139, 92, 246, 235]]],
     note: 'Cells whose centre saw no Sun in 2027: candidates for permanently shadowed regions, where water ice can survive. Small cold traps are finer than these 5 km cells.',
@@ -115,7 +120,7 @@ export const LAYERS = [
 ];
 
 export function layerValue(id, layers, dem, lat, lon) {
-  if (id === 'sun' || id === 'earth') return layers ? layerPercent(layers, id, lat, lon) : null;
+  if (id === 'sun' || id === 'earth' || id === 'both') return layers ? layerPercent(layers, id, lat, lon) : null;
   if (id === 'shadow') {
     if (!layers || Math.abs(lat) < CAP_LAT - 6) return null;
     return layerPercent(layers, 'sun', lat, lon);

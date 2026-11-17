@@ -205,6 +205,7 @@ export function updateCurrentTime(recompute = false) {
   app.lastNow = evaluate(app.timeMs, app.ctx, app.config, { withDsn: true });
   const dtInput = document.getElementById('datetimeInput');
   if (dtInput) dtInput.value = new Date(app.timeMs).toISOString().slice(0, 16);
+  window.dispatchEvent(new CustomEvent('lsp-time', { detail: app.timeMs }));
   if (globe) {
     globe.setVectors(app.lastNow.state);
     globe.setSite(app.site);

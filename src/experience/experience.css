@@ -1226,3 +1226,9 @@ html[data-theme='dark'] .cc-badge.amber { color: var(--xp-warn); }
 .xp-layer-card p { margin: 0 0 6px; color: #cbd5e1; }
 .xp-layer-card .l-src { color: #64748b; font-size: 11px; }
 @media (max-width: 640px) { .xp-layer-card p, .xp-layer-card .l-src { display: none; } }
+.xp-layer-card .l-modes { display: flex; gap: 2px; padding: 2px; margin: 8px 0 4px; border-radius: 9px; background: rgba(148, 163, 184, .16); }
+.xp-layer-card .l-modes button { flex: 1; border: 0; background: transparent; color: #cbd5e1; font: 600 11.5px var(--xp-font); padding: 5px 4px; border-radius: 7px; cursor: pointer; }
+.xp-layer-card .l-modes button.is-on { background: #f8fafc; color: #0f172a; box-shadow: 0 1px 3px rgba(0,0,0,.3); }
+.xp-layer-card .l-keys { display: flex; flex-wrap: wrap; gap: 6px 12px; }
+.xp-layer-card .l-keys span { display: inline-flex; align-items: center; gap: 6px; }
+.xp-layer-card .l-keys i { width: 12px; height: 12px; border-radius: 3px; display: inline-block; border: 1px solid rgba(255,255,255,.25); }

@@ -370,6 +370,14 @@ export function createGlobeRenderer(canvas, onPickSite, options = {}) {
     setOverlay(canvasEl, opacity = 0.85) {
       if (!three) return;
       const { T } = three;
+      // Same canvas again: just upload its new pixels (used by the live "Now" layer).
+      if (canvasEl && three.overlay && three.overlayCanvas === canvasEl) {
+        three.overlay.material.opacity = opacity;
+        three.overlay.material.map.needsUpdate = true;
+        renderGlobe();
+        return;
+      }
+      three.overlayCanvas = canvasEl;
       if (three.overlay) {
         three.scene.remove(three.overlay);
         three.overlay.material.map?.dispose();
