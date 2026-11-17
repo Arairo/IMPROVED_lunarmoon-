@@ -78,7 +78,7 @@ function buildSteps({ app, actions }) {
       target: '#compareBody',
       pane: 'compare',
       title: 'Interpret the results',
-      body: 'Highlights mark clear best and worst values only. Power, battery and link values are first-order estimates, and ridge-crest results depend on the 240 m terrain grid. Use the “?” buttons for definitions. Reopen this tour from the Tour button, or watch the narrated walkthrough with the Video tutorial button.',
+      body: 'Highlights mark clear best and worst values only. Power, battery and link values are first-order estimates, and ridge-crest results depend on terrain detail (20 m near the main south-polar sites, 240 m elsewhere near the pole). Use the “?” buttons for definitions. Reopen this tour from the Tour button, or watch the narrated walkthrough with the Video tutorial button.',
     },
   ];
 }

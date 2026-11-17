@@ -69,7 +69,7 @@ function lolaTerrainProvider(terrain) {
     width: size,
     height: size,
     tilingScheme,
-    credit: 'Terrain: LRO LOLA (NASA/GSFC), bundled south-pole grids',
+    credit: 'Terrain: LRO LOLA (NASA/GSFC): 20 m tiles near the main south-polar sites, 240 m and 1 km grids',
     callback(x, y, level) {
       const rect = tilingScheme.tileXYToRectangle(x, y, level);
       const heights = new Float32Array(size * size);
@@ -523,6 +523,12 @@ export async function createMoonScene(container, { terrain, onPick, onStatus }) 
 
   return {
     viewer,
+    /** Rebuild the terrain tiles after a finer grid (20 m tile) was added to `terrain`. */
+    reloadTerrain() {
+      if (!terrain) return;
+      viewer.terrainProvider = lolaTerrainProvider(terrain);
+      scene.requestRender();
+    },
     setTerrainExaggeration,
     setHighlights,
     setState,

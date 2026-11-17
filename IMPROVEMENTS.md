@@ -71,6 +71,7 @@ Status: ✅ done · 🔨 in progress · ⏳ planned
 | # | Improvement | Reference | Status |
 |---|---|---|---|
 | 4.1 | Whole-Moon map layers on the 3D Moon: sunlight and Earth in view for 2027 (real terrain skylines), never-sunlit polar areas, height and slope, with a live readout | Darksight | ✅ |
+| 3.32 | Terrain 3D uses the 20 m tiles near the main south-polar sites (skyline and 3D tiles); site notes, glossary, tour and badges updated for 20 m terrain (ridge badge 66% Sun / yr); app code split so the main bundle is 316 kB instead of 1 MB | Loose ends | ✅ |
 | 4.6 | Beginner mode rebuilt as "Mission: Land on the Moon": sunny-spot game on real lighting data, forecast calendar, route choice with a 3D launch and landing, 30-day survival meters and stars, printable badge, read-aloud | User testing: "Beginner doesn't stand out" | ✅ |
 | 4.4 | Map layers by time: Now (follows the timeline and Play), Your 30 days, Year 2027; Sun + Earth together layer | User request | ✅ |
 | 4.5 | Flight view: launch-to-landing planning model with three routes (Direct, Phasing loops, Low-energy), side-by-side comparison, dated timeline, every burn and the fuel, touchdown lighting/radio checks and a 3D animation; checked against Apollo 11's burns and five flown timelines; in the Date step, the Report, the JSON export and Ask Lumi | User request | ✅ |

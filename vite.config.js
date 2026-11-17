@@ -17,8 +17,19 @@ export default defineConfig({
   server: { port: 5174, host: true },
   preview: { port: 4174 },
   build: {
-    chunkSizeWarningLimit: 6000,
+    chunkSizeWarningLimit: 800, // three.js on its own is ~750 kB (193 kB gzipped)
     // Two pages: the guided beginner flow (index.html) and the expert planner.
-    rollupOptions: { input: { main: 'index.html', planner: 'planner.html' } },
+    // Big libraries get their own chunks, so they stay cached between updates.
+    rollupOptions: {
+      input: { main: 'index.html', planner: 'planner.html' },
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules/three')) return 'three';
+          if (id.includes('node_modules/astronomy-engine')) return 'astronomy';
+          if (id.includes('/src/data/')) return 'site-data';
+          return undefined;
+        },
+      },
+    },
   },
 });

@@ -14,7 +14,6 @@ import { soundOn, toggleSound, setSound, syncSoundLabels, play } from './sound.j
 import { icon } from './icons.js';
 import { createMenu } from './menu.js';
 import { openAbout } from './about.js';
-import { openTrust } from './trust.js';
 import { lumiSvg } from './lumi.js';
 
 const lumiFace = () => lumiSvg('happy', 26);
@@ -114,7 +113,7 @@ export function initExperience(api) {
       { icon: 'scale', label: 'Compare Lab tour', sub: 'How to read a side-by-side comparison', run: () => startCmpTour() },
       { sep: true },
       { icon: 'sparkles', label: 'Ask Lumi a question', run: () => document.querySelector('[data-x="lumi"]')?.click() },
-      { icon: 'check', label: 'Accuracy, data and sources', sub: 'How we know the numbers are right', run: () => openTrust({ sites }) },
+      { icon: 'check', label: 'Accuracy, data and sources', sub: 'How we know the numbers are right', run: () => import('./trust.js').then((m) => m.openTrust({ sites })) },
       { icon: 'info', label: 'About this project', run: () => openAbout({ onVideo: openVideo }) },
     ]);
     createMenu(tools.querySelector('[data-x="settings"]'), () => {

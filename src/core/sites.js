@@ -50,7 +50,7 @@ export const SITES = [
 ];
 
 // Hand-picked ridge points. Their computed values appear in the window summary;
-// near crests they depend strongly on the 240 m terrain resolution.
+// near crests they depend on terrain resolution (20 m tiles are used where available).
 export const COMPUTED_SITES = [
   {
     id: 'ridge',
@@ -60,7 +60,7 @@ export const COMPUTED_SITES = [
     lat: -89.45,
     lon: -137.31,
     precision: 'computed',
-    note: 'High point on the ridge joining Shackleton and de Gerlache craters, an area that LOLA lighting studies rank among the best-lit at the pole. At a ridge crest a 240 m terrain grid cannot resolve the local slope, so treat the sunlight figures here as approximate (they can shift by several percentage points).',
+    note: 'High point on the ridge joining Shackleton and de Gerlache craters, an area that LOLA lighting studies rank among the best-lit at the pole. Its skyline uses NASA’s 20 m LOLA terrain: the Sun is above it about 66% of 2027, close to NASA Goddard’s own lighting map (68%). On a crest a few hundred metres still matter, so use the landing-area check.',
   },
   {
     id: 'peak-shackleton',

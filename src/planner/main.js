@@ -6,7 +6,7 @@ import '@fontsource/ibm-plex-mono/500.css';
 import './styles.css';
 import './theme-apple.css';
 import { createMoonScene } from './scene/moonScene.js';
-import { loadTerrain } from '../core/horizon.js';
+import { loadTerrain, addHiresTileTo } from '../core/horizon.js';
 import { loadGlobalDem } from '../core/globalDem.js';
 import { DEFAULT_CONFIG, evaluate, isEarthUp, isSunUp, nextTransition, prepareSite, scan } from '../core/analysis.js';
 import { COMPUTED_SITES as CURATED_COMPUTED, SITES, SITE_GROUPS, parseCoordinates } from '../core/sites.js';
@@ -148,6 +148,14 @@ function selectSite(site, { fly = false, keepScenario = false } = {}) {
   if (!site) return;
   app.site = site;
   app.ctx = prepareSite(site, app.terrain, app.config);
+  // 20 m LOLA terrain near the main south-polar sites: fetch it, then redo the
+  // skyline and the 3D tiles with it.
+  addHiresTileTo(app.terrain, site.lat, site.lon, DATA).then((added) => {
+    if (!added || app.site !== site) return;
+    app.scene?.reloadTerrain?.();
+    selectSite(site, { keepScenario: true });
+    setStatus('20 m LOLA terrain loaded around this site');
+  }).catch(() => {});
   if (!keepScenario) app.activeScenario = null;
   app.scene?.setSelected(site);
   polar?.setSelected(site);

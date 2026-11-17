@@ -255,28 +255,38 @@ export function horizonAt(horizon, azDeg) {
 // the shared terrain so nudges and the landing-area check see 20 m detail.
 let hiresIndex;
 const hiresLoaded = new Map();
-export async function ensureHiresTile(lat, lon, baseUrl) {
-  if (!sharedTerrain || lat > -80) return false;
+async function hiresTileFor(lat, lon, baseUrl) {
+  if (lat > -80) return null;
   if (hiresIndex === undefined) {
     try { const r = await fetch(`${baseUrl}/hires/index.json`); hiresIndex = r.ok ? await r.json() : null; } catch { hiresIndex = null; }
   }
-  if (!hiresIndex) return false;
+  if (!hiresIndex) return null;
   const { x, y } = toSouthPolar(lat, lon);
   const tile = hiresIndex.tiles.find((t) => Math.abs(x - t.centreX) < t.halfExtent - 2000 && Math.abs(y - t.centreY) < t.halfExtent - 2000);
-  if (!tile || hiresLoaded.has(tile.id)) return false;
-  hiresLoaded.set(tile.id, null);
-  try {
-    const [meta, buf] = await Promise.all([
-      fetch(`${baseUrl}/hires/${tile.id}.json`).then((r) => r.json()),
-      fetch(`${baseUrl}/hires/${tile.id}.bin`).then((r) => r.arrayBuffer()),
-    ]);
-    const grid = createGrid(meta, new Int16Array(buf));
-    hiresLoaded.set(tile.id, grid);
-    const t = createTerrain([...sharedTerrain.grids, grid], sharedTerrain.global);
-    setSharedTerrain(t);
-    return true;
-  } catch {
-    hiresLoaded.delete(tile.id);
-    return false;
+  if (!tile) return null;
+  if (!hiresLoaded.has(tile.id)) {
+    hiresLoaded.set(tile.id, (async () => {
+      const [meta, buf] = await Promise.all([
+        fetch(`${baseUrl}/hires/${tile.id}.json`).then((r) => r.json()),
+        fetch(`${baseUrl}/hires/${tile.id}.bin`).then((r) => r.arrayBuffer()),
+      ]);
+      return createGrid(meta, new Int16Array(buf));
+    })().catch(() => { hiresLoaded.delete(tile.id); return null; }));
   }
+  return hiresLoaded.get(tile.id);
+}
+
+/** Add the 20 m tile around (lat, lon), if there is one, to a terrain object in place. True if it was added. */
+export async function addHiresTileTo(terrain, lat, lon, baseUrl) {
+  if (!terrain) return false;
+  const grid = await hiresTileFor(lat, lon, baseUrl);
+  if (!grid || terrain.grids.includes(grid)) return false;
+  terrain.grids.push(grid);
+  terrain.grids.sort((a, b) => a.meta.cellSize - b.meta.cellSize);
+  return true;
+}
+
+export async function ensureHiresTile(lat, lon, baseUrl) {
+  if (!sharedTerrain) return false;
+  return addHiresTileTo(sharedTerrain, lat, lon, baseUrl);
 }
