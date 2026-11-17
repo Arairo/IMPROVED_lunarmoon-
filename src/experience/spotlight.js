@@ -1,6 +1,7 @@
 // Spotlight guide: everything except one area is blurred and dimmed, the
 // area stays sharp inside a glowing ring, and Lumi explains it in a bubble.
 
+import { icon } from './icons.js';
 import { setLumi } from './lumi.js';
 import { play } from './sound.js';
 
@@ -89,7 +90,7 @@ export function createSpotlight(steps, { label = 'Guide', onDone } = {}) {
     if (animate) {
       const last = idx === steps.length - 1;
       bubble.innerHTML = `
-        <div class="b-step">${label} · ${idx + 1} of ${steps.length}</div>
+        <div class="b-top"><div class="b-step">${label} · ${idx + 1} of ${steps.length}</div>${last ? '' : `<button type="button" class="b-end" data-a="end" title="End the tour (Esc)">${icon('x', 13)} End tour</button>`}</div>
         <h4>${step.title}</h4>
         <p>${step.body}</p>
         ${step.extra || ''}
@@ -106,6 +107,7 @@ export function createSpotlight(steps, { label = 'Guide', onDone } = {}) {
       bubble.querySelector('[data-a="next"]').addEventListener('click', () => go(idx + 1));
       bubble.querySelector('[data-a="back"]')?.addEventListener('click', () => go(idx - 1));
       bubble.querySelector('[data-a="skip"]')?.addEventListener('click', stop);
+      bubble.querySelector('[data-a="end"]')?.addEventListener('click', stop);
       bubble.querySelector('[data-a="why"]')?.addEventListener('click', () => {
         bubble.querySelector('.b-why')?.classList.toggle('is-open');
         setLumi(coach.querySelector('.lumi-slot'), 'think', 'hop', 84);

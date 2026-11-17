@@ -1,6 +1,7 @@
 // Experience layer bootstrap: theme, cinematic intro, mode switching,
 // dynamic notch, Pro-mode spotlight tour and Creo-style globe controls.
 
+import { mountLayers } from './layersUi.js';
 import './experience.css';
 import './theme-pro.css';
 import { mountIntro } from './intro.js';
@@ -143,6 +144,7 @@ export function initExperience(api) {
     t.innerHTML = `${icon('mountain', 14)} Terrain 3D ${icon('external', 12)}`;
     viewTabs.appendChild(t);
   }
+  const mapLayers = mountLayers({ getGlobe, viewTabs });
 
   // ---------- Globe view cluster + gesture hint ----------
   const gv = document.getElementById('globeViewport');

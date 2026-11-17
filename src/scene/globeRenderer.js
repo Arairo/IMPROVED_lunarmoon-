@@ -12,6 +12,10 @@ export function createGlobeRenderer(canvas, onPickSite, options = {}) {
   const center = [0, 0, 0], targetCenter = [0, 0, 0];
   // Camera "up": world north normally; the local vertical when standing at a site.
   const camUp = [0, 1, 0], targetUp = [0, 1, 0];
+  // freeUp: the camera's "up" follows the orbit (trackball style), so dragging
+  // up or down tumbles straight over the poles instead of stopping at them.
+  let freeUp = true;
+  const orbitUp = () => [-Math.sin(pitch) * Math.sin(yaw), Math.cos(pitch), -Math.sin(pitch) * Math.cos(yaw)];
   // Earth is drawn NOT to scale: 7 Moon radii away (really ~221) and 0.45 Moon radii (really 3.7).
   const EARTH_DIST = 7, EARTH_R = 0.45;
   let highlights = [];
@@ -205,10 +209,14 @@ export function createGlobeRenderer(canvas, onPickSite, options = {}) {
     distance += (targetDist - distance) * 0.25;
     panX += (targetPanX - panX) * 0.25;
     panY += (targetPanY - panY) * 0.25;
+    if (freeUp) { const u = orbitUp(); targetUp[0] = u[0]; targetUp[1] = u[1]; targetUp[2] = u[2]; }
     let dc = 0;
+    // Ease the "up" only when leaving a mast view; in normal orbiting it follows exactly.
+    const upGap = Math.abs(targetUp[0] - camUp[0]) + Math.abs(targetUp[1] - camUp[1]) + Math.abs(targetUp[2] - camUp[2]);
+    const snapUp = freeUp && upGap < 0.05;
     for (let k = 0; k < 3; k++) {
       center[k] += (targetCenter[k] - center[k]) * 0.2; dc += Math.abs(targetCenter[k] - center[k]);
-      camUp[k] += (targetUp[k] - camUp[k]) * 0.2; dc += Math.abs(targetUp[k] - camUp[k]);
+      camUp[k] = snapUp ? targetUp[k] : camUp[k] + (targetUp[k] - camUp[k]) * 0.2; dc += Math.abs(targetUp[k] - camUp[k]);
     }
     const settling = dc + Math.abs(targetYaw - yaw) + Math.abs(targetPitch - pitch) + Math.abs(targetDist - distance) + Math.abs(targetPanX - panX) + Math.abs(targetPanY - panY) > 1e-4;
 
@@ -278,10 +286,14 @@ export function createGlobeRenderer(canvas, onPickSite, options = {}) {
     return e.shiftKey ? 'pan' : 'spin';
   };
   const HINTS = { spin: 'Spin', pan: 'Pan', zoom: 'Zoom' };
+  canvas.style.touchAction = 'none'; // drags spin the Moon instead of scrolling the page
   canvas.addEventListener('contextmenu', (e) => e.preventDefault());
   canvas.addEventListener('mousedown', (e) => { if (e.button === 1) e.preventDefault(); });
   canvas.addEventListener('pointerdown', (e) => {
     const action = actionFor(e);
+    // Keep the angles small after many turns (same offset for current and target).
+    const k = Math.round(targetPitch / (2 * Math.PI));
+    if (k) { pitch -= 2 * Math.PI * k; targetPitch -= 2 * Math.PI * k; }
     dragging = { x: e.clientX, y: e.clientY, yaw: targetYaw, pitch: targetPitch, dist: targetDist, panX: targetPanX, panY: targetPanY, moved: false, action, button: e.button };
     canvas.setPointerCapture(e.pointerId);
     canvas.style.cursor = action === 'pan' ? 'move' : action === 'zoom' ? 'ns-resize' : 'grabbing';
@@ -295,7 +307,7 @@ export function createGlobeRenderer(canvas, onPickSite, options = {}) {
     }
     if (dragging.action === 'spin') {
       targetYaw = dragging.yaw - dx * 0.006;
-      targetPitch = clamp(dragging.pitch + dy * 0.006, -1.53, 1.53);
+      targetPitch = dragging.pitch + dy * 0.006;
     } else if (dragging.action === 'pan') {
       const k = (distance * 0.9) / Math.max(200, canvas.clientHeight);
       targetPanX = clamp(dragging.panX - dx * k, -2, 2);
@@ -338,8 +350,45 @@ export function createGlobeRenderer(canvas, onPickSite, options = {}) {
     new ResizeObserver(() => renderGlobe()).observe(canvas);
   }
 
+  const pickLatLon = (clientX, clientY) => {
+    if (!three) return null;
+    const rect = canvas.getBoundingClientRect();
+    const mouse = new three.T.Vector2(((clientX - rect.left) / rect.width) * 2 - 1, -((clientY - rect.top) / rect.height) * 2 + 1);
+    const raycaster = new three.T.Raycaster();
+    raycaster.setFromCamera(mouse, three.camera);
+    const hits = raycaster.intersectObject(three.moonMesh);
+    if (!hits.length) return null;
+    const pt = hits[0].point.clone().normalize();
+    return { lat: Math.asin(clamp(pt.y, -1, 1)) * RAD, lon: Math.atan2(pt.x, pt.z) * RAD };
+  };
+
   return {
     render: renderGlobe,
+    /** Lat/lon under a screen point, or null off the Moon. */
+    latLonAt: pickLatLon,
+    /** Drape an equirectangular canvas (lon -180..180, lat +90 at top) over the Moon; null removes it. */
+    setOverlay(canvasEl, opacity = 0.85) {
+      if (!three) return;
+      const { T } = three;
+      if (three.overlay) {
+        three.scene.remove(three.overlay);
+        three.overlay.material.map?.dispose();
+        three.overlay.material.dispose();
+        three.overlay = null;
+      }
+      if (canvasEl) {
+        const tex = new T.CanvasTexture(canvasEl);
+        if ('colorSpace' in tex) tex.colorSpace = T.SRGBColorSpace;
+        tex.anisotropy = three.renderer.capabilities.getMaxAnisotropy?.() || 1;
+        const mat = new T.MeshBasicMaterial({ map: tex, transparent: true, opacity, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -4 });
+        three.overlayGeo ||= new T.SphereGeometry(1.0009, 256, 128);
+        three.overlay = new T.Mesh(three.overlayGeo, mat);
+        three.overlay.rotation.y = -Math.PI / 2;
+        three.overlay.renderOrder = 2;
+        three.scene.add(three.overlay);
+      }
+      renderGlobe();
+    },
     setSite(site) {
       selectedSite = site;
       renderGlobe();
@@ -357,22 +406,25 @@ export function createGlobeRenderer(canvas, onPickSite, options = {}) {
     },
     flyToSite(site) {
       if (!site) return;
-      targetCenter.fill(0); targetUp[0] = 0; targetUp[1] = 1; targetUp[2] = 0;
+      targetCenter.fill(0); targetUp[0] = 0; targetUp[1] = 1; targetUp[2] = 0; freeUp = true;
       targetPanX = 0; targetPanY = 0;
       selectedSite = site;
       targetYaw = site.lon * DEG;
       targetPitch = clamp(site.lat * DEG, -1.52, 1.52);
+      { const k = Math.round((pitch - targetPitch) / (2 * Math.PI)); pitch -= 2 * Math.PI * k; }
+      while (targetYaw - yaw > Math.PI) targetYaw -= 2 * Math.PI;
+      while (targetYaw - yaw < -Math.PI) targetYaw += 2 * Math.PI;
       targetDist = site.lat < -75 ? 1.85 : 2.5;
       renderGlobe();
     },
     southPole() {
-      targetCenter.fill(0); targetUp[0] = 0; targetUp[1] = 1; targetUp[2] = 0;
+      targetCenter.fill(0); targetUp[0] = 0; targetUp[1] = 1; targetUp[2] = 0; freeUp = true;
       targetPanX = 0; targetPanY = 0;
       targetYaw = 0; targetPitch = -1.48; targetDist = 2.05;
       renderGlobe();
     },
     overview() {
-      targetCenter.fill(0); targetUp[0] = 0; targetUp[1] = 1; targetUp[2] = 0;
+      targetCenter.fill(0); targetUp[0] = 0; targetUp[1] = 1; targetUp[2] = 0; freeUp = true;
       targetPanX = 0; targetPanY = 0;
       targetYaw = 0.2; targetPitch = -0.35; targetDist = 3.2;
       renderGlobe();
@@ -382,7 +434,7 @@ export function createGlobeRenderer(canvas, onPickSite, options = {}) {
       // Look at the midpoint, from a side view perpendicular to the Earth-Moon line.
       const e = [earthDir[1], earthDir[2], earthDir[0]];
       for (let k = 0; k < 3; k++) targetCenter[k] = e[k] * EARTH_DIST * 0.5;
-      targetUp[0] = 0; targetUp[1] = 1; targetUp[2] = 0;
+      targetUp[0] = 0; targetUp[1] = 1; targetUp[2] = 0; freeUp = true;
       let side = [-e[2], 0, e[0]];
       const n = Math.hypot(...side) || 1;
       side = side.map((v) => v / n);
@@ -403,6 +455,7 @@ export function createGlobeRenderer(canvas, onPickSite, options = {}) {
       let c = v.map((x, k) => -x + 0.42 * up[k]); // camera sits behind the site and a little above
       const cn = Math.hypot(...c);
       c = c.map((x) => x / cn);
+      freeUp = false;
       for (let k = 0; k < 3; k++) { targetCenter[k] = p[k] + v[k] * 0.1; targetUp[k] = up[k]; }
       targetPanX = 0; targetPanY = 0;
       targetPitch = Math.asin(clamp(c[1], -1, 1));
@@ -435,12 +488,12 @@ export function createGlobeRenderer(canvas, onPickSite, options = {}) {
       renderGlobe();
     },
     reset() {
-      targetCenter.fill(0); targetUp[0] = 0; targetUp[1] = 1; targetUp[2] = 0;
+      targetCenter.fill(0); targetUp[0] = 0; targetUp[1] = 1; targetUp[2] = 0; freeUp = true;
       targetYaw = -0.45; targetPitch = -1.15; targetDist = 3.1; targetPanX = 0; targetPanY = 0;
       renderGlobe();
     },
     view(name) {
-      targetCenter.fill(0); targetUp[0] = 0; targetUp[1] = 1; targetUp[2] = 0;
+      targetCenter.fill(0); targetUp[0] = 0; targetUp[1] = 1; targetUp[2] = 0; freeUp = true;
       targetPanX = 0; targetPanY = 0;
       const v = { front: [0, 0, 3], back: [Math.PI, 0, 3], left: [-Math.PI / 2, 0, 3], right: [Math.PI / 2, 0, 3], top: [0, 1.53, 3], bottom: [0, -1.53, 3] }[name];
       if (v) [targetYaw, targetPitch, targetDist] = v;
