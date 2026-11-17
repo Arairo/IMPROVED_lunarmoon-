@@ -10,6 +10,7 @@ import { createGlobeRenderer } from './scene/globeRenderer.js';
 import { createPolarMapRenderer, ramp } from './ui/polarMap.js';
 import { drawTimeline } from './ui/timeline.js';
 import { loadGlobalDem, setGlobalDem } from './core/globalDem.js';
+import { loadTerrain, setSharedTerrain } from './core/horizon.js';
 import { renderAssessmentPanel } from './ui/assessment.js';
 import { addScenario, renderCompareTable, exportCompareCsv } from './ui/compare.js';
 import { createTour, openGlossary, showToast } from './ui/modals.js';
@@ -693,11 +694,14 @@ function boot() {
   selectSite(shared?.site || app.sites[0], true);
   // Whole-Moon LOLA terrain for points outside the polar grids (custom pins,
   // nudges): loaded quietly after first paint; re-checks the current custom site.
-  setTimeout(() => loadGlobalDem(`${import.meta.env.BASE_URL}data`).then((g) => {
-    if (!g) return;
-    setGlobalDem(g);
+  setTimeout(async () => {
+    const base = `${import.meta.env.BASE_URL}data`;
+    const [polar, g] = await Promise.all([loadTerrain(base).catch(() => null), loadGlobalDem(base)]);
+    if (g) setGlobalDem(g);
+    if (polar) { polar.global = g; setSharedTerrain(polar); }
     if (String(app.site?.id || '').startsWith('custom')) selectSite(app.site, false);
-  }), 1500);
+    window.dispatchEvent(new Event('lsp-terrain'));
+  }, 1200);
 }
 
 if (document.readyState === 'loading') {

@@ -11,6 +11,7 @@ import { play } from './sound.js';
 import { createCalendar } from './calendar.js';
 import { icon } from './icons.js';
 import { addScenario } from '../ui/compare.js';
+import { groundSlope } from '../core/horizon.js';
 
 const DAY = 86400000;
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
@@ -151,10 +152,19 @@ export function mountFlow({ app, setTime, switchMode, getBestSpots, actions }) {
   trayGo.addEventListener('click', () => { if (app.scenarios.length >= 2) { app.cmpView = 'result'; switchMode('compare'); } });
 
   // 5 · Report
-  slot(4).innerHTML = '<div class="f-report" data-report></div><div class="f-row f-wrap"><button type="button" class="f-primary" data-r="print">Print / save as PDF</button><button type="button" data-r="link">Copy link</button><button type="button" data-r="terrain">Terrain 3D ↗</button><button type="button" data-r="lumi">Ask Lumi</button></div>';
+  slot(4).innerHTML = '<div class="f-report" data-report></div><div class="f-row f-wrap"><button type="button" class="f-primary" data-r="print">Print / save as PDF</button><button type="button" data-r="json">Download JSON</button><button type="button" data-r="link">Copy link</button><button type="button" data-r="terrain">Terrain 3D ↗</button><button type="button" data-r="lumi">Ask Lumi</button></div>';
   const s5 = slot(4);
   s5.querySelector('[data-r="print"]').addEventListener('click', () => printReport());
   s5.querySelector('[data-r="link"]').addEventListener('click', () => actions.copyLink());
+  s5.querySelector('[data-r="json"]').addEventListener('click', () => {
+    const blob = new Blob([JSON.stringify(decisionSummary(), null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `lunar-plan-${(app.site.short || app.site.name).replace(/[^a-z0-9]+/gi, '-').toLowerCase()}-${new Date(app.windowStartMs).toISOString().slice(0, 10)}.json`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+    play('go');
+  });
   s5.querySelector('[data-r="terrain"]').addEventListener('click', () => actions.terrain());
   s5.querySelector('[data-r="lumi"]').addEventListener('click', () => actions.lumi());
 
@@ -231,7 +241,14 @@ export function mountFlow({ app, setTime, switchMode, getBestSpots, actions }) {
     el.innerHTML = `<div class="f-overall ${v.overall}">${LIGHT[v.overall][0]}<small>at touchdown, ${when(app.windowStartMs)}</small></div>
       ${line('power', 'Power', `${sunTxt} Sunlight ${pct(s.litFraction)} of the window, longest night ${fmtHours(s.longestDarkH)}.`)}
       ${line('earth', 'Earth contact', `${earthTxt} Earth in view ${pct(s.earthCentreFraction)}, direct link ${pct(s.dteFraction)}.`)}
+      ${slopeLine()}
       <p class="f-note">Traffic lights use our own rules of thumb, not a NASA standard.</p>`;
+  }
+  function slopeLine() {
+    const sl = groundSlope(app.site.lat, app.site.lon);
+    if (!sl || sl.cell > 1000) return '';
+    const word = sl.slopeDeg < 5 ? 'gentle' : sl.slopeDeg < 10 ? 'moderate' : sl.slopeDeg < 15 ? 'steep' : 'very steep';
+    return `<div class="f-v ${sl.slopeDeg < 10 ? 'green' : sl.slopeDeg < 15 ? 'amber' : 'red'}"><span class="f-light">∠</span><div><b>Ground slope: ${sl.slopeDeg.toFixed(1)}° (${word})</b><small>Averaged over about ${Math.round(sl.baselineM)} m of NASA LOLA terrain. Boulders and small craters are smaller than that, so check high-resolution images before committing.</small></div></div>`;
   }
   function reportHtml() {
     const v = verdictNow();
@@ -251,10 +268,36 @@ export function mountFlow({ app, setTime, switchMode, getBestSpots, actions }) {
         <tr><td>Longest night</td><td>${fmtHours(s.longestDarkH)}${s.longestDarkOpenEnded ? '+' : ''}</td></tr>
         <tr><td>Average solar power</td><td>${Math.round(s.avgPowerW)} W</td></tr>
         <tr><td>Battery needed</td><td>${s.batteryKWh.toFixed(1)} kWh${s.batteryOpenEnded ? '+' : ''}</td></tr>
+        ${(() => { const sl = groundSlope(app.site.lat, app.site.lon); return sl && sl.cell <= 1000 ? `<tr><td>Ground slope (over ~${Math.round(sl.baselineM)} m)</td><td>${sl.slopeDeg.toFixed(1)}°</td></tr>` : ''; })()}
+        ${(() => { const d = app.lastDispersion; return d && d.siteId === app.site.id && d.start === app.windowStartMs ? `<tr><td>Landing anywhere within ${d.radiusM >= 1000 ? `${d.radiusM / 1000} km` : `${d.radiusM} m`}: worst / typical</td><td>${pct(d.min)} / ${pct(d.p50)}</td></tr>` : ''; })()}
       </table>
       ${range ? `<p class="f-note">${esc(range)} (how much the answer changes within one terrain cell).</p>` : ''}
       ${spots ? `<p class="f-meta">Best spots for the 30 days from touchdown:</p><ul>${spots}</ul>` : ''}
       <p class="f-note">Lunar Site Planner · NASA LOLA terrain · ephemeris checked against NASA JPL Horizons · verdicts use our own rules of thumb.</p>`;
+  }
+  /** Machine-readable decision summary: the same numbers as the report, plus inputs and provenance. */
+  function decisionSummary() {
+    const v = verdictNow();
+    const s = app.scan?.stats || {};
+    const ws = windowStats(app.site, app.windowStartMs, app.config, app.windowDays, app.windowDays > 60 ? 2 * 3600000 : 3600000);
+    const sl = groundSlope(app.site.lat, app.site.lon);
+    const d = app.lastDispersion && app.lastDispersion.siteId === app.site.id && app.lastDispersion.start === app.windowStartMs ? app.lastDispersion : null;
+    const r2 = (x) => (x == null ? null : Math.round(x * 1000) / 1000);
+    return {
+      tool: 'Lunar Site Planner', generatedUtc: new Date().toISOString(), link: location.href,
+      site: { name: app.site.name, latDeg: r2(app.site.lat), lonDeg: r2(app.site.lon), terrain: app.ctx?.horizon?.source || null },
+      touchdownUtc: new Date(app.windowStartMs).toISOString(), windowDays: app.windowDays,
+      verdictAtTouchdown: v ? { overall: LIGHT[v.overall][0], power: LIGHT[v.power][0], earthContact: LIGHT[v.earth][0], rules: 'Lunar Site Planner rules of thumb, not a NASA standard' } : null,
+      window: {
+        sunlightFraction: r2(s.litFraction), earthInViewFraction: r2(s.earthCentreFraction), sunAndEarthTogetherFraction: r2(ws.both),
+        directToEarthFraction: r2(s.dteFraction), longestNightHours: r2(s.longestDarkH), longestNightCutByWindow: !!s.longestDarkOpenEnded,
+        averageSolarPowerW: r2(s.avgPowerW), batteryNeededKWh: r2(s.batteryKWh),
+      },
+      groundSlope: sl && sl.cell <= 1000 ? { degrees: r2(sl.slopeDeg), baselineM: Math.round(sl.baselineM) } : null,
+      landingDispersion: d ? { radiusM: d.radiusM, samples: d.points.length, sunAndEarthTogether: { worst: r2(d.min), p10: r2(d.p10), median: r2(d.p50), best: r2(d.max) } } : null,
+      spacecraft: app.config,
+      provenance: { terrain: 'NASA LRO LOLA (240 m / 1 km south-polar grids, LDEM_16 elsewhere)', ephemeris: 'astronomy-engine with the IAU lunar rotation model, checked against NASA JPL Horizons' },
+    };
   }
   function printReport() {
     const w = window.open('', '_blank');
@@ -290,6 +333,7 @@ export function mountFlow({ app, setTime, switchMode, getBestSpots, actions }) {
   }
   let reportKey = '';
   window.addEventListener('lsp-range', () => { if (current === 4) refresh(); });
+  window.addEventListener('lsp-terrain', () => { keys.verdict = null; if (current === 2) renderVerdict(); });
 
   go(0, { quiet: true });
   return { refresh, go, print: () => printReport(), renderBest: () => { if (current === 0) renderBest(); } };

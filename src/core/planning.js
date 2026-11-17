@@ -162,3 +162,56 @@ export function launchDateSeries(site, fromMs, days, config, { windowDays = 30, 
   }
   return out;
 }
+
+/** Points spread evenly over a disc (sunflower pattern), centre first. */
+export function discPoints(site, radiusM, n) {
+  const pts = [{ lat: site.lat, lon: site.lon, dist: 0, az: 0 }];
+  const golden = Math.PI * (3 - Math.sqrt(5));
+  for (let i = 1; i < n; i++) {
+    const r = radiusM * Math.sqrt(i / (n - 1));
+    const az = ((i * golden * 180) / Math.PI) % 360;
+    const p = destination(site.lat, site.lon, az, r);
+    pts.push({ lat: p.lat, lon: p.lon, dist: r, az });
+  }
+  return pts;
+}
+
+const quantile = (sorted, q) => {
+  const i = (sorted.length - 1) * q;
+  const lo = Math.floor(i), hi = Math.ceil(i);
+  return sorted[lo] + (sorted[hi] - sorted[lo]) * (i - lo);
+};
+
+/**
+ * Landing dispersion: a lander aimed at `site` touches down somewhere within
+ * `radiusM`. Samples that disc and reports, over the next `days`, the spread of
+ * time with the Sun and Earth up together: worst (min), P10, median, best, and
+ * the worst spot. Each point gets its own terrain horizon.
+ */
+export function landingDispersion(site, startMs, config, { radiusM = 500, n = 25, days = 30 } = {}) {
+  const pts = discPoints(site, radiusM, n).map((p, i) => ({ ...p, ...windowStats({ ...site, id: `${site.id}-d${i}`, lat: p.lat, lon: p.lon }, startMs, config, days, 2 * HOUR) }));
+  const both = pts.map((p) => p.both).sort((a, b) => a - b);
+  const worst = pts.reduce((w, p) => (p.both < w.both ? p : w), pts[0]);
+  return { radiusM, points: pts, centre: pts[0], min: both[0], p10: quantile(both, 0.1), p50: quantile(both, 0.5), max: both[both.length - 1], worst };
+}
+
+/**
+ * A safer place to aim: of the centre and six points half a radius away, the
+ * aim whose own landing disc has the best worst-case (P10) time with the Sun
+ * and Earth together. Returns { aim: {lat, lon, dist, az}, dispersion } for
+ * the best candidate (the centre if nothing beats it).
+ */
+export function robustAim(site, startMs, config, { radiusM = 500, n = 13, days = 30 } = {}) {
+  const cands = [{ lat: site.lat, lon: site.lon, dist: 0, az: 0 }];
+  for (let k = 0; k < 6; k++) {
+    const az = k * 60;
+    const p = destination(site.lat, site.lon, az, radiusM / 2);
+    cands.push({ lat: p.lat, lon: p.lon, dist: radiusM / 2, az });
+  }
+  let best = null;
+  cands.forEach((c, i) => {
+    const d = landingDispersion({ ...site, id: `${site.id}-a${i}`, lat: c.lat, lon: c.lon }, startMs, config, { radiusM, n, days });
+    if (!best || d.p10 > best.dispersion.p10 + 1e-9) best = { aim: c, dispersion: d };
+  });
+  return best;
+}

@@ -33,12 +33,9 @@ export function openAbout({ onVideo } = {}) {
           <li><b>NASA Deep Space Network</b> station locations for the radio-link check.</li>
           <li>Sun and Earth positions from the astronomy-engine library with the IAU lunar rotation model, <b>checked against NASA JPL Horizons</b>.</li>
         </ul></section>
-        <section><h3>How we know it’s right</h3>
-          <table class="a-table"><tr><th>Check against JPL Horizons</th><th>Difference</th></tr>
-            <tr><td>Sun at the Apollo 11 landing, 1969</td><td>0.007°</td></tr>
-            <tr><td>Earth from the Shackleton connecting ridge, 2027</td><td>0.0001°</td></tr>
-            <tr><td>Sun at Reiner Gamma, 2027</td><td>0.002°</td></tr></table></section>
-        <section><h3>Honest limits</h3><p>Real terrain covers the south pole (south of about 75°S); elsewhere the horizon is a smooth Moon. The terrain grid is 240 m, so a single ridge-top value can shift by several percentage points. The GO / GO WITH CARE / NO GO lights use our own rules of thumb, not a NASA standard. In the 3D view, Earth is drawn closer and smaller than it really is.</p></section>
+        <section><h3>How we know it’s right</h3><p>48 checks against NASA JPL Horizons (worst difference about 0.005°), the Sun’s height at five Apollo landings within 0.35° of the mission reports, and sunsets at Blue Ghost, Chandrayaan-3 and SLIM on the days their teams reported. Every site’s skyline comes from NASA LOLA terrain.</p>
+          <button type="button" class="xp-chip" data-v="trust">See the full checks, data and sources</button></section>
+        <section><h3>Honest limits</h3><p>Real NASA LOLA terrain covers every site: 240 m near the south pole and about 1.9 km elsewhere. The polar grid is 240 m, so a single ridge-top value can shift by several percentage points. The GO / GO WITH CARE / NO GO lights use our own rules of thumb, not a NASA standard. In the 3D view, Earth is drawn closer and smaller than it really is.</p></section>
         ${team}
         <section><h3>How we used AI</h3><p>We used Claude Code (Anthropic) as a coding assistant to write and test the app’s code and text. The narration voice in our tutorial videos is AI-generated (Kokoro text-to-speech), the promo’s music was synthesised in code, and the videos carry an “SI-assisted” label. The science engine was checked against NASA JPL Horizons, and every data source is listed above. No NASA logos or branding are used.</p></section>
         <div class="a-links"><a class="xp-chip" href="${REPO}" target="_blank" rel="noopener">Source code on GitHub</a>
@@ -54,6 +51,7 @@ export function openAbout({ onVideo } = {}) {
     if (e.target === box || e.target.closest('[data-v="close"]')) close();
     if (e.target.closest('[data-v="video"]')) { close(); onVideo?.(); }
     if (e.target.closest('[data-v="promo"]')) { close(); onVideo?.('promo'); }
+    if (e.target.closest('[data-v="trust"]')) { close(); import('./trust.js').then((m) => import('../data/sites.js').then((d) => m.openTrust({ sites: d.default }))); }
   });
   setTimeout(() => box.querySelector('[data-v="close"]')?.focus(), 50);
 }

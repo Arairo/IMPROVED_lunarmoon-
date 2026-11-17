@@ -36,7 +36,7 @@ export function renderSkeleton(root, site, ctx) {
       </div>
     </div>
     ${site.note ? `<div class="note">${escapeHtml(site.note)}</div>` : ''}
-    ${ctx.horizon.terrain ? '' : `<div class="note">No bundled LOLA grid covers this point (the grids span the south pole to 75°S), so the horizon is the bare lunar sphere. Away from the poles the Sun climbs high, so local terrain matters much less.</div>`}
+    ${ctx.horizon.terrain ? '' : `<div class="note">The global LOLA terrain is still loading (or not built yet), so this horizon is the bare lunar sphere for now.</div>`}
     <div class="verdicts">
       <div class="verdict" id="vPower"></div>
       <div class="verdict" id="vComms"></div>

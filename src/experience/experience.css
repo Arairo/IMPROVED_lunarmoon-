@@ -1184,3 +1184,22 @@ html[data-theme='dark'] .cc-badge.amber { color: var(--xp-warn); }
   .cr-who { display: flex; align-items: center; gap: 6px; font: 600 13px var(--xp-font); color: var(--xp-ink-2); min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .cr-who i { flex: none; width: 8px; height: 8px; border-radius: 2px; background: var(--c); }
 }
+.xp-plan .p-disp { margin: 8px 0 4px; padding: 10px 12px; border-radius: 12px; background: var(--xp-surface-solid); font: 400 12.5px/1.5 var(--xp-font); color: var(--xp-ink-2); }
+.xp-plan .p-disp b { color: var(--xp-ink); }
+.xp-plan .p-aim { margin-left: 4px; height: 26px !important; background: var(--xp-accent) !important; color: #fff !important; border-color: transparent !important; }
+
+/* Accuracy, data and sources */
+.xp-trust .t-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; margin-bottom: 18px; }
+.xp-trust .t-stats div { padding: 14px; border-radius: 16px; background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.1); }
+.xp-trust .t-stats b { display: block; font: 800 28px var(--xp-font); letter-spacing: -0.02em; color: #30d158; }
+.xp-trust .t-stats span { font: 500 12.5px/1.4 var(--xp-font); color: #c7c9d1; }
+.xp-trust .a-table small { color: #8e93a0; }
+.xp-trust .a-table + .a-table { margin-top: 12px; }
+.xp-trust .t-scroll { max-height: 280px; overflow: auto; border-radius: 12px; }
+.xp-trust details summary { cursor: pointer; color: #2997ff; font: 600 13px var(--xp-font); margin: 6px 0; }
+.xp-trust .t-src { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+.xp-trust .t-src li { display: grid; gap: 2px; padding: 10px 12px; border-radius: 12px; background: rgba(255, 255, 255, 0.05); }
+.xp-trust .t-src a { color: #2997ff; font: 700 13.5px var(--xp-font); text-decoration: none; }
+.xp-trust .t-src span { font: 400 12.5px/1.4 var(--xp-font); color: #c7c9d1; }
+.xp-trust .t-src small { font: 500 11px var(--xp-font); color: #8e93a0; }
+@media (min-width: 760px) { .xp-trust .t-stats { grid-template-columns: repeat(4, minmax(0, 1fr)); } }

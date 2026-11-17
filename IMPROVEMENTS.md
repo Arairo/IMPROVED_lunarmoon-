@@ -56,6 +56,12 @@ Status: ✅ done · 🔨 in progress · ⏳ planned
 | 3.20 | QA pass (independent agent, 17 confirmed bugs fixed): phone Moon tab, tour placement after scrolling and on phones, Find searching from the touchdown date, scenario window restored from Compare, Compare shortcuts, baseline guide state, unique scenario colours, What-if reset after outside changes, keyboard focus in menus/Lumi/choosers, Report window lengths, ±250 m line, and many Lumi phrasings | QA report | ✅ |
 | 3.21 | Compare, question first: “Two places”, “Launch dates” (one chart of every launch day for a year) or “My plan vs the best spot”; head-to-head result with a one-sentence verdict, reasons, only the measures that differ, full details folded away; an “Add this plan to compare” tray in the planner | Apple model compare, Versus.com, Google Flights date graph, shop compare trays | ✅ |
 | 3.22 | Same status words everywhere (GO / GO WITH CARE / NO GO), labelled “Now” or “at touchdown”; Terrain 3D opens with your window; long-stay searches explain the ~2-week limit | QA polish | ✅ |
+| 3.23 | Real NASA LOLA terrain at every site (LDEM_16 global map, ~1.9 km) instead of a smooth Moon for 16 of 29 sites; built by a one-click GitHub workflow | Darksight (global LOLA), Lunar Horizon Wheel | ✅ |
+| 3.24 | Nudges, custom pins and the ±250 m range use the real 240 m polar grid (they used a 5 km grid before) | QA / Darksight nudge | ✅ |
+| 3.25 | Landing area check: touchdown spread within 100 m–2 km (worst / typical / best) and a safer aim point | Penumbra (robust aim), PolarWindow (landing dispersion) | ✅ |
+| 3.26 | Ground slope at the site (over ~0.5 km) in Check and the report | Darksight, PolarWindow | ✅ |
+| 3.27 | Checked against what flew: Sun height at five Apollo landings (within 0.35°) and sunsets at Blue Ghost, Chandrayaan-3 and SLIM, as automated tests and an in-app panel; JPL Horizons scoreboard (48 checks, worst 0.005°) published in the app | PolarWindow (flown validation), Penumbra (scoreboard) | ✅ |
+| 3.28 | “Accuracy, data and sources” panel and JSON decision-summary export | Darksight (307 sources), Penumbra (provenance, JSON export) | ✅ |
 
 ## 4. Reach
 

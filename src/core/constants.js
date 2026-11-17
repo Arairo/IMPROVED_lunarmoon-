@@ -57,7 +57,7 @@ export const GLOSSARY = {
   },
   lola: {
     title: 'NASA LRO LOLA Altimetry',
-    text: 'Laser altimeter elevation grids from NASA’s Lunar Reconnaissance Orbiter (240 m resolution within 180 km of the south pole and 1 km resolution out to 75°S).',
+    text: 'Laser altimeter elevation grids from NASA’s Lunar Reconnaissance Orbiter (240 m resolution within 180 km of the south pole, 1 km out to 75°S, and the global LDEM_16 map at about 1.9 km everywhere else).',
   },
   margin: {
     title: 'Link Margin (dB)',

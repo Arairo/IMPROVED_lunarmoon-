@@ -343,7 +343,7 @@ export function createWalk({ app, sites, onOpenPro, onExit, onToggleTheme, onTog
               <tr><td>Earth from the Shackleton ridge, 2027</td><td>0.0001°</td></tr>
               <tr><td>Sun at Reiner Gamma, 2027</td><td>0.002°</td></tr>
             </table>
-            <p style="margin-top:10px">The skyline is NASA LOLA terrain (south of about 75°S; a smooth Moon elsewhere). ${RULES_NOTE}</p>`)}</div>`;
+            <p style="margin-top:10px">The skyline is real NASA LOLA terrain: 240 m detail near the south pole, about 1.9 km elsewhere. ${RULES_NOTE}</p>`)}</div>`;
       },
       cta: 'What if the launch slips?',
     },

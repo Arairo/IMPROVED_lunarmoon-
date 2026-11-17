@@ -1,13 +1,14 @@
 name: Validate against JPL Horizons
 
 # Run from the Actions tab ("Run workflow"). Compares the engine's Sun and
-# Earth positions with NASA JPL Horizons and posts the scoreboard to the run
-# summary, plus a downloadable JSON file.
+# Earth positions with NASA JPL Horizons, posts the scoreboard to the run
+# summary, and saves it to public/data/validation.json so the app's
+# "How we know it's right" panel shows the latest result. Deploy runs after it.
 on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   validate:
@@ -25,3 +26,11 @@ jobs:
         with:
           name: horizons-validation
           path: validation.json
+      - name: Save the scoreboard into the app
+        run: |
+          cp validation.json public/data/validation.json
+          git config user.name "github-actions[bot]"
+          git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+          git add public/data/validation.json
+          git commit -m "Update JPL Horizons validation scoreboard" || echo "Nothing changed"
+          git push

@@ -73,3 +73,17 @@ test('launchDateSeries matches windowStats for a launch day', async () => {
   assert.ok(Math.abs(series[k].both - ws.both) < 0.01, `${series[k].both} vs ${ws.both}`);
   assert.ok(series.every((d) => d.both >= 0 && d.both <= d.sun + 1e-9 && d.both <= d.earth + 1e-9));
 });
+
+test('landing dispersion and robust aim are consistent', async () => {
+  const { landingDispersion, robustAim, discPoints } = await import('../src/core/planning.js');
+  const { surfaceDistance } = await import('../src/core/geo.js');
+  const pts = discPoints(RIDGE, 500, 25);
+  assert.equal(pts.length, 25);
+  assert.ok(pts.every((p) => surfaceDistance(RIDGE.lat, RIDGE.lon, p.lat, p.lon) <= 501));
+  const d = landingDispersion(RIDGE, T0, DEFAULT_CONFIG, { radiusM: 500, n: 9 });
+  assert.ok(d.min <= d.p10 && d.p10 <= d.p50 && d.p50 <= d.max);
+  assert.ok(d.worst.both === d.min);
+  const r = robustAim(RIDGE, T0, DEFAULT_CONFIG, { radiusM: 500, n: 7 });
+  const centre = landingDispersion(RIDGE, T0, DEFAULT_CONFIG, { radiusM: 500, n: 7 });
+  assert.ok(r.dispersion.p10 >= centre.p10 - 1e-9, 'the robust aim is never worse than aiming at the centre');
+});

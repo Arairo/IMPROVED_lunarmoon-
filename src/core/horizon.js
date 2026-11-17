@@ -102,9 +102,10 @@ export async function loadTerrain(baseUrl, names = ['sp_fine', 'sp_coarse']) {
  * horizon-forming terrain), groundHeight, mastHeight, source }.
  * Without terrain data the profile is the bare-sphere dip for the mast height.
  */
-export function computeHorizon(terrain, lat, lon, { mastHeight = 2, maxDistM = 300000 } = {}) {
-  const elevations = new Float32Array(AZ_COUNT);
-  const distances = new Float32Array(AZ_COUNT);
+export function computeHorizon(terrain, lat, lon, { mastHeight = 2, maxDistM = 300000, azStepDeg = AZ_STEP_DEG } = {}) {
+  const count = Math.round(360 / azStepDeg);
+  const elevations = new Float32Array(count);
+  const distances = new Float32Array(count);
   const ground = terrain?.heightAt(lat, lon) ?? null;
   const dip = sphereHorizonDip(mastHeight);
   if (!ground) {
@@ -114,8 +115,8 @@ export function computeHorizon(terrain, lat, lon, { mastHeight = 2, maxDistM = 3
   }
   const r0 = MOON_RADIUS_M + ground.height + mastHeight;
   const minStep = ground.cell / 2;
-  for (let i = 0; i < AZ_COUNT; i++) {
-    const az = i * AZ_STEP_DEG;
+  for (let i = 0; i < count; i++) {
+    const az = i * azStepDeg;
     let best = -90;
     let bestDist = 0;
     let s = Math.max(60, ground.cell * 0.75);
@@ -146,6 +147,27 @@ export function computeHorizon(terrain, lat, lon, { mastHeight = 2, maxDistM = 3
   };
 }
 
+// Full-resolution terrain shared by the app once loaded (240 m / 1 km polar
+// grids + whole-Moon LOLA). Until then, unlisted points use the compact grid.
+let sharedTerrain = null;
+export const setSharedTerrain = (t) => { sharedTerrain = t; };
+export const getSharedTerrain = () => sharedTerrain;
+
+/**
+ * Average ground slope (deg) at a site from central differences over one cell
+ * either side, with the baseline used; null where there is no terrain.
+ */
+export function groundSlope(lat, lon, terrain = sharedTerrain) {
+  const c = terrain?.heightAt(lat, lon);
+  if (!c) return null;
+  const d = Math.max(c.cell, 100);
+  const h = (az) => terrain.heightAt(destination(lat, lon, az, d).lat, destination(lat, lon, az, d).lon)?.height;
+  const n = h(0), sth = h(180), e = h(90), w = h(270);
+  if ([n, sth, e, w].some((v) => v == null)) return null;
+  const gx = (e - w) / (2 * d), gy = (n - sth) / (2 * d);
+  return { slopeDeg: Math.atan(Math.hypot(gx, gy)) * RAD, baselineM: 2 * d, cell: c.cell };
+}
+
 /** Compute or look up compact 180-sample site horizon with mast adjustment. */
 export function computeSiteHorizon(site, mastHeight = 2) {
   const pre = precomputedHorizons[site.id];
@@ -159,6 +181,10 @@ export function computeSiteHorizon(site, mastHeight = 2) {
       source: pre.source,
       terrain: pre.terrain,
     };
+  }
+  if (!pre && sharedTerrain && sharedTerrain.heightAt(site.lat, site.lon)) {
+    const full = computeHorizon(sharedTerrain, site.lat, site.lon, { mastHeight, azStepDeg: 2 });
+    return { el180: Array.from(full.elevations), groundHeight: Math.round(full.groundHeight), mastHeight, source: full.source, terrain: true };
   }
   const h0 = sampleDemHeight(site.lat, site.lon);
   const dip = sphereHorizonDip(mastHeight);

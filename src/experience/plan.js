@@ -2,7 +2,8 @@
 // shift the date a day, or find the next good landing window, with a plain
 // sentence saying what changed, an Undo, and an honest ±250 m range.
 
-import { nudgeSite, windowStats, describeChange, findNextWindow, positionRange } from '../core/planning.js';
+import { nudgeSite, windowStats, describeChange, findNextWindow, positionRange, landingDispersion, robustAim } from '../core/planning.js';
+import { destination } from '../core/geo.js';
 import { showToast } from '../ui/modals.js';
 
 const DAY = 86400000;
@@ -42,6 +43,13 @@ export function mountPlanCard({ app, selectSite, setTime, getGlobe }) {
         <option value="1">1</option><option value="3" selected>3</option><option value="7">7</option><option value="14">14</option>
       </select> d</label>
     </div>
+    <div class="p-row"><span class="p-lbl">Land</span>
+      <label class="p-km">within <select data-rad aria-label="How far from the aim point the lander might touch down">
+        <option value="100">100 m</option><option value="250">250 m</option><option value="500" selected>500 m</option><option value="1000">1 km</option><option value="2000">2 km</option>
+      </select></label>
+      <button type="button" class="p-find" data-disp>Check the landing area</button>
+    </div>
+    <div class="p-disp" data-disp-out hidden aria-live="polite"></div>
     <p class="p-out" aria-live="polite"></p>
     <div class="p-foot"><button type="button" class="p-undo" data-undo hidden>Undo</button><span class="p-range" title="How much the next 30 days change within one terrain cell (about 250 m) of this point"></span></div>`;
   host.prepend(card);
@@ -100,6 +108,49 @@ export function mountPlanCard({ app, selectSite, setTime, getGlobe }) {
     markMine();
   });
 
+  // Landing dispersion: landers don't touch down exactly on target (IM-1 ended
+  // up about 1.5 km away), so plan for the whole area, and suggest a safer aim.
+  const COMPASS = ['north', 'north-east', 'east', 'south-east', 'south', 'south-west', 'west', 'north-west'];
+  const dirWord = (az) => COMPASS[Math.round((((az % 360) + 360) % 360) / 45) % 8];
+  const distWord = (m) => (m >= 1000 ? `${(m / 1000).toFixed(m % 1000 ? 1 : 0)} km` : `${Math.round(m / 10) * 10} m`);
+  const dispOut = card.querySelector('[data-disp-out]');
+  let dispKey = '';
+  card.querySelector('[data-disp]').addEventListener('click', () => {
+    const radiusM = Number(card.querySelector('[data-rad]').value);
+    const site = app.site, start = app.windowStartMs;
+    dispKey = `${site.lat},${site.lon}|${start}|${radiusM}`;
+    const myKey = dispKey;
+    dispOut.hidden = false;
+    dispOut.innerHTML = `<span class="w-spinner" style="width:12px;height:12px;border-width:2px"></span> Checking 25 touchdown points within ${distWord(radiusM)}…`;
+    setTimeout(() => {
+      const d = landingDispersion(site, start, app.config, { radiusM, n: 25 });
+      if (myKey !== dispKey) return;
+      app.lastDispersion = { ...d, siteId: site.id, start };
+      const range = Math.round(d.min * 100) === Math.round(d.max * 100) ? pct(d.min) : `${pct(d.min)}–${pct(d.max)}`;
+      const worstTxt = d.worst.dist > 0 ? ` The weakest spot is ${distWord(d.worst.dist)} ${dirWord(d.worst.az)} of the aim.` : '';
+      dispOut.innerHTML = `<b>If the lander touches down anywhere within ${distWord(radiusM)}:</b> power and radio together ${range} of the next 30 days (worst case ${pct(d.min)}, typical ${pct(d.p50)}).${worstTxt}<span data-aim> <span class="w-spinner" style="width:10px;height:10px;border-width:2px"></span> Looking for a safer place to aim…</span>`;
+      setTimeout(() => {
+        const r = robustAim(site, start, app.config, { radiusM, n: 13 });
+        if (myKey !== dispKey) return;
+        const aimEl = dispOut.querySelector('[data-aim]');
+        const gain = Math.round(r.dispersion.p10 * 100) - Math.round(d.p10 * 100);
+        if (r.aim.dist === 0 || gain < 2) { aimEl.textContent = ' Aiming here is already the safest choice nearby.'; return; }
+        aimEl.innerHTML = ` <br><b>Safer aim:</b> ${distWord(r.aim.dist)} ${dirWord(r.aim.az)} keeps at least ${pct(r.dispersion.p10)} even after a bad landing (${pct(d.p10)} aiming here). <button type="button" class="p-aim">Aim there</button>`;
+        aimEl.querySelector('.p-aim').addEventListener('click', () => {
+          const before = stats();
+          remember();
+          const p = destination(site.lat, site.lon, r.aim.az, r.aim.dist);
+          const moved = { ...nudgeSite(site, 'N', 0.001), lat: p.lat, lon: p.lon, id: `custom-${p.lat.toFixed(4)},${p.lon.toFixed(4)}`, name: `${site.baseName || site.short || site.name}, safer aim`, short: `${site.baseName || site.short || site.name} · safer aim` };
+          getGlobe()?.setGhost?.(site.lat, site.lon);
+          selectSite(moved, false);
+          say(describeChange(`Moved the aim ${distWord(r.aim.dist)} ${dirWord(r.aim.az)}`, before, stats()));
+          markMine();
+          dispOut.hidden = true;
+        });
+      }, 30);
+    }, 30);
+  });
+
   undoBtn.addEventListener('click', () => {
     const prev = history.pop();
     if (!prev) return;
@@ -117,6 +168,7 @@ export function mountPlanCard({ app, selectSite, setTime, getGlobe }) {
   let key = '', timer = 0;
   function refresh() {
     if (!app.site) return;
+    if (dispKey && dispKey !== `${app.site.lat},${app.site.lon}|${app.windowStartMs}|${card.querySelector('[data-rad]').value}`) { dispKey = ''; dispOut.hidden = true; }
     if (mine && (mine.site !== app.site || mine.start !== app.windowStartMs)) {
       mine = null;
       history.length = 0;
@@ -139,5 +191,6 @@ export function mountPlanCard({ app, selectSite, setTime, getGlobe }) {
       }
     }, 400);
   }
+  window.addEventListener('lsp-terrain', () => { key = ''; refresh(); });
   return { refresh };
 }
