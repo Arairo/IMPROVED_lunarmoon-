@@ -172,7 +172,7 @@ function attachHover(canvas) {
     const ms = t.scan.startMs + ((px - t.pad.l) / t.pw) * (t.scan.endMs - t.scan.startMs);
     const i = Math.max(0, Math.min(s.times.length - 1, Math.round((ms - t.scan.startMs) / t.scan.stepMs)));
     const sun = s.sunFrac[i] > 0 ? `${Math.round(s.sunFrac[i] * 100)}% of the Sun up` : 'Sun down';
-    const earth = s.visible[i] ? `Earth ${s.earthClear[i] >= 0 ? '+' : ''}${s.earthClear[i].toFixed(1)}° above terrain` : 'Earth hidden';
+    const earth = !s.visible[i] ? 'Earth hidden' : s.earthClear[i] >= 0 ? `Earth ${s.earthClear[i].toFixed(1)}° above terrain` : 'Earth partly hidden behind terrain';
     tip.innerHTML = `<b>${fmt.format(s.times[i])} UTC</b><span><i class="sun"></i>${sun}</span><span><i class="pow"></i>${Math.round(s.watts[i])} W ${s.watts[i] >= t.loadW ? '(enough)' : '(below load)'}</span><span><i class="earth"></i>${earth}</span><span><i class="dte"></i>Direct link ${s.dte[i] ? 'available' : 'not available'}</span>`;
     tip.hidden = false;
     const tw = tip.offsetWidth, th = tip.offsetHeight;

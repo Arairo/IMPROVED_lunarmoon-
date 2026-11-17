@@ -105,16 +105,17 @@ const TERMS = [
   ['margin', /margin|link budget/],
   ['pole', /south pole|why the pole|why polar/],
   ['shadow', /shadow|cold trap|crater floor|ice/],
-  ['battery', /battery|night/],
+  ['battery', /battery|survive the night|power at night/],
   ['earthhidden', /(earth|sun) (is )?(hidden|blocked|not visible|gone)|can'?t see (the )?(earth|sun)/],
   ['earthfixed', /earth (barely|hardly) move|why (does|is) earth|earth stay/],
   ['farside', /far side|farside|dark side/],
-  ['lunarday', /lunar day|how long (is )?(a )?(day|night)|lunar month|synodic|how long does the sun/],
+  ['lunarday', /lunar (day|night)|how long (is )?(a )?(day|night)|lunar month|synodic|how long does the sun/],
   ['distance', /how far|distance (to|from)|light.?second|delay|latency/],
   ['clps', /\bclps\b|commercial lunar payload/],
   ['artemis', /artemis/],
   ['regolith', /regolith|moon dust|lunar dust|soil/],
   ['temperature', /temperature|how (cold|hot)|freez/],
+  ['modes', /beginner mode|professional mode|pro mode|what('s| is) beginner|what('s| is) professional/],
   ['gravity', /gravity|weigh/],
   ['crater', /what('s| is) a crater|craters? (form|made)/],
   ['water', /\bwater\b/],
@@ -141,7 +142,7 @@ const SMALL = [
 export function parseRequest(text, sites, nowMs = Date.now()) {
   const t = norm(text);
   const found = findSites(text, sites);
-  const minDays = (() => { const m = /(\d+)\s*\+?\s*(?:full\s+)?days?/.exec(t); return m ? Math.min(30, Math.max(1, +m[1])) : null; })();
+  const minDays = (() => { const m = /\bfor\s+(?:at least\s+)?(\d+)\s*\+?\s*(?:full\s+)?days?\b(?!\s*(?:later|earlier|from now|ahead))/.exec(t); return m && !/\bnext \d+ days\b/.test(t) ? Math.min(14, Math.max(1, +m[1])) : null; })();
 
   if (/^\s*(help|what can you do|what can i (ask|do)|commands|options|\?)\s*[!?.]*\s*$/.test(t)) return { type: 'help' };
   if (/^\s*(hi+|hello+|hey+|yo|hiya|howdy|good (morning|afternoon|evening)|greetings|salam|assalamualaikum)( there| lumi| everyone| all)?\s*[!.]*\s*$/.test(t)) return { type: 'small', kind: 'hello' };
@@ -155,36 +156,44 @@ export function parseRequest(text, sites, nowMs = Date.now()) {
   if (/\b(open|show)\b.*\bcalendar\b|\bpick a (day|date)\b/.test(t)) return { type: 'step', step: 1 };
   if (/\b(dark|light) (mode|theme)\b/.test(t)) return { type: 'theme', value: /\bdark\b/.test(t) ? 'dark' : 'light' };
   if (/\b(start|show|give me) (the |a )?(tour|walkthrough)\b|\bguide me\b|\bshow me around\b|\bhow (do|does) (i|this|it) work\b/.test(t)) return { type: 'tour' };
-  if (/\bbeginner\b/.test(t)) return { type: 'beginner' };
+  if (/\bbeginner\b/.test(t) && !/\b(what|why|how|explain|difference)\b/.test(t)) return { type: 'beginner' };
   if (/\b(terrain 3d|3d terrain|cesium)\b/.test(t)) return { type: 'terrain' };
   if (/^\s*(play|start playing|animate)\b/.test(t)) return { type: 'play', on: true };
   if (/^\s*(pause|stop)\b/.test(t)) return { type: 'play', on: false };
-  if (/\b(earthrise|look at (the )?earth|see (the )?earth|where is earth)\b/.test(t) && !/\bwhy\b/.test(t)) return { type: 'look', body: 'earth' };
-  if (/\b(look at|see|where is) the sun\b/.test(t) && !/\bwhy\b/.test(t)) return { type: 'look', body: 'sun' };
+  if (/\b(earthrise|look at (the )?earth|see (the )?earth|where is earth)\b/.test(t) && !/\b(why|when)\b/.test(t)) return { type: 'look', body: 'earth', site: found[0] || null };
+  if (/\b(look at|see|where is) the sun\b/.test(t) && !/\b(why|when)\b/.test(t)) return { type: 'look', body: 'sun', site: found[0] || null };
 
+  const nudge2 = /\b(move|shift|nudge|go)\s+(north|south|east|west)\s*(?:by\s*)?(\d+(?:\.\d+)?)\s*(?:km|kilomet(?:er|re)s?)\b/.exec(t);
+  if (nudge2) return { type: 'nudge', km: Math.min(50, +nudge2[3]), dir: DIRS[nudge2[2]] };
   const nudge = /\b(move|shift|nudge|what if|go)\b[^0-9]*(\d+(?:\.\d+)?)\s*(?:km|kilomet(?:er|re)s?)\s*(?:to the\s+)?(north|south|east|west|n|s|e|w)\b/.exec(t);
   if (nudge) return { type: 'nudge', km: Math.min(50, +nudge[2]), dir: DIRS[nudge[3]] };
-  const shiftDays = /\b(\d+)\s*days?\s*(later|earlier|after|before)\b/.exec(t);
-  if (shiftDays && !/\b(best|next|find)\b/.test(t)) return { type: 'shiftDays', days: +shiftDays[1] * (/later|after/.test(shiftDays[2]) ? 1 : -1) };
+  const UNIT = { day: 1, week: 7, month: 29.530588 };
+  const shiftDays = /\b(\d+|a|one)\s*(day|week|month)s?\s*(later|earlier|after|before)\b/.exec(t);
+  if (shiftDays && !/\b(best|next|find|compare|vs|versus)\b/.test(t)) {
+    const n = /^\d+$/.test(shiftDays[1]) ? +shiftDays[1] : 1;
+    return { type: 'shiftDays', days: n * UNIT[shiftDays[2]] * (/later|after/.test(shiftDays[3]) ? 1 : -1) };
+  }
+  const slip = /\bslip\s*(?:by\s*)?(\d+|a|one)?\s*(day|week|month)s?\b/.exec(t);
+  if (slip && !found.length && !/\bcompare\b/.test(t)) return { type: 'shiftDays', days: (/^\d+$/.test(slip[1] || '') ? +slip[1] : 1) * UNIT[slip[2]] };
 
-  if (/\bcompare\b|\bvs\.?\b|\bversus\b/.test(t)) {
+  if (/\bcompare\b|\bvs\.?\b|\bversus\b/.test(t) || (found.length >= 2 && /\bbetter than\b|\bwhich is better\b|\bor\b/.test(t))) {
     const slip = /\b(\d+)\s*months?\s*(later|slip)?|\bslip/.test(t) && !found.length;
     return { type: 'compare', sites: found, slip };
   }
 
-  if (/\b(best|next|good|earliest|first)\b[^.?!]*\b(date|time|window|day|moment|landing)s?\b|\bwhen (should|can|could|do) (i|we) land\b|\bfind (a|the next)? ?(good )?(date|window)\b/.test(t)) {
-    return { type: 'bestDate', site: found[0] || null, from: findDate(text, nowMs), minDays: minDays || 3 };
-  }
   if (/\bbest (\w+ )?(spot|site|place|location|landing site)s?\b|\bwhere (should|can|could) (i|we) land\b|\bsunniest\b/.test(t)) {
     return { type: 'bestSpot', flown: /\b(flown|landed|previous|already|past)\b/.test(t) };
+  }
+  if (/\b(best|next|good|earliest|first)\b[^.?!]*\b(date|time|window|day|moment|landing)s?\b|\bwhen (should|can|could|do) (i|we) land\b|\bfind (a|the next)? ?(good )?(date|window)\b/.test(t)) {
+    return { type: 'bestDate', site: found[0] || null, from: findDate(text, nowMs), minDays: minDays || 3 };
   }
 
   if (/\b(why|what is|what's|whats|what are|what does|explain|meaning|mean|define|how come|how (far|cold|hot|long|much|big|strong)|is there|are there|tell me about|does|do you know)\b/.test(t)) {
     const term = TERMS.find(([, re]) => re.test(t));
     if (term) return { type: 'explain', term: term[0] };
   }
-  if (/\bsunset\b|\bsun (go )?down\b|\bwhen does the sun set\b/.test(t)) return { type: 'when', what: 'sunset' };
-  if (/\bearthset\b|\bearth (go )?down\b|\blose (contact|earth|signal)\b/.test(t)) return { type: 'when', what: 'earthset' };
+  if (/\bsun ?(sets?|rises?)\b|\bsun (goes |go )?(down|up)\b|\bsun ?(set|rise)\b/.test(t)) return { type: 'when', what: 'sunset' };
+  if (/\bearth ?(sets?|rises?)\b|\bearth (goes |go |comes )?(down|up|back)\b|\blose (contact|earth|signal)\b/.test(t)) return { type: 'when', what: 'earthset' };
   if (/\b(power|solar|sunlight|sun up|energy|watts?)\b/.test(t) && !found.length) return { type: 'status', focus: 'power' };
   if (/\b(earth|radio|comms?|communicat\w*|talk|contact|signal|link)\b/.test(t) && !found.length) return { type: 'status', focus: 'earth' };
   if (/\b(go|no.?go|status|verdict|safe|ok|okay|good)\b\??/.test(t) && !found.length && !findCoords(text)) return { type: 'status', focus: 'all' };

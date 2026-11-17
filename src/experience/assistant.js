@@ -44,6 +44,7 @@ const EXPLAIN = {
   calendar: 'In step 2 each day is coloured for the site you picked, landing at the same time of day. <b>Green</b>: the Sun and Earth stay up together for at least 3 days. <b>Amber</b>: the Sun is up but Earth is hidden or sets sooner. <b>Red</b>: the Sun is down, so no solar power. The little bar shows how long Sun and Earth stay up together (full = 14+ days).',
   solarpower: '',
   earthrise: 'An Earthrise is Earth coming up over the Moon’s horizon, made famous by the Apollo 8 photo in 1968. From the surface Earth barely moves in the sky, so you only see it rise from places near the edge of the near side, where the Moon’s wobble lifts it over the hills. Say “show me the Earthrise” and I’ll point the camera at it.',
+  modes: '<b>Beginner</b> is a calm walk with Lumi: one question at a time, with the “why” whenever you want it. <b>Professional</b> is the full planner: five steps from site to report, the 3D Moon, the timeline, What if and the Compare Lab. You can switch any time under Settings.',
   farside: 'The far side is the half of the Moon that always faces away from Earth (it is not darker: it gets just as much sunlight). Earth never rises there, so landers like Chang’e 4 need a relay satellite to talk home.',
 };
 
@@ -97,9 +98,9 @@ export function createAssistant(api) {
     if (!n) return 'I’m still calculating, give me a second.';
     const power = n.powerStatus === 'go' ? `<b>Power: yes.</b> The Sun is ${n.sun.clearance.toFixed(1)}° above the skyline and the panels make about ${Math.round(n.sun.watts)} W.`
       : n.powerStatus === 'marginal' ? `<b>Power: partly.</b> Only part of the Sun clears the terrain; the panels make about ${Math.round(n.sun.watts)} W, below the lander’s load.`
-      : `<b>Power: no.</b> The Sun is behind the terrain (${n.sun.clearance.toFixed(1)}° below the skyline), so the lander runs on its battery.`;
+      : `<b>Power: no.</b> The Sun is ${Math.abs(n.sun.clearance).toFixed(1)}° below the skyline, so the lander runs on its battery.`;
     const earth = n.earth.los ? `<b>Earth: in view</b>, ${n.earth.clearance.toFixed(1)}° above the skyline${n.commsStatus === 'go' ? ', and the radio link to the Deep Space Network closes.' : n.commsStatus === 'marginal' ? ', but only just: the link is marginal.' : ', but no Deep Space Network antenna can see the Moon right now.'}`
-      : `<b>Earth: hidden</b> behind the terrain (${n.earth.clearance.toFixed(1)}°), so no direct radio link.`;
+      : `<b>Earth: hidden</b>, ${Math.abs(n.earth.clearance).toFixed(1)}° below the skyline, so no direct radio link.`;
     const head = `At <b>${siteName()}</b>, ${when(app.timeMs)}:`;
     if (focus === 'power') return `${head}<br>${power}`;
     if (focus === 'earth') return `${head}<br>${earth}`;
@@ -134,9 +135,9 @@ export function createAssistant(api) {
       case 'bestDate': {
         const site = r.site || app.site;
         if (r.site && r.site.id !== app.site.id) selectSite(r.site, true);
-        const from = r.from ?? app.timeMs;
+        const from = r.from ?? app.windowStartMs;
         const res = findNextWindow(site, from, app.config, { minDays: r.minDays });
-        if (!res) return add('lumi', `I searched 12 months from ${day(from)} at <b>${esc(site.name)}</b>: there is no time with the Sun and Earth up together for ${r.minDays} day${r.minDays > 1 ? 's' : ''}. ${site.lat < -85 ? 'Crater floors near the pole can stay dark for years; try a ridge.' : 'Try a shorter stay or another site.'}`,
+        if (!res) return add('lumi', `I searched 12 months from ${day(from)} at <b>${esc(site.name)}</b>: there is no time with the Sun and Earth up together for ${r.minDays} day${r.minDays > 1 ? 's' : ''}. ${site.lat < -85 && site.group !== 'computed' ? 'Crater floors near the pole can stay dark for years; try a ridge.' : 'Try a shorter stay or another site.'}`,
           [{ label: 'Show me the best spot instead', run: () => ask('best spot') }]);
         const lasts = ((res.endMs - res.ms) / DAY).toFixed(1);
         return add('lumi', `Earliest landing at <b>${esc(site.name)}</b> from ${day(from)} with the Sun and Earth up together for ${r.minDays}+ days:<br><b>${when(res.ms)}</b>, lasting ${lasts} days.`,
@@ -171,8 +172,10 @@ export function createAssistant(api) {
       }
       case 'shiftDays': {
         const before = windowStats(app.site, app.windowStartMs, app.config);
-        setTime(app.windowStartMs + r.days * DAY, true);
-        return add('lumi', describeChange(`${Math.abs(r.days)} day${Math.abs(r.days) > 1 ? 's' : ''} ${r.days > 0 ? 'later' : 'earlier'}`, before, windowStats(app.site, app.windowStartMs, app.config)));
+        setTime(Math.round(app.windowStartMs + r.days * DAY), true);
+        const ad = Math.abs(r.days);
+        const span = ad >= 29 ? `${Math.round(ad / 29.530588)} lunar month${Math.round(ad / 29.530588) > 1 ? 's' : ''}` : ad % 7 === 0 && ad >= 7 ? `${ad / 7} week${ad > 7 ? 's' : ''}` : `${Math.round(ad)} day${ad > 1 ? 's' : ''}`;
+        return add('lumi', describeChange(`${span} ${r.days > 0 ? 'later' : 'earlier'}`, before, windowStats(app.site, app.windowStartMs, app.config)));
       }
       case 'when': {
         const s = app.scan?.series;
@@ -206,8 +209,10 @@ export function createAssistant(api) {
         return add('lumi', 'Your one-page report is opening in a new tab, ready to print or save as PDF. (If nothing opened, allow pop-ups for this site.)');
       case 'copyLink':
         actions.copyLink?.();
-        return add('lumi', 'Copied a link to this exact site, date and settings. Anyone who opens it sees the same scenario.');
+        return add('lumi', 'Copied a link to this site and date. Anyone who opens it lands on the same scenario (with their own spacecraft settings).');
       case 'look':
+        if (r.site && r.site.id !== app.site.id) selectSite(r.site, true);
+        if (r.body === 'earth' && app.scan?.stats.earthCentreFraction === 0) return add('lumi', `From <b>${siteName()}</b> you can’t see Earth at all: it’s on the far side, so Earth never rises there. Landers there talk home through a relay satellite.`, [{ label: 'Why?', run: () => ask('what is the far side') }]);
         actions.look?.(r.body);
         return add('lumi', r.body === 'earth' ? 'Standing behind the lander, looking towards Earth across the real horizon. The dotted lines link the best spots to Earth.' : 'Standing behind the lander, looking towards the Sun across the real horizon.');
       case 'theme': actions.theme?.(r.value); return add('lumi', `Switched to ${r.value} mode.`);
@@ -283,6 +288,10 @@ export function createAssistant(api) {
     play('pop');
     setTimeout(() => input.focus(), 120);
   }
-  function close() { panel.classList.remove('is-open'); }
+  function close() {
+    const hadFocus = panel.contains(document.activeElement);
+    panel.classList.remove('is-open');
+    if (hadFocus) { input.blur(); document.querySelector('[data-x="lumi"]')?.focus({ preventScroll: true }); }
+  }
   return { open, close, ask, toggle: () => (panel.classList.contains('is-open') ? close() : open()) };
 }

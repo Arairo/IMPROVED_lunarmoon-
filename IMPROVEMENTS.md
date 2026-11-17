@@ -53,6 +53,7 @@ Status: ✅ done · 🔨 in progress · ⏳ planned
 | 3.17 | One line-icon set instead of emoji; layered soft shadows; Lumi with a contact shadow; rounded timeline bars with a smooth power curve and hover read-outs | UX audit | ✅ |
 | 3.18 | Intro: lunar sunrise (starfield and Milky Way, daylight sweeping across the Moon, gold flare, Earth rising) instead of rainbow ribbons | User request | ✅ |
 | 3.19 | Compare Lab rebuilt: winner banner, ranked scenario cards with big deltas against a chosen baseline, a bar chart per measure, a day-by-day strip view, quick-start presets, “add any site”, and its own guided tour | User request | ✅ |
+| 3.20 | QA pass (independent agent, 17 confirmed bugs fixed): phone Moon tab, tour placement after scrolling and on phones, Find searching from the touchdown date, scenario window restored from Compare, Compare shortcuts, baseline guide state, unique scenario colours, What-if reset after outside changes, keyboard focus in menus/Lumi/choosers, Report window lengths, ±250 m line, and many Lumi phrasings | QA report | ✅ |
 
 ## 4. Reach
 

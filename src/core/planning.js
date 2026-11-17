@@ -62,7 +62,7 @@ export function describeChange(what, before, after) {
   const de = delta(before.earth, after.earth);
   if (ds) parts.push(`sunlight ${pct(before.sun)} → ${pct(after.sun)} (${signed(ds)})`);
   if (de) parts.push(`Earth in view ${pct(before.earth)} → ${pct(after.earth)} (${signed(de)})`);
-  if (Math.abs(after.darkH - before.darkH) >= 1) parts.push(`longest night ${hours(before.darkH)} → ${hours(after.darkH)}`);
+  if (hours(before.darkH) !== hours(after.darkH)) parts.push(`longest night ${hours(before.darkH)} → ${hours(after.darkH)}`);
   if (!parts.length) return `${what}: almost nothing changes over the next 30 days.`;
   return `${what}: ${parts.join(', ')}.`;
 }

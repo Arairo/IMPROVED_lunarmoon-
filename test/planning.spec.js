@@ -57,3 +57,9 @@ test('landingCalendar rates each day with the same rules as findNextWindow', asy
   assert.ok(cal.some((d) => d.rating === 'green'));
   assert.ok(landingCalendar(FLOOR, T0, 35, DEFAULT_CONFIG).every((d) => d.rating === 'red'));
 });
+
+test('describeChange never reports a change that rounds to nothing', () => {
+  const a = { sun: 0.5, earth: 0.5, darkH: 348.2 };
+  const b = { sun: 0.5, earth: 0.5, darkH: 349.0 };
+  assert.match(describeChange('Slip', a, b), /almost nothing changes/);
+});

@@ -163,7 +163,12 @@ export function renderCompareLab(container, app, onOpen, addScenario) {
 
   if (!list.some((s) => s.id === app.compareBaseId)) app.compareBaseId = list[0].id;
   const base = list.find((s) => s.id === app.compareBaseId);
-  list.forEach((s, i) => { if (!s.color) s.color = SC_COLORS[i % SC_COLORS.length]; });
+  // Every scenario keeps a colour no other scenario is using (8 named, then golden-angle hues).
+  const colorAt = (k) => (k < SC_COLORS.length ? SC_COLORS[k] : `hsl(${Math.round((k * 137.508) % 360)} 78% 62%)`);
+  list.forEach((s) => {
+    if (s.color && list.some((o) => o !== s && o.color === s.color && list.indexOf(o) < list.indexOf(s))) s.color = null;
+    if (!s.color) { let k = 0; while (list.some((o) => o.color === colorAt(k))) k++; s.color = colorAt(k); }
+  });
   const ranked = [...list].sort((a, b) => scoreOf(b) - scoreOf(a));
   const rank = new Map(ranked.map((s, i) => [s.id, i + 1]));
   const best = ranked[0];
@@ -245,13 +250,14 @@ export function renderCompareLab(container, app, onOpen, addScenario) {
     <div class="cl-cards">${cards}</div>
     <h3 class="cl-h"><span class="h-n">3</span>Side by side <small>Longer bar = more. ${icon('trophy', 12)} marks the best for each measure.</small></h3>
     <div class="cl-bars">${bars}</div>
-    <h3 class="cl-h"><span class="h-n">3</span>Day by day <small>Each row starts at its touchdown, so you can see when each plan has power and radio.</small></h3>
+    <h3 class="cl-h">Day by day <small>Each row starts at its touchdown, so you can see when each plan has power and radio.</small></h3>
     ${daysView}
     ${table}`;
 
   container.querySelectorAll('[data-open]').forEach((b) => b.addEventListener('click', () => { const sc = list.find((x) => x.id === b.dataset.open); if (sc) onOpen(sc); }));
   container.querySelectorAll('[data-base]').forEach((b) => b.addEventListener('click', () => { app.compareBaseId = b.dataset.base; app.compareBaseChosen = true; rerender(); }));
   container.querySelectorAll('[data-rm]').forEach((b) => b.addEventListener('click', () => {
+    if (b.dataset.rm === app.compareBaseId) app.compareBaseChosen = false;
     app.scenarios = app.scenarios.filter((x) => x.id !== b.dataset.rm);
     setCount();
     rerender();

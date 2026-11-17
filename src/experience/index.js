@@ -285,6 +285,7 @@ export function initExperience(api) {
    */
   function chooser({ key, title, sub, mood = 'wow', opts, onPick }) {
     if (document.querySelector('.xp-welcome')) return;
+    const returnTo = document.activeElement;
     const box = document.createElement('div');
     box.className = 'xp-welcome';
     box.setAttribute('role', 'dialog');
@@ -307,6 +308,7 @@ export function initExperience(api) {
       box.classList.remove('is-on');
       setTimeout(() => box.remove(), 300);
       removeEventListener('keydown', onKey);
+      if (returnTo && returnTo !== document.body && document.contains(returnTo)) returnTo.focus({ preventScroll: true });
       onPick(choice);
     };
     const onKey = (e) => { if (e.key === 'Escape') close('skip'); };

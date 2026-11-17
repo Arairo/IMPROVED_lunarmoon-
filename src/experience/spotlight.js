@@ -129,8 +129,8 @@ export function createSpotlight(steps, { label = 'Guide', onDone } = {}) {
       const el = step.target ? (typeof step.target === 'function' ? step.target() : document.querySelector(step.target)) : null;
       const r = el?.getBoundingClientRect();
       if (r && (r.top < 0 || r.bottom > innerHeight)) {
-        el.scrollIntoView({ block: r.height > innerHeight * 0.7 ? 'start' : 'center', behavior: 'smooth' });
-        setTimeout(() => show(i), 450);
+        el.scrollIntoView({ block: r.height > innerHeight * 0.7 ? 'start' : 'center', behavior: 'instant' });
+        requestAnimationFrame(() => show(i));
       } else show(i);
     }, typeof wait === 'number' ? wait : 0);
   }
@@ -142,6 +142,7 @@ export function createSpotlight(steps, { label = 'Guide', onDone } = {}) {
     // While the tour runs, the page behind it cannot take focus or clicks.
     document.querySelectorAll('body > header, body > main, body > section, body > nav').forEach((el) => { el.inert = true; });
     addEventListener('resize', onResize);
+    addEventListener('scroll', onResize, true);
     addEventListener('keydown', onKey);
     go(from);
   }
@@ -151,6 +152,7 @@ export function createSpotlight(steps, { label = 'Guide', onDone } = {}) {
     root?.classList.remove('is-on');
     document.querySelectorAll('body > header, body > main, body > section, body > nav').forEach((el) => { el.inert = false; });
     removeEventListener('resize', onResize);
+    removeEventListener('scroll', onResize, true);
     removeEventListener('keydown', onKey);
     if (done && onDone) onDone();
   }

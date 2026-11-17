@@ -55,6 +55,10 @@ export function mountPlanCard({ app, selectSite, setTime, getGlobe }) {
   const stats = () => windowStats(app.site, app.windowStartMs, app.config);
   const say = (text) => { out.textContent = text; out.classList.remove('is-new'); void out.offsetWidth; out.classList.add('is-new'); };
   const remember = () => { history.push(snapshot()); undoBtn.hidden = false; };
+  // What the card itself last set; if the site or date changes elsewhere, the
+  // sentence and Undo no longer apply, so they are cleared.
+  let mine = null;
+  const markMine = () => { mine = { site: app.site, start: app.windowStartMs }; };
 
   card.querySelectorAll('[data-dir]').forEach((b) => b.addEventListener('click', () => {
     const km = Number(card.querySelector('[data-km]').value);
@@ -66,6 +70,7 @@ export function mountPlanCard({ app, selectSite, setTime, getGlobe }) {
     selectSite(moved, false);
     const word = { N: 'north', S: 'south', E: 'east', W: 'west' }[b.dataset.dir];
     say(describeChange(`Moved ${km} km ${word}`, before, stats()));
+    markMine();
   }));
 
   card.querySelectorAll('[data-day]').forEach((b) => b.addEventListener('click', () => {
@@ -74,23 +79,25 @@ export function mountPlanCard({ app, selectSite, setTime, getGlobe }) {
     remember();
     setTime(app.windowStartMs + d * DAY, true);
     say(describeChange(d > 0 ? 'One day later' : 'One day earlier', before, stats()));
+    markMine();
   }));
 
   card.querySelector('[data-find]').addEventListener('click', () => {
     const minDays = Number(card.querySelector('[data-min]').value);
-    const res = findNextWindow(app.site, app.timeMs, app.config, { minDays });
+    const res = findNextWindow(app.site, app.windowStartMs, app.config, { minDays });
     if (!res) {
       say(`No landing time in the next 12 months has the Sun and Earth up together for ${minDays} day${minDays > 1 ? 's' : ''} here. Try another site or a shorter stay.`);
       return;
     }
     const lasts = ((res.endMs - res.ms) / DAY).toFixed(1);
-    if (res.ms - app.timeMs < 2 * 3600000) {
+    if (res.ms - app.windowStartMs < 2 * 3600000) {
       say(`Good news: right now already works. The Sun and Earth stay up together for ${lasts} days.`);
       return;
     }
     remember();
     setTime(res.ms, true);
     say(`Next good landing: ${fmtWhen(res.ms)}. The Sun and Earth stay up together for ${lasts} days.`);
+    markMine();
   });
 
   undoBtn.addEventListener('click', () => {
@@ -102,6 +109,7 @@ export function mountPlanCard({ app, selectSite, setTime, getGlobe }) {
     getGlobe()?.setGhost?.(null);
     undoBtn.hidden = history.length === 0;
     say('Undone.');
+    markMine();
     showToast('Back to the previous site and date');
   });
 
@@ -109,6 +117,13 @@ export function mountPlanCard({ app, selectSite, setTime, getGlobe }) {
   let key = '', timer = 0;
   function refresh() {
     if (!app.site) return;
+    if (mine && (mine.site !== app.site || mine.start !== app.windowStartMs)) {
+      mine = null;
+      history.length = 0;
+      undoBtn.hidden = true;
+      out.textContent = '';
+      getGlobe()?.setGhost?.(null);
+    }
     const k = `${app.site.lat},${app.site.lon}|${app.windowStartMs}|${JSON.stringify(app.config)}`;
     if (k === key) return;
     key = k;
@@ -118,6 +133,7 @@ export function mountPlanCard({ app, selectSite, setTime, getGlobe }) {
       try {
         const r = positionRange(app.site, app.windowStartMs, app.config);
         rangeEl.textContent = `Within ±250 m: sunlight ${span(r.sun)}, Earth ${span(r.earth)}`;
+        window.dispatchEvent(new Event('lsp-range')); // the report quotes this line
       } catch {
         rangeEl.textContent = '';
       }

@@ -219,6 +219,22 @@ export function setTime(ms, reanchor = false) {
   }
 }
 
+/** Open a Compare scenario in the planner with its own date AND window length. */
+function openScenario(sc) {
+  if (sc.windowDays && sc.windowDays !== app.windowDays) {
+    app.windowDays = sc.windowDays;
+    document.querySelectorAll('.win-btn').forEach((b) => {
+      b.className = Number(b.dataset.win) === sc.windowDays
+        ? 'win-btn px-2 py-0.5 text-[11px] font-semibold bg-slate-900 text-white'
+        : 'win-btn px-2 py-0.5 text-[11px] font-medium text-slate-600 hover:bg-slate-100';
+    });
+  }
+  app.windowStartMs = sc.startMs;
+  app.timeMs = sc.startMs;
+  selectSite(sc.site, true);
+  switchMode('explorer');
+}
+
 export function switchMode(mode) {
   app.mode = mode;
   document.getElementById('explorerView')?.classList.toggle('hidden', mode !== 'explorer');
@@ -235,12 +251,7 @@ export function switchMode(mode) {
   setBtn('modeCompareBtn', mode === 'compare');
 
   if (mode === 'compare') {
-    renderCompareTable(document.getElementById('compareTableContainer'), app, (sc) => {
-      app.windowStartMs = sc.startMs;
-      app.timeMs = sc.startMs;
-      selectSite(sc.site, true);
-      switchMode('explorer');
-    });
+    renderCompareTable(document.getElementById('compareTableContainer'), app, openScenario);
   } else {
     requestAnimationFrame(() => {
       globe?.render();
@@ -575,12 +586,7 @@ function boot() {
   document.getElementById('cmpAddCurrentBtn')?.addEventListener('click', () => {
     addScenario(app, app.site, app.windowStartMs, `${app.site.short || app.site.name}`);
     showToast('Added current site & window to Compare Lab');
-    renderCompareTable(document.getElementById('compareTableContainer'), app, (sc) => {
-      app.windowStartMs = sc.startMs;
-      app.timeMs = sc.startMs;
-      selectSite(sc.site, true);
-      switchMode('explorer');
-    });
+    renderCompareTable(document.getElementById('compareTableContainer'), app, openScenario);
   });
 
   document.getElementById('cmpSlipBtn')?.addEventListener('click', () => {
@@ -590,12 +596,7 @@ function boot() {
       addScenario(app, app.site, Math.round(base + k * SYNODIC_MONTH_DAYS * 86400000), `${app.site.short || app.site.name} · slip +${k} mo`);
     }
     showToast('Added baseline + 3 synodic month launch slips');
-    renderCompareTable(document.getElementById('compareTableContainer'), app, (sc) => {
-      app.windowStartMs = sc.startMs;
-      app.timeMs = sc.startMs;
-      selectSite(sc.site, true);
-      switchMode('explorer');
-    });
+    renderCompareTable(document.getElementById('compareTableContainer'), app, openScenario);
   });
 
   document.getElementById('cmpNearbyBtn')?.addEventListener('click', () => {
@@ -604,24 +605,16 @@ function boot() {
       if (s) addScenario(app, s, app.windowStartMs, `Alt: ${s.short || s.name}`);
     });
     showToast('Added top nearby LOLA sunlit terrain alternatives');
-    renderCompareTable(document.getElementById('compareTableContainer'), app, (sc) => {
-      app.windowStartMs = sc.startMs;
-      app.timeMs = sc.startMs;
-      selectSite(sc.site, true);
-      switchMode('explorer');
-    });
+    renderCompareTable(document.getElementById('compareTableContainer'), app, openScenario);
   });
 
   document.getElementById('cmpClearBtn')?.addEventListener('click', () => {
     app.scenarios = [];
+    app.compareBaseChosen = false;
+    app.compareBaseId = null;
     const countEl = document.getElementById('headerCompareCount');
     if (countEl) countEl.textContent = '0';
-    renderCompareTable(document.getElementById('compareTableContainer'), app, (sc) => {
-      app.windowStartMs = sc.startMs;
-      app.timeMs = sc.startMs;
-      selectSite(sc.site, true);
-      switchMode('explorer');
-    });
+    renderCompareTable(document.getElementById('compareTableContainer'), app, openScenario);
   });
 
   document.getElementById('cmpExportBtn')?.addEventListener('click', () => {
@@ -657,7 +650,7 @@ function boot() {
   window.addEventListener('keydown', (e) => {
     // Shortcuts belong to Professional mode only, and never steal keys from
     // form fields, buttons, links, open dialogs or the spotlight tour.
-    if (document.body.dataset.mode !== 'pro') return;
+    if (document.body.dataset.mode !== 'pro' || app.mode === 'compare') return;
     if (e.target.closest?.('input, textarea, select, button, a, summary, [role="button"], [contenteditable="true"]')) return;
     if (document.querySelector('#xp-spot.is-on, .xp-video, #settingsModal:not(.hidden), #glossaryModal:not(.hidden)')) return;
     if (e.code === 'Space') {

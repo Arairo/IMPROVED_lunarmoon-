@@ -26,10 +26,12 @@ export function createMenu(button, build) {
     }).join('');
     pop.querySelectorAll('button[data-i]').forEach((b) => b.addEventListener('click', () => {
       const it = items[Number(b.dataset.i)];
-      if (it.seg) { it.seg[Number(b.dataset.k)].run(); render(); play('tick'); return; }
+      // Re-rendering keeps the same control focused, so keyboard users stay put.
+      const refocus = () => { render(); pop.querySelector(`button[data-i="${b.dataset.i}"]${b.dataset.k ? `[data-k="${b.dataset.k}"]` : ''}`)?.focus({ preventScroll: true }); };
+      if (it.seg) { it.seg[Number(b.dataset.k)].run(); refocus(); play('tick'); return; }
       it.run();
       play('tick');
-      if (it.keepOpen) render(); else close();
+      if (it.keepOpen) refocus(); else close();
     }));
   }
   function place() {
@@ -68,5 +70,7 @@ export function createMenu(button, build) {
     }
   });
   window.addEventListener('resize', () => { if (!pop.hidden) place(); });
+  // Tabbing out of the menu closes it.
+  pop.addEventListener('focusout', (e) => { if (!pop.hidden && e.relatedTarget && !pop.contains(e.relatedTarget) && e.relatedTarget !== button) close(); });
   return api;
 }

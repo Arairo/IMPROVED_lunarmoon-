@@ -60,7 +60,7 @@ test('Ask Lumi answers status, explanations and app commands', () => {
   assert.deepEqual(ask('what is libration'), { type: 'explain', term: 'libration' });
   assert.equal(ask('why is Earth hidden?').term, 'earthhidden');
   assert.equal(ask('what is the DSN').term, 'dsn');
-  assert.deepEqual(ask('show me the earthrise'), { type: 'look', body: 'earth' });
+  assert.deepEqual(ask('show me the earthrise'), { type: 'look', body: 'earth', site: null });
   assert.deepEqual(ask('dark mode'), { type: 'theme', value: 'dark' });
   assert.equal(ask('start the tour').type, 'tour');
   assert.equal(ask('open terrain 3d').type, 'terrain');
@@ -87,4 +87,29 @@ test('Ask Lumi handles small talk, flow steps and more questions', () => {
   assert.equal(ask('is there water on the moon').term, 'water');
   assert.equal(ask('what does go with care mean').term, 'verdict');
   assert.equal(ask('will I have power').focus, 'power', 'status questions still work');
+});
+
+test('Ask Lumi understands sunset and Earthset however they are spelt', () => {
+  for (const q of ['when does earth set', 'when is earthset', 'when does Earth go down', 'when will we lose contact']) assert.deepEqual(ask(q), { type: 'when', what: 'earthset' }, q);
+  for (const q of ['when is sunset', 'when does the sun set', 'when does the sun go down']) assert.deepEqual(ask(q), { type: 'when', what: 'sunset' }, q);
+});
+
+test('Ask Lumi QA fixes: best site, explanations, nudges, slips, comparisons', () => {
+  assert.equal(ask("what's the best landing site?").type, 'bestSpot');
+  assert.equal(ask('best spot for the next 30 days').type, 'bestSpot');
+  assert.equal(ask('how cold is it at night').term, 'temperature');
+  assert.equal(ask('how long is a lunar night').term, 'lunarday');
+  assert.equal(ask('what is beginner mode?').term, 'modes');
+  assert.equal(ask('switch to beginner').type, 'beginner');
+  assert.deepEqual(ask('when is sunrise'), { type: 'when', what: 'sunset' });
+  assert.deepEqual(ask('move north 1 km'), { type: 'nudge', km: 1, dir: 'N' });
+  assert.equal(ask('1 week later').days, 7);
+  assert.ok(Math.abs(ask('slip 1 month').days - 29.530588) < 1e-6);
+  const c = ask('is the ridge better than shackleton?');
+  assert.equal(c.type, 'compare');
+  assert.deepEqual(c.sites.map((x) => x.id), ['ridge', 'shackleton']);
+  const l = ask("can I see Earth from Chang'e 4?");
+  assert.equal(l.type, 'look');
+  assert.equal(l.site.id, 'ce4');
+  assert.equal(ask('best date at the ridge in 2027 for 7 days').minDays, 7);
 });

@@ -63,9 +63,9 @@ export function mountFlow({ app, setTime, switchMode, getBestSpots, actions }) {
     <label class="f-field">Date and time (UTC)<input type="datetime-local" data-dt step="60"/></label>
     <div class="f-pills" data-quick style="margin-top:10px">
       <button type="button" data-slip="0">Mission date</button>
-      <button type="button" data-slip="1">+1 month</button>
-      <button type="button" data-slip="3">+3 months</button>
-      <button type="button" data-slip="6">+6 months</button>
+      <button type="button" data-slip="1">+1 lunar month</button>
+      <button type="button" data-slip="3">+3 lunar months</button>
+      <button type="button" data-slip="6">+6 lunar months</button>
     </div></details>
     <label class="f-field">How far ahead to look
       <span class="f-pills" data-win><button type="button" data-w="15">15 days</button><button type="button" data-w="30">1 lunar day</button><button type="button" data-w="90">3 months</button><button type="button" data-w="365">1 year</button></span>
@@ -96,10 +96,10 @@ export function mountFlow({ app, setTime, switchMode, getBestSpots, actions }) {
   s2.querySelector('[data-find]').addEventListener('click', () => {
     const minDays = Number(s2.querySelector('[data-min]').value);
     const out = s2.querySelector('[data-find-out]');
-    const res = findNextWindow(app.site, app.timeMs, app.config, { minDays });
+    const res = findNextWindow(app.site, app.windowStartMs, app.config, { minDays });
     if (!res) { out.textContent = `No time in the next 12 months has the Sun and Earth up together for ${minDays} days here. Try another site in step 1.`; return; }
     const lasts = ((res.endMs - res.ms) / DAY).toFixed(1);
-    if (res.ms - app.timeMs < 2 * 3600000) { out.textContent = `Good news: this date already works. The Sun and Earth stay up together for ${lasts} days.`; play('go'); return; }
+    if (res.ms - app.windowStartMs < 2 * 3600000) { out.textContent = `Good news: this date already works. The Sun and Earth stay up together for ${lasts} days.`; play('go'); return; }
     setTime(res.ms, true);
     cal.show(res.ms);
     out.textContent = `Found: ${when(res.ms)}. The Sun and Earth stay up together for ${lasts} days.`;
@@ -212,7 +212,7 @@ export function mountFlow({ app, setTime, switchMode, getBestSpots, actions }) {
     const v = verdictNow();
     const s = app.scan?.stats;
     if (!v || !s) return '<p>Calculating…</p>';
-    const ws = windowStats(app.site, app.windowStartMs, app.config);
+    const ws = windowStats(app.site, app.windowStartMs, app.config, app.windowDays, app.windowDays > 60 ? 2 * 3600000 : 3600000);
     const range = document.querySelector('.xp-plan .p-range')?.textContent || '';
     const spots = getBestSpots().map((sp) => `<li>${esc(sp.title)}: ${esc(sp.r.site.name)} (${pct(sp.r.ops)} with Sun and Earth together)</li>`).join('');
     return `<h3>${esc(app.site.name)}</h3>
@@ -221,14 +221,14 @@ export function mountFlow({ app, setTime, switchMode, getBestSpots, actions }) {
       <table class="f-table">
         <tr><td>Sunlight</td><td>${pct(s.litFraction)}</td></tr>
         <tr><td>Earth in view (centre above terrain)</td><td>${pct(s.earthCentreFraction)}</td></tr>
-        <tr><td>Sun and Earth together (next 30 days)</td><td>${pct(ws.both)}</td></tr>
+        <tr><td>Sun and Earth together</td><td>${pct(ws.both)}</td></tr>
         <tr><td>Direct-to-Earth link</td><td>${pct(s.dteFraction)}</td></tr>
         <tr><td>Longest night</td><td>${fmtHours(s.longestDarkH)}${s.longestDarkOpenEnded ? '+' : ''}</td></tr>
         <tr><td>Average solar power</td><td>${Math.round(s.avgPowerW)} W</td></tr>
         <tr><td>Battery needed</td><td>${s.batteryKWh.toFixed(1)} kWh${s.batteryOpenEnded ? '+' : ''}</td></tr>
       </table>
       ${range ? `<p class="f-note">${esc(range)} (how much the answer changes within one terrain cell).</p>` : ''}
-      ${spots ? `<p class="f-meta">Best spots for the same window:</p><ul>${spots}</ul>` : ''}
+      ${spots ? `<p class="f-meta">Best spots for the 30 days from touchdown:</p><ul>${spots}</ul>` : ''}
       <p class="f-note">Lunar Site Planner · NASA LOLA terrain · ephemeris checked against NASA JPL Horizons · verdicts use our own rules of thumb.</p>`;
   }
   function printReport() {
@@ -257,11 +257,13 @@ export function mountFlow({ app, setTime, switchMode, getBestSpots, actions }) {
     if (current === 1) { renderDate(); cal.refresh(); }
     if (current === 2) renderVerdict();
     if (current === 4) {
-      const k = `${app.site.lat},${app.site.lon}|${app.windowStartMs}|${app.windowDays}|${JSON.stringify(app.config)}|${getBestSpots().length}`;
+      const range = document.querySelector('.xp-plan .p-range')?.textContent || '';
+      const k = `${app.site.lat},${app.site.lon}|${app.windowStartMs}|${app.windowDays}|${JSON.stringify(app.config)}|${getBestSpots().length}|${range}`;
       if (force || k !== reportKey) { reportKey = k; slot(4).querySelector('[data-report]').innerHTML = reportHtml(); }
     }
   }
   let reportKey = '';
+  window.addEventListener('lsp-range', () => { if (current === 4) refresh(); });
 
   go(0, { quiet: true });
   return { refresh, go, print: () => printReport(), renderBest: () => { if (current === 0) renderBest(); } };
