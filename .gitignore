@@ -4,3 +4,4 @@ dist/
 .env.*
 !.env.example
 lunar-site-planner-promo-HQ.mp4
+__pycache__/
