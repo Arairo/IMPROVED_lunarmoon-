@@ -5,6 +5,7 @@
 
 import { apolloChecks, flownEventChecks } from '../core/flownChecks.js';
 import { precomputedHorizons } from '../core/horizon.js';
+import { planFlight, FLOWN_FLIGHTS, ROUTES } from '../core/flight.js';
 import { icon } from './icons.js';
 
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
@@ -59,6 +60,18 @@ export async function openTrust({ sites }) {
             ${events.map((e) => `<tr><td>${esc(e.name)}</td><td>${esc(e.note)}</td><td>${e.oursMs ? `${day(e.oursMs)} UTC` : '–'}</td></tr>`).join('')}
           </table>
           <p class="a-dim">Apollo figures: Sun elevation above a level horizon at touchdown, from the mission reports. Apollo 16 is left out because its landing came 5 h 42 min late and published figures differ on which time they mean. These checks also run as automated tests on every update.</p></section>
+        ${(() => {
+          const T = Date.parse('1969-07-20T20:17Z'), loi = Date.parse('1969-07-19T17:22Z'), tli = Date.parse('1969-07-16T16:22Z');
+          const a = planFlight(T, { route: 'direct', coastDays: (loi - tli) / 864e5, lunarOrbitDays: (T - loi) / 864e5, parkingAltKm: 191 });
+          const dv = Object.fromEntries(a.burns.map((b) => [b.id, b.dv]));
+          const row = (n, ours, flown) => `<tr><td>${n}</td><td>${flown.toFixed(2)} km/s</td><td>${ours.toFixed(2)} km/s</td></tr>`;
+          return `<section><h3>Flight model vs what flew</h3>
+          <table class="a-table"><tr><th>Apollo 11 burn</th><th>Flown</th><th>Our model</th></tr>
+            ${row('Leave Earth orbit (TLI)', dv.tli, 3.18)}${row('Brake into lunar orbit', dv.loi, 0.94)}${row('Descent to the surface', dv.doi + dv.pdi, 2.06)}</table>
+          <table class="a-table"><tr><th>Mission</th><th>Route</th><th>Launch to landing: flown</th><th>Our typical route</th></tr>
+            ${FLOWN_FLIGHTS.map((f) => { const T2 = Date.parse(f.touchdown); const p = planFlight(T2, { route: f.route }); return `<tr><td>${esc(f.name)}</td><td>${esc(ROUTES[f.route].label)}</td><td>${((T2 - Date.parse(f.launch)) / 864e5).toFixed(1)} days</td><td>${p.doorToDoorDays.toFixed(1)} days</td></tr>`; }).join('')}</table>
+          <p class="a-dim">The Flight view is a two-body (“patched conics”) planning model: good to hours and tens of m/s, not navigation. Typical phase lengths follow how these missions flew; real missions tune them to their rocket, orbit and landing site.</p></section>`;
+        })()}
         <section><h3>Sun and Earth positions vs NASA JPL Horizons</h3>
           ${val ? `<p>${val.rows.length} comparisons (${new Set(val.rows.map((r) => r.site)).size} sites × 3 dates × Sun and Earth), run ${new Date(val.generated).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}: worst elevation difference <b>${worstEl.toFixed(4)}°</b>, median <b>${val.medianEl.toFixed(4)}°</b>. The Sun’s disk is 0.53° wide, so that is under 1% of it.</p>
           <details><summary>Show all ${val.rows.length}</summary><div class="t-scroll"><table class="a-table"><tr><th>Site</th><th>UTC</th><th>Body</th><th>Horizons el</th><th>Ours el</th><th>Δ</th></tr>

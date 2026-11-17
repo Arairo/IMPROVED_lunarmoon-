@@ -12,6 +12,7 @@ import { createCalendar } from './calendar.js';
 import { icon } from './icons.js';
 import { addScenario } from '../ui/compare.js';
 import { groundSlope } from '../core/horizon.js';
+import { planFlight, ROUTES } from '../core/flight.js';
 
 const DAY = 86400000;
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
@@ -55,6 +56,7 @@ export function mountFlow({ app, setTime, switchMode, getBestSpots, actions }) {
   // 2 · Date
   slot(1).innerHTML = `
     <div class="f-date"><small>Touchdown (start of the window)</small><b data-date></b><span data-local></span></div>
+    <button type="button" class="f-flightlink" data-flight>${icon('rocket', 16)}<span><b>How do we get there?</b><small>Plan the flight: launch date, route, fuel</small></span>${icon('external', 13)}</button>
     <div class="f-card f-calcard"><b>Pick a day</b><small class="f-sub">Colours are for this site, landing at the same time of day.</small><div data-cal></div></div>
     <div class="f-card">
       <b>Not sure? Let the planner find one.</b>
@@ -74,6 +76,7 @@ export function mountFlow({ app, setTime, switchMode, getBestSpots, actions }) {
       <span class="f-pills" data-win><button type="button" data-w="15">15 days</button><button type="button" data-w="30">1 lunar day</button><button type="button" data-w="90">3 months</button><button type="button" data-w="365">1 year</button></span>
     </label>`;
   const s2 = slot(1);
+  s2.querySelector('[data-flight]')?.addEventListener('click', () => actions.flight?.());
   const cal = createCalendar({
     getSite: () => app.site,
     getConfig: () => app.config,
@@ -273,7 +276,17 @@ export function mountFlow({ app, setTime, switchMode, getBestSpots, actions }) {
       </table>
       ${range ? `<p class="f-note">${esc(range)} (how much the answer changes within one terrain cell).</p>` : ''}
       ${spots ? `<p class="f-meta">Best spots for the 30 days from touchdown:</p><ul>${spots}</ul>` : ''}
+      ${(() => { const f = flightNow(); return `<p class="f-meta">Getting there (${esc(ROUTES[f.route].label)} route, ${esc(f.lander.label.toLowerCase())}):</p>
+        <table class="f-table"><tr><td>Launch from ${esc(f.launchSite.short)}</td><td>${when(f.launchMs)}</td></tr>
+        <tr><td>Leave Earth orbit / arrive in lunar orbit</td><td>${when(f.tliMs)} / ${when(f.loiMs)}</td></tr>
+        <tr><td>Door to door</td><td>${(f.doorToDoorDays).toFixed(1)} days</td></tr>
+        <tr><td>Lander speed changes / fuel</td><td>${f.landerDv.toFixed(2)} km/s / ${Math.round(f.propKg).toLocaleString('en-GB')} kg</td></tr></table>`; })()}
       <p class="f-note">Lunar Site Planner · NASA LOLA terrain · ephemeris checked against NASA JPL Horizons · verdicts use our own rules of thumb.</p>`;
+  }
+  /** The flight for this plan, with the route and lander chosen in the Flight view (Direct by default). */
+  function flightNow() {
+    const o = app.flight?.opts || (() => { try { return JSON.parse(localStorage.getItem('lsp.flight') || '{}'); } catch { return {}; } })();
+    return planFlight(app.windowStartMs, o);
   }
   /** Machine-readable decision summary: the same numbers as the report, plus inputs and provenance. */
   function decisionSummary() {
@@ -295,8 +308,9 @@ export function mountFlow({ app, setTime, switchMode, getBestSpots, actions }) {
       },
       groundSlope: sl && sl.cell <= 1000 ? { degrees: r2(sl.slopeDeg), baselineM: Math.round(sl.baselineM) } : null,
       landingDispersion: d ? { radiusM: d.radiusM, samples: d.points.length, sunAndEarthTogether: { worst: r2(d.min), p10: r2(d.p10), median: r2(d.p50), best: r2(d.max) } } : null,
+      flight: (() => { const f = flightNow(); return { route: f.route, model: 'patched conics planning model', launchSite: f.launchSite.name, launchUtc: new Date(f.launchMs).toISOString(), leaveEarthOrbitUtc: new Date(f.tliMs).toISOString(), lunarOrbitArrivalUtc: new Date(f.loiMs).toISOString(), doorToDoorDays: r2(f.doorToDoorDays), landerDeltaVKmS: r2(f.landerDv), landerDryKg: f.lander.dryKg, propellantKg: Math.round(f.propKg), burns: f.burns.map((b) => ({ burn: b.label, utc: new Date(b.t).toISOString(), deltaVKmS: r2(b.dv), by: b.byLander ? 'lander' : 'rocket' })) }; })(),
       spacecraft: app.config,
-      provenance: { terrain: 'NASA LRO LOLA (240 m / 1 km south-polar grids, LDEM_16 elsewhere)', ephemeris: 'astronomy-engine with the IAU lunar rotation model, checked against NASA JPL Horizons' },
+      provenance: { terrain: 'NASA LRO LOLA (20 m PGDA tiles near the main south-polar sites, 240 m / 1 km south-polar grids, LDEM_16 elsewhere)', ephemeris: 'astronomy-engine with the IAU lunar rotation model, checked against NASA JPL Horizons' },
     };
   }
   function printReport() {

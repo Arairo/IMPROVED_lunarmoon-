@@ -27,7 +27,7 @@ One kilometre, or one bad landing, can decide a mission. Lunar Site Planner show
 
 **Beginner**: a calm walk with Lumi, our guide. One question per screen (where, when, what you'd see), a traffic-light verdict, and the "why" only when you want it. Works on a phone.
 
-**Professional**: a five-step mission flow with the 3D Moon in the middle. **Map layers** colour the whole Moon by sunlight, Earth in view, never-sunlit areas, height or slope, with a live readout under the pointer.
+**Professional**: a five-step mission flow with the 3D Moon in the middle. **Map layers** colour the whole Moon by sunlight, Earth in view, Sun + Earth together, never-sunlit areas, height or slope, with a live readout under the pointer. The sunlight and Earth layers work **now** (they follow the timeline, so pressing Play sweeps the shadows round the pole), **for your 30 days**, or **for the whole of 2027**.
 
 1. **Site**: Apollo, CLPS (IM-1, IM-2, Blue Ghost), Chandrayaan-3, Chang'e, SLIM, computed best-lit ridges, coordinates, or a click anywhere on the Moon. The best spot for the next 30 days is found for you.
 2. **Date**: a month calendar coloured for your site (green = sunlight and Earth together for 3+ days), or "Find the next good date".
@@ -36,6 +36,12 @@ One kilometre, or one bad landing, can decide a mission. Lunar Site Planner show
 5. **Report**: one page to print or save as PDF, a share link, or a JSON decision summary.
 
 ![What if: the landing-area check finds a safer aim point](docs/screenshots/what-if.jpg)
+
+## Flight: from the launch pad to touchdown
+
+The **Flight** view works backwards from your touchdown time: when to launch, which route, every burn and how much fuel the lander needs. Pick **Direct** (3–5 days, like Apollo 11 and IM-1), **Phasing loops** (~40 days, like Chandrayaan-3 and Blue Ghost 1) or **Low-energy** (~4 months, like SLIM), compare all three side by side, and watch the flight in 3D: Earth, the moving Moon, the path coloured by phase and the descent onto your site. It also checks the touchdown itself: is the Sun at a good angle for the landing cameras, is there power on arrival, and can Earth follow the descent by radio.
+
+It is a two-body ("patched conics") planning model, good to hours and tens of m/s. The automated tests check it against Apollo 11's burns (leaving Earth orbit 3.16 vs 3.18 km/s flown; braking into lunar orbit 0.93 vs 0.94 km/s) and five flown timelines.
 
 ## Compare, one question at a time
 

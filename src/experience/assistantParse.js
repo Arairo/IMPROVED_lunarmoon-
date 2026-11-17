@@ -94,6 +94,8 @@ export function findDate(text, nowMs) {
 }
 
 const TERMS = [
+  ['deltav', /delta[- ]?v\b|Δv|speed change/],
+  ['routes', /routes? to the moon|ways to (get to|reach) the moon|low[- ]energy|phasing (loop|orbit)|ballistic (lunar )?transfer|why (does|do) (it|they|some missions) take (so )?long/],
   ['libration', /librat|wobble/],
   ['elevation', /elevation|altitude|how high/],
   ['azimuth', /azimuth|compass/],
@@ -157,6 +159,10 @@ export function parseRequest(text, sites, nowMs = Date.now()) {
   if (/\b(dark|light) (mode|theme)\b/.test(t)) return { type: 'theme', value: /\bdark\b/.test(t) ? 'dark' : 'light' };
   if (/\b(start|show|give me) (the |a )?(tour|walkthrough)\b|\bguide me\b|\bshow me around\b|\bhow (do|does) (i|this|it) work\b/.test(t)) return { type: 'tour' };
   if (/\bbeginner\b/.test(t) && !/\b(what|why|how|explain|difference)\b/.test(t)) return { type: 'beginner' };
+  if (/\b(plan|show|open|simulate|watch)( me)?( the| a| my)? (flight|trip|journey|launch)\b|\bhow (do|will|would|can) (we|i|it|you) get (there|to the moon)\b|\bwhen (do|should|must|would) (we|i) (have to )?launch\b|\blaunch (date|day|window)\b|\bflight (sim|simulation|view|plan)\b/.test(t)) {
+    const route = /\blow[- ]energy|ballistic|slow\b/.test(t) ? 'lowenergy' : /\bphasing|loops?\b/.test(t) ? 'phasing' : /\bdirect|fast|apollo\b/.test(t) ? 'direct' : null;
+    return { type: 'flight', route };
+  }
   if (/\b(terrain 3d|3d terrain|cesium)\b/.test(t)) return { type: 'terrain' };
   if (/^\s*(play|start playing|animate)\b/.test(t)) return { type: 'play', on: true };
   if (/^\s*(pause|stop)\b/.test(t)) return { type: 'play', on: false };

@@ -60,7 +60,7 @@ try {
 let globe = null;
 let polar = null;
 let xp = null;
-const xpApi = { copyLink: () => copyScenarioLink(), compareSites: (...a) => compareSites(...a), app, sites: sitesData, selectSite: (...a) => selectSite(...a), setTime: (...a) => setTime(...a), switchMode: (...a) => switchMode(...a), getGlobe: () => globe, setHint: () => {} };
+const xpApi = { copyLink: () => copyScenarioLink(), compareSites: (...a) => compareSites(...a), app, sites: sitesData, selectSite: (...a) => selectSite(...a), setTime: (...a) => setTime(...a), switchMode: (...a) => switchMode(...a), getGlobe: () => globe, switchSubView: (v) => switchSubView(v), setHint: () => {} };
 
 export function onLayoutChange() {
   window.dispatchEvent(new Event('resize'));
@@ -279,23 +279,20 @@ export function switchMode(mode) {
 export function switchSubView(view) {
   app.view = view;
   const isPolar = view === 'polar';
-  document.getElementById('globeViewport')?.classList.toggle('hidden', isPolar);
+  const isGlobe = view === 'globe';
+  document.getElementById('globeViewport')?.classList.toggle('hidden', !isGlobe);
   document.getElementById('polarViewport')?.classList.toggle('hidden', !isPolar);
+  document.getElementById('flightViewport')?.classList.toggle('hidden', view !== 'flight');
   const tabGlobeBtn = document.getElementById('tabGlobeBtn');
   const tabPolarBtn = document.getElementById('tabPolarBtn');
-  if (tabGlobeBtn) {
-    tabGlobeBtn.className = !isPolar
-      ? 'px-3 py-1 rounded-md text-xs font-semibold bg-slate-900 text-white shadow-sm'
-      : 'px-3 py-1 rounded-md text-xs font-semibold text-slate-600 hover:text-slate-900';
-  }
-  if (tabPolarBtn) {
-    tabPolarBtn.className = isPolar
-      ? 'px-3 py-1 rounded-md text-xs font-semibold bg-slate-900 text-white shadow-sm'
-      : 'px-3 py-1 rounded-md text-xs font-semibold text-slate-600 hover:text-slate-900';
-  }
+  const on = 'px-3 py-1 rounded-md text-xs font-semibold bg-slate-900 text-white shadow-sm';
+  const off = 'px-3 py-1 rounded-md text-xs font-semibold text-slate-600 hover:text-slate-900';
+  if (tabGlobeBtn) { tabGlobeBtn.className = isGlobe ? on : off; tabGlobeBtn.setAttribute('aria-selected', String(isGlobe)); }
+  if (tabPolarBtn) { tabPolarBtn.className = isPolar ? on : off; tabPolarBtn.setAttribute('aria-selected', String(isPolar)); }
+  window.dispatchEvent(new CustomEvent('lsp-view', { detail: view }));
   requestAnimationFrame(() => {
     if (isPolar) polar?.draw();
-    else globe?.render();
+    else if (isGlobe) globe?.render();
   });
 }
 

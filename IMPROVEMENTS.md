@@ -71,5 +71,7 @@ Status: ✅ done · 🔨 in progress · ⏳ planned
 | # | Improvement | Reference | Status |
 |---|---|---|---|
 | 4.1 | Whole-Moon map layers on the 3D Moon: sunlight and Earth in view for 2027 (real terrain skylines), never-sunlit polar areas, height and slope, with a live readout | Darksight | ✅ |
+| 4.4 | Map layers by time: Now (follows the timeline and Play), Your 30 days, Year 2027; Sun + Earth together layer | User request | ✅ |
+| 4.5 | Flight view: launch-to-landing planning model with three routes (Direct, Phasing loops, Low-energy), side-by-side comparison, dated timeline, every burn and the fuel, touchdown lighting/radio checks and a 3D animation; checked against Apollo 11's burns and five flown timelines; in the Date step, the Report, the JSON export and Ask Lumi | User request | ✅ |
 | 4.2 | Ask Lumi: a chat panel that understands typed requests (go to a site or coordinates, best date, best spot, compare, move N km, shift days, sunset/Earthset, status, explain a term, theme, tour, flow steps, print the report, copy the link), small talk (hello, thanks, who are you, jokes, fun facts) and ~30 explained topics, answered from the engine, never by guessing. Runs offline, no AI service or key | Bean Drift (AI assistant), PolarWindow (grounded AI) | ✅ |
 | 4.3 | Public read-only API for site/date queries | Bean Drift (REST + MCP) | ⏳ |

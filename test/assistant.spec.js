@@ -113,3 +113,13 @@ test('Ask Lumi QA fixes: best site, explanations, nudges, slips, comparisons', (
   assert.equal(l.site.id, 'ce4');
   assert.equal(ask('best date at the ridge in 2027 for 7 days').minDays, 7);
 });
+
+test('Ask Lumi plans the flight and explains routes and delta-v', () => {
+  assert.deepEqual(ask('plan the flight'), { type: 'flight', route: null });
+  assert.equal(ask('how do we get there?').type, 'flight');
+  assert.equal(ask('when should we launch').type, 'flight');
+  assert.equal(ask('plan the flight low-energy').route, 'lowenergy');
+  assert.equal(ask('show the flight with phasing loops').route, 'phasing');
+  assert.equal(ask('what are the routes to the moon').term, 'routes');
+  assert.equal(ask('what is delta-v').term, 'deltav');
+});

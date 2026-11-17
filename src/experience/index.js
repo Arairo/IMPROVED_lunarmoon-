@@ -2,6 +2,7 @@
 // dynamic notch, Pro-mode spotlight tour and Creo-style globe controls.
 
 import { mountLayers } from './layersUi.js';
+import { mountFlight } from './flightUi.js';
 import './experience.css';
 import './theme-pro.css';
 import { mountIntro } from './intro.js';
@@ -145,6 +146,8 @@ export function initExperience(api) {
     viewTabs.appendChild(t);
   }
   const mapLayers = mountLayers({ getGlobe, viewTabs, app });
+  const flight = mountFlight({ app, viewTabs, switchSubView: api.switchSubView, setTime });
+  window.addEventListener('lsp-fly-site', () => getGlobe?.()?.flyToSite(app.site));
 
   // ---------- Globe view cluster + gesture hint ----------
   const gv = document.getElementById('globeViewport');
@@ -430,6 +433,7 @@ export function initExperience(api) {
     compareBest: () => api.compareSites?.([app.site, ...best.spots.map((sp) => sp.r.site)]),
     copyLink: () => api.copyLink?.(),
     terrain: () => { const a = document.querySelector('[data-x="terrain"]'); if (a) location.href = a.href; },
+    flight: (route) => { api.switchSubView?.('flight'); return flight?.setRoute(route); },
     lumi: () => assistant.open(),
     look: (body) => getGlobe()?.lookAlong?.(body),
     theme: (v) => applyTheme(v),

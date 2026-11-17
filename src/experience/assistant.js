@@ -24,6 +24,8 @@ const EXPLAIN = {
   disk: 'The Sun is a disk about half a degree wide, not a point. When it is partly behind a ridge, only part of it shines on the panels, so power drops gradually rather than switching off.',
   dte: 'Direct-to-Earth means the lander talks straight to antennas on Earth, with no relay satellite. It needs Earth’s centre above the terrain, ideally by a couple of degrees.',
   dsn: 'NASA’s Deep Space Network has three big antenna sites, in California, Spain and Australia, so at least one can usually see the Moon. A direct link also needs one of them to have the Moon above its horizon.',
+  deltav: 'Δv (delta-v) is how much a spacecraft has to change its speed, in km/s. Every burn costs fuel, and the rocket equation says the fuel grows fast with Δv. Landing from lunar orbit alone takes about 2 km/s; leaving Earth orbit for the Moon about 3.1 km/s.',
+  routes: 'There are three common ways to the Moon. Direct takes 3 to 5 days but needs a hard braking burn on arrival. Phasing loops (Chandrayaan-3, Blue Ghost 1) raise the orbit little by little over weeks, using small burns. Low-energy routes (SLIM, ispace) swing out about 1.5 million km and let the Sun’s pull bend the path back, taking months but arriving slowly, so braking costs least. The Flight view compares all three for your plan.',
   lola: 'LOLA is the Lunar Orbiter Laser Altimeter on NASA’s Lunar Reconnaissance Orbiter. It has measured the height of the Moon’s surface billions of times. We use its south-pole height maps to build each site’s skyline.',
   margin: 'Link margin is how much stronger the radio signal is than the minimum needed, in decibels. Above 0 dB the link works; a few dB extra covers pointing errors and losses.',
   pole: 'Craters at the south pole hold water ice that has been frozen for billions of years: water to drink, air to breathe and rocket fuel. But the Sun skims the horizon there and Earth bobs in and out of view, which is exactly what this planner checks.',
@@ -219,6 +221,15 @@ export function createAssistant(api) {
       case 'tour': close(); actions.tour?.(); return undefined;
       case 'beginner': close(); actions.beginner?.(); return undefined;
       case 'terrain': actions.terrain?.(); return add('lumi', 'Opening the Terrain 3D view on this site and date.');
+      case 'flight': {
+        const f = actions.flight?.(r.route);
+        if (!f) return add('lumi', 'Opening the Flight view.');
+        const d = (ms) => new Date(ms).toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'UTC' });
+        return add('lumi', `To touch down at <b>${siteName()}</b> on ${d(f.touchdownMs)} UTC by the <b>${f.routeInfo.label}</b> route: launch from ${f.launchSite.short} on <b>${d(f.launchMs)} UTC</b>, ${f.doorToDoorDays.toFixed(f.doorToDoorDays < 20 ? 1 : 0)} days door to door. The lander changes its speed by ${f.landerDv.toFixed(2)} km/s and needs about ${Math.round(f.propKg).toLocaleString('en-GB')} kg of fuel.`, [
+          { label: 'Compare the routes', run: () => ask('what are the routes to the moon') },
+          ...(f.route !== 'lowenergy' ? [{ label: 'Try low-energy', run: () => ask('plan the flight low-energy') }] : [{ label: 'Try direct', run: () => ask('plan the flight direct') }]),
+        ]);
+      }
       case 'play': actions.play?.(r.on); return add('lumi', r.on ? 'Playing: watch the Sun circle the sky.' : 'Paused.');
       default:
         misses += 1;
