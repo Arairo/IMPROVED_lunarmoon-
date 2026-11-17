@@ -1,0 +1,14 @@
+{
+  "name": "global_dem",
+  "projection": "simple cylindrical (equirectangular)",
+  "ppd": 8,
+  "width": 2880,
+  "height": 1440,
+  "dtype": "int16-le",
+  "units": "metres above the 1737.4 km reference sphere",
+  "rowOrder": "row 0 at +90 lat, column 0 at 0 E, cell centres at +0.5",
+  "minHeight": -8981,
+  "maxHeight": 10686,
+  "source": "NASA LRO LOLA global elevation map LDEM_16 (PDS Geosciences Node), block-averaged to 8 px/deg",
+  "built": "2026-11-17T10:18:27.524Z"
+}
