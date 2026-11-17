@@ -249,3 +249,34 @@ export function horizonAt(horizon, azDeg) {
   }
   return 0;
 }
+
+// ---- 20 m LOLA tiles (PGDA LDEM_80S_20MPP_ADJ) around south-polar sites ----
+// Loaded one at a time, only when a site inside a tile is in use, and added to
+// the shared terrain so nudges and the landing-area check see 20 m detail.
+let hiresIndex;
+const hiresLoaded = new Map();
+export async function ensureHiresTile(lat, lon, baseUrl) {
+  if (!sharedTerrain || lat > -80) return false;
+  if (hiresIndex === undefined) {
+    try { const r = await fetch(`${baseUrl}/hires/index.json`); hiresIndex = r.ok ? await r.json() : null; } catch { hiresIndex = null; }
+  }
+  if (!hiresIndex) return false;
+  const { x, y } = toSouthPolar(lat, lon);
+  const tile = hiresIndex.tiles.find((t) => Math.abs(x - t.centreX) < t.halfExtent - 2000 && Math.abs(y - t.centreY) < t.halfExtent - 2000);
+  if (!tile || hiresLoaded.has(tile.id)) return false;
+  hiresLoaded.set(tile.id, null);
+  try {
+    const [meta, buf] = await Promise.all([
+      fetch(`${baseUrl}/hires/${tile.id}.json`).then((r) => r.json()),
+      fetch(`${baseUrl}/hires/${tile.id}.bin`).then((r) => r.arrayBuffer()),
+    ]);
+    const grid = createGrid(meta, new Int16Array(buf));
+    hiresLoaded.set(tile.id, grid);
+    const t = createTerrain([...sharedTerrain.grids, grid], sharedTerrain.global);
+    setSharedTerrain(t);
+    return true;
+  } catch {
+    hiresLoaded.delete(tile.id);
+    return false;
+  }
+}

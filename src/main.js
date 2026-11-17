@@ -10,7 +10,7 @@ import { createGlobeRenderer } from './scene/globeRenderer.js';
 import { createPolarMapRenderer, ramp } from './ui/polarMap.js';
 import { drawTimeline } from './ui/timeline.js';
 import { loadGlobalDem, setGlobalDem } from './core/globalDem.js';
-import { loadTerrain, setSharedTerrain } from './core/horizon.js';
+import { loadTerrain, setSharedTerrain, ensureHiresTile } from './core/horizon.js';
 import { renderAssessmentPanel } from './ui/assessment.js';
 import { addScenario, renderCompareTable, exportCompareCsv } from './ui/compare.js';
 import { createTour, openGlossary, showToast } from './ui/modals.js';
@@ -187,6 +187,14 @@ export function selectSite(site, fly = false) {
   updateCurrentTime(true);
   if (fly && globe) globe.flyToSite(site);
   if (polar) polar.draw();
+  loadHiresFor(site);
+}
+
+// 20 m terrain near the big south-polar sites, fetched only when needed.
+function loadHiresFor(site) {
+  ensureHiresTile(site.lat, site.lon, `${import.meta.env.BASE_URL}data`)
+    .then((added) => { if (added) window.dispatchEvent(new Event('lsp-terrain')); })
+    .catch(() => {});
 }
 
 export function updateCurrentTime(recompute = false) {
@@ -701,6 +709,7 @@ function boot() {
     if (polar) { polar.global = g; setSharedTerrain(polar); }
     if (String(app.site?.id || '').startsWith('custom')) selectSite(app.site, false);
     window.dispatchEvent(new Event('lsp-terrain'));
+    if (app.site) loadHiresFor(app.site);
   }, 1200);
 }
 
