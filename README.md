@@ -25,7 +25,7 @@ One kilometre, or one bad landing, can decide a mission. Lunar Site Planner show
 
 ## Two ways in
 
-**Beginner**: a calm walk with Lumi, our guide. One question per screen (where, when, what you'd see), a traffic-light verdict, and the "why" only when you want it. Works on a phone.
+**Beginner: "Mission: Land on the Moon"**: six short chapters with Lumi, our guide. Find the sunny spot (a guessing game on the real south-pole lighting map), pick a day from a Moon "forecast", choose a route and watch the launch and landing in 3D, survive 30 days with power and radio meters, and earn a printable mission badge with up to three stars. Read-aloud, one decision per screen, works on a phone.
 
 **Professional**: a five-step mission flow with the 3D Moon in the middle. **Map layers** colour the whole Moon by sunlight, Earth in view, Sun + Earth together, never-sunlit areas, height or slope, with a live readout under the pointer. The sunlight and Earth layers work **now** (they follow the timeline, so pressing Play sweeps the shadows round the pole), **for your 30 days**, or **for the whole of 2027**.
 
