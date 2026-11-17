@@ -1,0 +1,36 @@
+name: Probe NASA data listings
+
+# Maintenance helper: prints NASA data directory listings and labels so the
+# terrain workflows can point at the right files. Changes nothing.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: PDS LOLA polar gridded products
+        run: |
+          for u in \
+            https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/polar/img/ \
+            https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/polar/ ; do
+            echo "=== $u"; curl -sL -m 60 "$u" | sed -e 's/<[^>]*>/ /g' | grep -iE "ldem|lbl|img|jp2|tif" | tr -s ' ' | head -120
+          done
+      - name: Labels of fine south-polar DEMs
+        run: |
+          base=https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/polar/img
+          for f in ldem_875s_20m ldem_875s_10m ldem_85s_20m ldem_85s_40m ldem_80s_20m ldem_80s_40m ldem_85s_60m ldem_80s_80m ldem_875s_5m; do
+            for v in "$f.lbl" "$(echo $f | tr a-z A-Z).LBL"; do
+              code=$(curl -s -o /tmp/l.txt -w '%{http_code}' -m 30 "$base/$v")
+              if [ "$code" = 200 ]; then echo "=== $v"; grep -E "LINES|LINE_SAMPLES|SAMPLE_TYPE|SAMPLE_BITS|SCALING_FACTOR|OFFSET|MAP_PROJECTION_TYPE|MAP_SCALE|MAP_RESOLUTION|CENTER_L|PROJECTION_OFFSET|MINIMUM_LAT|MAXIMUM_LAT|A_AXIS|FILE_RECORDS|RECORD_BYTES|UNIT" /tmp/l.txt | head -40; break; fi
+            done
+          done
+      - name: PGDA illumination products
+        run: |
+          for id in 69 78 90 87 81 66 60; do
+            echo "=== https://pgda.gsfc.nasa.gov/products/$id"
+            curl -sL -m 60 "https://pgda.gsfc.nasa.gov/products/$id" | grep -oiE '(href|src)="[^"]+"|<title>[^<]*</title>|<h[12][^>]*>[^<]*' | grep -iE "title|h1|h2|data|\.(img|lbl|tif|txt|xyz|grd|zip|jp2)" | head -60
+          done
