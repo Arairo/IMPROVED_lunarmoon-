@@ -9,6 +9,7 @@ import { esc, fmtLatLon, fmtUtc } from './ui/format.js';
 import { createGlobeRenderer } from './scene/globeRenderer.js';
 import { createPolarMapRenderer, ramp } from './ui/polarMap.js';
 import { drawTimeline } from './ui/timeline.js';
+import { loadGlobalDem, setGlobalDem } from './core/globalDem.js';
 import { renderAssessmentPanel } from './ui/assessment.js';
 import { addScenario, renderCompareTable, exportCompareCsv } from './ui/compare.js';
 import { createTour, openGlossary, showToast } from './ui/modals.js';
@@ -690,6 +691,13 @@ function boot() {
   window.addEventListener('lsp-theme', () => updateCurrentTime(false));
   if (shared?.t) { app.timeMs = app.windowStartMs = shared.t; }
   selectSite(shared?.site || app.sites[0], true);
+  // Whole-Moon LOLA terrain for points outside the polar grids (custom pins,
+  // nudges): loaded quietly after first paint; re-checks the current custom site.
+  setTimeout(() => loadGlobalDem(`${import.meta.env.BASE_URL}data`).then((g) => {
+    if (!g) return;
+    setGlobalDem(g);
+    if (String(app.site?.id || '').startsWith('custom')) selectSite(app.site, false);
+  }), 1500);
 }
 
 if (document.readyState === 'loading') {

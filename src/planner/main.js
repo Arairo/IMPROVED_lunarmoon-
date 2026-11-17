@@ -7,6 +7,7 @@ import './styles.css';
 import './theme-apple.css';
 import { createMoonScene } from './scene/moonScene.js';
 import { loadTerrain } from '../core/horizon.js';
+import { loadGlobalDem } from '../core/globalDem.js';
 import { DEFAULT_CONFIG, evaluate, isEarthUp, isSunUp, nextTransition, prepareSite, scan } from '../core/analysis.js';
 import { COMPUTED_SITES as CURATED_COMPUTED, SITES, SITE_GROUPS, parseCoordinates } from '../core/sites.js';
 import { RADIO_PRESETS } from '../core/comms.js';
@@ -736,6 +737,7 @@ async function boot() {
   $('#assessment').innerHTML = '<div class="empty">Loading LOLA terrain…</div>';
   try {
     app.terrain = await loadTerrain(DATA);
+    app.terrain.global = await loadGlobalDem(DATA); // whole-Moon LOLA where the polar grids end (null until built)
   } catch (err) {
     setStatus(`Terrain grids failed to load (${err.message}); horizons fall back to a bare sphere`);
   }

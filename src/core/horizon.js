@@ -8,6 +8,7 @@
 import precomputedData from '../data/precomputedHorizons.js';
 import { sampleDemHeight } from './dem.js';
 import { MOON_RADIUS_M, RAD, destination, sphereHorizonDip, toSouthPolar } from './geo.js';
+import { getGlobalDem } from './globalDem.js';
 
 export const AZ_STEP_DEG = 0.5;
 export const AZ_COUNT = Math.round(360 / AZ_STEP_DEG);
@@ -44,25 +45,33 @@ export function createGrid(meta, heights) {
   };
 }
 
-/** Combine grids finest-first into one terrain sampler. */
-export function createTerrain(grids) {
+/**
+ * Combine grids finest-first into one terrain sampler. The south-polar grids
+ * win where they have data; `global` (a whole-Moon LOLA grid) fills the rest.
+ */
+export function createTerrain(grids, global = null) {
   const ordered = [...grids].sort((a, b) => a.meta.cellSize - b.meta.cellSize);
   return {
     grids: ordered,
+    global,
     /** { height, cell } at lat/lon, or null where no grid has data. */
     heightAt(lat, lon) {
-      if (lat > -60) return null;
-      const { x, y } = toSouthPolar(lat, lon);
-      for (const g of ordered) {
-        if (!g.covers(x, y)) continue;
-        const height = g.sample(x, y);
-        if (!Number.isNaN(height)) return { height, cell: g.meta.cellSize };
+      if (lat <= -60) {
+        const { x, y } = toSouthPolar(lat, lon);
+        for (const g of ordered) {
+          if (!g.covers(x, y)) continue;
+          const height = g.sample(x, y);
+          if (!Number.isNaN(height)) return { height, cell: g.meta.cellSize };
+        }
       }
-      return null;
+      const gl = this.global || getGlobalDem();
+      return gl ? { height: gl.heightAt(lat, lon), cell: gl.cell, global: true } : null;
     },
     coverageLabel(lat, lon) {
       const h = this.heightAt(lat, lon);
-      return h ? `LOLA ${h.cell >= 1000 ? `${h.cell / 1000} km` : `${h.cell} m`} grid` : null;
+      if (!h) return null;
+      const size = h.cell >= 1000 ? `${Number((h.cell / 1000).toFixed(1))} km` : `${Math.round(h.cell)} m`;
+      return h.global ? `LOLA ${size} global grid` : `LOLA ${size} grid`;
     },
   };
 }
@@ -153,6 +162,11 @@ export function computeSiteHorizon(site, mastHeight = 2) {
   }
   const h0 = sampleDemHeight(site.lat, site.lon);
   const dip = sphereHorizonDip(mastHeight);
+  if (h0 == null && getGlobalDem()) {
+    // Outside the polar grid: ray-cast over the whole-Moon LOLA grid.
+    const full = computeHorizon(createTerrain([], getGlobalDem()), site.lat, site.lon, { mastHeight, maxDistM: 200000 });
+    return { el180: Array.from({ length: 180 }, (_, k) => full.elevations[k * 4]), groundHeight: Math.round(full.groundHeight), mastHeight, source: full.source, terrain: true };
+  }
   if (h0 == null) {
     return {
       el180: new Array(180).fill(dip),

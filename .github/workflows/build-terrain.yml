@@ -1,0 +1,50 @@
+name: Build global terrain
+
+# Run once from the Actions tab ("Run workflow"). Downloads NASA's LRO LOLA
+# global elevation map (LDEM_16, ~1.9 km per pixel) from the PDS Geosciences
+# Node, rebuilds every listed site's terrain horizon from it, and commits:
+#   public/data/global_dem.{bin,json}   whole-Moon terrain for the app (8 px/deg)
+#   src/data/precomputedHorizons.*      site horizons (polar grids + LDEM_16)
+# The deploy workflow then publishes the site.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Download LOLA LDEM_16 from the PDS Geosciences Node
+        run: |
+          mkdir -p data-raw
+          base=https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/cylindrical/img
+          curl -fL --retry 4 --retry-delay 5 -o data-raw/ldem_16.img "$base/ldem_16.img" \
+            || curl -fL --retry 4 --retry-delay 5 -o data-raw/ldem_16.img "$base/LDEM_16.IMG"
+          curl -fL --retry 3 -o data-raw/ldem_16.lbl "$base/ldem_16.lbl" \
+            || curl -fL --retry 3 -o data-raw/ldem_16.lbl "$base/LDEM_16.LBL" \
+            || echo "No label found; using the documented LDEM_16 layout"
+          ls -la data-raw
+      - name: Pack the global grid (8 px/deg) for the app
+        run: node tools/build_global_dem.mjs data-raw/ldem_16.img --ppd 8
+      - name: Rebuild every site's horizon
+        run: node tools/build_site_horizons.mjs data-raw/ldem_16.img | tee horizons.log
+      - run: npm test
+      - name: Summary
+        run: |
+          { echo '## Site horizons rebuilt from LOLA'; echo '```'; cat horizons.log; echo '```'; cat public/data/global_dem.json; } >> "$GITHUB_STEP_SUMMARY"
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+          git add public/data/global_dem.bin public/data/global_dem.json src/data/precomputedHorizons.js src/data/precomputedHorizons.json public/data/precomputedHorizons.json
+          git commit -m "Add LOLA global terrain and rebuild site horizons" || echo "Nothing changed"
+          git push

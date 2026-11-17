@@ -5,6 +5,10 @@ on:
     branches: [main]
   pull_request:
   workflow_dispatch:
+  # Commits made by the terrain workflow don't trigger pushes, so redeploy after it.
+  workflow_run:
+    workflows: ["Build global terrain"]
+    types: [completed]
 
 permissions:
   contents: read
