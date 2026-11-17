@@ -1,0 +1,35 @@
+{
+  "description": "Share of 2027 with the Sun's centre (sun) and Earth's centre (earth) above the local LOLA terrain skyline, 2 m mast, 6-hour sampling. Values are uint8 = percent x 2.",
+  "year": 2027,
+  "stepHours": 6,
+  "mastM": 2,
+  "azimuths": 72,
+  "order": [
+    "global.sun",
+    "global.earth",
+    "south.sun",
+    "south.earth",
+    "north.sun",
+    "north.earth"
+  ],
+  "global": {
+    "width": 360,
+    "height": 180,
+    "cellDeg": 1,
+    "rowOrder": "row 0 at lat 89.5, column 0 at lon -179.5"
+  },
+  "south": {
+    "size": 184,
+    "cellM": 5000,
+    "halfExtentM": 460000,
+    "projection": "south-polar stereographic: x = rho sin(lon), y = rho cos(lon), row 0 at +y"
+  },
+  "north": {
+    "size": 184,
+    "cellM": 5000,
+    "halfExtentM": 460000,
+    "projection": "north-polar stereographic: x = rho sin(lon), y = -rho cos(lon), row 0 at +y"
+  },
+  "terrain": "NASA LRO LOLA: 240 m / 1 km south-polar grids and the LDEM_16-based global grid (8 px/deg)",
+  "built": "2026-11-17T10:41:06.771Z"
+}

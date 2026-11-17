@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
   # Commits made by the terrain workflow don't trigger pushes, so redeploy after it.
   workflow_run:
-    workflows: ["Build global terrain", "Validate against JPL Horizons"]
+    workflows: ["Build global terrain", "Validate against JPL Horizons", "Add 20 m terrain and check against NASA PGDA"]
     types: [completed]
 
 permissions:

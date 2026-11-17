@@ -2,7 +2,11 @@
 // Rebuild every listed site's terrain horizon from LOLA: the 240 m / 1 km
 // south-polar grids where they reach, and the whole-Moon LOLA grid elsewhere.
 //
-//   node tools/build_site_horizons.mjs [data-raw/ldem_16.img]
+//   node tools/build_site_horizons.mjs [data-raw/ldem_16.img] [--only-hires]
+//
+// 20 m tiles in public/data/hires/ (tools/build_hires_terrain.mjs) are used first
+// where present. --only-hires rebuilds just the sites that have a 20 m tile and
+// keeps every other site as it is.
 //
 // With an LDEM image the full-resolution map is used (best); without one it
 // falls back to public/data/global_dem.bin. Writes src/data/precomputedHorizons.{js,json}
@@ -27,10 +31,19 @@ function globalGrid(imgPath) {
   return createGlobalGrid(meta, new Int16Array(fs.readFileSync(path.join(dataDir, 'global_dem.bin')).buffer.slice(0)));
 }
 
+const args = process.argv.slice(2);
+const onlyHires = args.includes('--only-hires');
+const imgArg = args.find((a) => !a.startsWith('--'));
+const hiresIndex = path.join(dataDir, 'hires/index.json');
+const tiles = fs.existsSync(hiresIndex)
+  ? JSON.parse(fs.readFileSync(hiresIndex, 'utf8')).tiles.map((t) => grid(`hires/${t.id}`))
+  : [];
+const hiresIds = new Set(tiles.map((t) => t.meta.name.replace(/^hires_/, '')));
 const sites = JSON.parse(fs.readFileSync(path.join(root, 'src/data/sites.json'), 'utf8'));
-const terrain = createTerrain([grid('sp_fine'), grid('sp_coarse')], globalGrid(process.argv[2]));
-const out = {};
+const terrain = createTerrain([...tiles, grid('sp_fine'), grid('sp_coarse')], globalGrid(imgArg));
+const out = onlyHires ? JSON.parse(fs.readFileSync(path.join(root, 'src/data/precomputedHorizons.json'), 'utf8')) : {};
 for (const s of sites) {
+  if (onlyHires && !hiresIds.has(s.id)) continue;
   const h = computeHorizon(terrain, s.lat, s.lon, { mastHeight: 2 });
   out[s.id] = {
     groundHeight: Math.round(h.groundHeight),

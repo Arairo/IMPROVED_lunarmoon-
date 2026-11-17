@@ -21,15 +21,18 @@ export function createGrid(meta, heights) {
   if (data.length !== n * n) throw new Error(`${meta.name}: expected ${n * n} cells, got ${data.length}`);
   const margin = half - 1.5 * cell;
   const noData = meta.noData ?? -32768;
+  // Polar grids are centred on the pole; local 20 m tiles carry their own centre.
+  const cx = meta.centreX ?? 0;
+  const cy = meta.centreY ?? 0;
   return {
     meta,
     covers(x, y) {
-      return Math.abs(x) < margin && Math.abs(y) < margin;
+      return Math.abs(x - cx) < margin && Math.abs(y - cy) < margin;
     },
     /** Bilinear height (m) at projected x/y, NaN on no-data; caller checks covers() first. */
     sample(x, y) {
-      const fc = (x + half) / cell - 0.5;
-      const fr = (half - y) / cell - 0.5;
+      const fc = (x - cx + half) / cell - 0.5;
+      const fr = (half - (y - cy)) / cell - 0.5;
       const c0 = Math.floor(fc);
       const r0 = Math.floor(fr);
       const tc = fc - c0;

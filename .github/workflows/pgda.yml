@@ -1,0 +1,50 @@
+name: Add 20 m terrain and check against NASA PGDA
+
+# Run from the Actions tab ("Run workflow"). Uses GDAL to read just the needed
+# parts of two NASA Goddard PGDA products:
+#   - LOLA 20 m south-pole terrain (LDEM_80S_20MPP_ADJ, Barker et al. 2023):
+#     a 16 km x 16 km tile around every south-polar site, checked against our
+#     240 m LOLA grid before it is used, then the sites' skylines are rebuilt.
+#   - Lunar polar illumination (average Sun / Earth visibility, Mazarico et al.):
+#     compared with our own sunlight and Earth-in-view map layers.
+# Commits public/data/hires/*, public/data/pgda_check.json and the site horizons;
+# the deploy workflow then publishes the site.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Install GDAL
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq gdal-bin python3-gdal python3-numpy
+      - name: Read the PGDA products
+        run: python3 tools/pgda_fetch.py data-raw/pgda 2>&1 | tee fetch.log
+      - name: Check and pack the 20 m tiles, compare illumination
+        run: node tools/build_hires_terrain.mjs data-raw/pgda 2>&1 | tee check.log
+      - name: Rebuild skylines at the sites with 20 m terrain
+        run: node tools/build_site_horizons.mjs --only-hires | tee horizons.log
+      - run: npm test
+      - name: Summary
+        if: always()
+        run: |
+          { echo '## 20 m terrain and PGDA check'; echo '```'; cat check.log horizons.log 2>/dev/null; echo '```';
+            echo '<details><summary>Fetch log</summary>'; echo; echo '```'; tail -80 fetch.log; echo '```'; echo '</details>'; } >> "$GITHUB_STEP_SUMMARY"
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+          git add public/data/hires public/data/pgda_check.json src/data/precomputedHorizons.js src/data/precomputedHorizons.json public/data/precomputedHorizons.json
+          git commit -m "Add LOLA 20 m south-pole terrain and the NASA PGDA illumination check" || echo "Nothing changed"
+          git pull --rebase
+          git push
