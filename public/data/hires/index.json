@@ -1,0 +1,114 @@
+{
+ "source": "NASA GSFC PGDA LDEM_80S_20MPP_ADJ (Barker et al. 2023)",
+ "url": "https://pgda.gsfc.nasa.gov/products/90",
+ "tiles": [
+  {
+   "id": "ridge",
+   "centreX": -11300,
+   "centreY": -12260,
+   "halfExtent": 8000,
+   "cellSize": 20,
+   "size": 800,
+   "meanAbsDiffM": 3.1
+  },
+  {
+   "id": "peak-shackleton",
+   "centreX": 30040,
+   "centreY": -20000,
+   "halfExtent": 8000,
+   "cellSize": 20,
+   "size": 800,
+   "meanAbsDiffM": 2.4
+  },
+  {
+   "id": "shackleton",
+   "centreX": 7700,
+   "centreY": -6400,
+   "halfExtent": 8000,
+   "cellSize": 20,
+   "size": 800,
+   "meanAbsDiffM": 3.6
+  },
+  {
+   "id": "best-1",
+   "centreX": -36500,
+   "centreY": 14500,
+   "halfExtent": 8000,
+   "cellSize": 20,
+   "size": 800,
+   "meanAbsDiffM": 3
+  },
+  {
+   "id": "best-2",
+   "centreX": -2500,
+   "centreY": -5500,
+   "halfExtent": 8000,
+   "cellSize": 20,
+   "size": 800,
+   "meanAbsDiffM": 3.5
+  },
+  {
+   "id": "degerlache",
+   "centreX": -45420,
+   "centreY": 2300,
+   "halfExtent": 8000,
+   "cellSize": 20,
+   "size": 800,
+   "meanAbsDiffM": 2.5
+  },
+  {
+   "id": "shoemaker",
+   "centreX": 39820,
+   "centreY": 39960,
+   "halfExtent": 8000,
+   "cellSize": 20,
+   "size": 800,
+   "meanAbsDiffM": 2.6
+  },
+  {
+   "id": "haworth",
+   "centreX": -5400,
+   "centreY": 77140,
+   "halfExtent": 8000,
+   "cellSize": 20,
+   "size": 800,
+   "meanAbsDiffM": 2.4
+  },
+  {
+   "id": "faustini",
+   "centreX": 85100,
+   "centreY": 8480,
+   "halfExtent": 8000,
+   "cellSize": 20,
+   "size": 800,
+   "meanAbsDiffM": 2.6
+  },
+  {
+   "id": "nobile",
+   "centreX": 114800,
+   "centreY": 85600,
+   "halfExtent": 8000,
+   "cellSize": 20,
+   "size": 800,
+   "meanAbsDiffM": 2.8
+  },
+  {
+   "id": "lcross",
+   "centreX": -121440,
+   "centreY": 106600,
+   "halfExtent": 8000,
+   "cellSize": 20,
+   "size": 800,
+   "meanAbsDiffM": 2
+  },
+  {
+   "id": "im2",
+   "centreX": 76980,
+   "centreY": 137740,
+   "halfExtent": 8000,
+   "cellSize": 20,
+   "size": 800,
+   "meanAbsDiffM": 2.6
+  }
+ ]
+}
