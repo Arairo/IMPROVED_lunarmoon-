@@ -44,11 +44,14 @@ def info(ds):
     gt = ds.GetGeoTransform()
     unit = 1000.0 if abs(gt[1]) < 5 else 1.0  # projected units in km or m
     b = ds.GetRasterBand(1)
+    nd = b.GetNoDataValue()
+    if nd is not None and math.isnan(nd):
+        nd = 'nan'
     return {
         'size': [ds.RasterXSize, ds.RasterYSize],
         'geotransform': gt,
         'unitToMetres': unit,
-        'noData': b.GetNoDataValue(),
+        'noData': nd,
         'dtype': gdal.GetDataTypeName(b.DataType),
         'scale': b.GetScale(), 'offset': b.GetOffset(),
         'block': b.GetBlockSize(),
@@ -68,7 +71,7 @@ def window(ds, meta, x, y, half):
     if xs1 > xs0 and ys1 > ys0:
         a = ds.GetRasterBand(1).ReadAsArray(xs0, ys0, xs1 - xs0, ys1 - ys0).astype(np.float32)
         nd = meta['noData']
-        if nd is not None:
+        if nd is not None and nd != 'nan':
             a[a == nd] = np.nan
         out[ys0 - y0:ys1 - y0, xs0 - x0:xs1 - x0] = a
     # centre of the window in metres (cell centres)
@@ -82,8 +85,17 @@ def point(ds, meta, x, y):
     px = int((x / u - gt[0]) / gt[1])
     py = int((y / u - gt[3]) / gt[5])
     if 0 <= px < ds.RasterXSize and 0 <= py < ds.RasterYSize:
-        v = float(ds.GetRasterBand(1).ReadAsArray(px, py, 1, 1)[0, 0])
-        return None if meta['noData'] is not None and v == meta['noData'] else v
+        for attempt in range(3):
+            try:
+                v = float(ds.GetRasterBand(1).ReadAsArray(px, py, 1, 1)[0, 0])
+                break
+            except RuntimeError as e:
+                print('point read failed, retrying:', str(e)[:120], flush=True)
+        else:
+            return None
+        if meta['noData'] is not None and meta['noData'] != 'nan' and v == meta['noData']:
+            return None
+        return v * (meta['scale'] or 1) + (meta['offset'] or 0)
     return None
 
 
@@ -114,17 +126,21 @@ for name, url in (('sun', SUN_URL), ('earth', EARTH_URL)):
                   width=184, height=184, resampleAlg='average', dstNodata=-9999)
     arr = w.GetRasterBand(1).ReadAsArray().astype(np.float32)
     arr[arr == -9999] = np.nan
-    if m['noData'] is not None:
+    if m['noData'] is not None and m['noData'] != 'nan':
         arr[arr == m['noData']] = np.nan
+    arr = arr * (m['scale'] or 1) + (m['offset'] or 0)  # stored as scaled integers
     print(name, 'grid min/max/mean', np.nanmin(arr), np.nanmax(arr), np.nanmean(arr), flush=True)
     arr.tofile(os.path.join(OUT, f'illum_{name}.f32'))
     for s in POLAR:
         meta['sites'].setdefault(s['id'], {})[name + '120m'] = point(ds, m, *xy(s['lat'], s['lon']))
 
-ds85 = gdal.Open(SUN85_URL)
-m85 = info(ds85)
-meta['products']['sun85'] = {'url': SUN85_URL.replace('/vsicurl/', ''), **m85}
-for s in POLAR:
-    meta['sites'][s['id']]['sun60m'] = point(ds85, m85, *xy(s['lat'], s['lon']))
+try:
+    ds85 = gdal.Open(SUN85_URL)
+    m85 = info(ds85)
+    meta['products']['sun85'] = {'url': SUN85_URL.replace('/vsicurl/', ''), **m85}
+    for s in POLAR:
+        meta['sites'][s['id']]['sun60m'] = point(ds85, m85, *xy(s['lat'], s['lon']))
+except RuntimeError as e:
+    print('60 m Sun map unavailable, using the 120 m one only:', e, flush=True)
 json.dump(meta, open(os.path.join(OUT, 'illum_meta.json'), 'w'), indent=1, default=str)
 print(json.dumps(meta['sites'], indent=1), flush=True)

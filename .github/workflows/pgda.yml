@@ -15,6 +15,10 @@ on:
 permissions:
   contents: write
 
+defaults:
+  run:
+    shell: bash  # -eo pipefail, so a failing step is not hidden by tee
+
 jobs:
   build:
     runs-on: ubuntu-latest
