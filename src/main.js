@@ -124,13 +124,17 @@ export function toggleFocusMode() {
 
 /** Put several sites on the same window side by side in the Compare tab. */
 function compareSites(list) {
+  // A fresh head-to-head of exactly these sites on the current touchdown date.
   const seen = new Set();
+  app.scenarios = [];
   for (const site of list) {
-    if (!site || seen.has(site.id)) continue;
-    seen.add(site.id);
-    addScenario(app, site, app.windowStartMs, site.short || site.name);
+    if (!site || seen.has(`${site.id}|${site.lat}|${site.lon}`)) continue;
+    seen.add(`${site.id}|${site.lat}|${site.lon}`);
+    addScenario(app, site, app.windowStartMs, (site.short || site.name).replace(/ \(.*\)$/, ''));
   }
-  showToast('Added to Compare');
+  app.compareBaseId = app.scenarios[0]?.id;
+  app.cmpShow = app.scenarios.slice(0, 3).map((s) => s.id);
+  app.cmpView = 'result';
   switchMode('compare');
 }
 

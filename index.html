@@ -236,19 +236,22 @@
     <div class="cl-wrap">
       <div class="cl-head">
         <div class="cl-title">
-          <span class="cl-kicker">Compare Lab</span>
-          <h2>Which plan works best?</h2>
-          <p>Put sites and dates side by side and see how big each difference really is.</p>
+          <span class="cl-kicker">Compare</span>
+          <h2 id="cmpTitle">What do you want to compare?</h2>
+          <p id="cmpSub">Pick one question. You can always start a new comparison.</p>
         </div>
         <div class="cl-actions">
-          <button type="button" id="cmpAddCurrentBtn" class="cl-btn is-primary">+ This site &amp; date</button>
-          <select id="cmpAddSiteSel" class="cl-select" aria-label="Add any site to the comparison"></select>
-          <button type="button" id="cmpSlipBtn" class="cl-btn">Launch slips +1, +2, +3 mo</button>
-          <button type="button" id="cmpNearbyBtn" class="cl-btn">Sunnier spots nearby</button>
-          <span class="cl-sep"></span>
+          <button type="button" id="cmpNewBtn" class="cl-btn" hidden>New comparison</button>
           <button type="button" id="cmpTourBtn" class="cl-btn is-ghost">Tour</button>
-          <button type="button" id="cmpExportBtn" class="cl-btn is-ghost">Export CSV</button>
-          <button type="button" id="cmpClearBtn" class="cl-btn is-ghost is-danger">Clear</button>
+        </div>
+        <!-- Older entry points, kept for the planner, Lumi and CSV export -->
+        <div hidden>
+          <button type="button" id="cmpAddCurrentBtn"></button>
+          <select id="cmpAddSiteSel"></select>
+          <button type="button" id="cmpSlipBtn"></button>
+          <button type="button" id="cmpNearbyBtn"></button>
+          <button type="button" id="cmpExportBtn"></button>
+          <button type="button" id="cmpClearBtn"></button>
         </div>
       </div>
       <div id="compareTableContainer"></div>

@@ -39,14 +39,15 @@ export function notchUpdate(now, { playing = false } = {}) {
     el.classList.remove('is-busy');
     el.classList.add('is-wide');
     const p = now.powerStatus, c = now.commsStatus;
-    const state = p === 'go' && c === 'go' ? ['GO', '#30d158'] : p === 'no-go' && c === 'no-go' ? ['NO-GO', '#ff453a'] : ['CAUTION', '#ffd60a'];
+    // Same words as the Check step (GO / GO WITH CARE / NO GO); this pill is about right now.
+    const state = p === 'go' && c === 'go' ? ['GO', '#30d158'] : p === 'no-go' && c === 'no-go' ? ['NO GO', '#ff453a'] : ['GO WITH CARE', '#ffd60a'];
     el.style.setProperty('--c', state[1]);
     if (!el.querySelector('[data-k="w"]')) {
       el.innerHTML = `<span class="n-dot"></span><span class="n-top" data-k="s"></span><span class="n-sep"></span>
         <span class="n-sub">☀︎</span><span class="n-val" data-k="w"></span><span class="n-sep"></span>
         <span class="n-sub">Earth</span><span class="n-val" data-k="e"></span>`;
     }
-    el.querySelector('[data-k="s"]').textContent = playing ? `${state[0]} · live` : state[0];
+    el.querySelector('[data-k="s"]').textContent = `Now · ${state[0]}`;
     flashVal(el.querySelector('[data-k="w"]'), last.watts, now.sun.watts, (v) => `${v.toFixed(0)} W`);
     flashVal(el.querySelector('[data-k="e"]'), last.clear, now.earth.clearance, (v) => `${v >= 0 ? '+' : '−'}${Math.abs(v).toFixed(1)}°`);
     last = { watts: now.sun.watts, clear: now.earth.clearance };

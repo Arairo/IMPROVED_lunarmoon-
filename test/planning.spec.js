@@ -63,3 +63,13 @@ test('describeChange never reports a change that rounds to nothing', () => {
   const b = { sun: 0.5, earth: 0.5, darkH: 349.0 };
   assert.match(describeChange('Slip', a, b), /almost nothing changes/);
 });
+
+test('launchDateSeries matches windowStats for a launch day', async () => {
+  const { launchDateSeries, windowStats } = await import('../src/core/planning.js');
+  const series = launchDateSeries(RIDGE, T0, 60, DEFAULT_CONFIG);
+  assert.equal(series.length, 60);
+  const k = 17;
+  const ws = windowStats(RIDGE, series[k].ms, DEFAULT_CONFIG, 30, 2 * 3600000);
+  assert.ok(Math.abs(series[k].both - ws.both) < 0.01, `${series[k].both} vs ${ws.both}`);
+  assert.ok(series.every((d) => d.both >= 0 && d.both <= d.sun + 1e-9 && d.both <= d.earth + 1e-9));
+});

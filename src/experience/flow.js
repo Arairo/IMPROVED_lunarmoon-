@@ -10,6 +10,7 @@ import { fmtLatLon, fmtHours } from '../ui/format.js';
 import { play } from './sound.js';
 import { createCalendar } from './calendar.js';
 import { icon } from './icons.js';
+import { addScenario } from '../ui/compare.js';
 
 const DAY = 86400000;
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
@@ -40,6 +41,7 @@ export function mountFlow({ app, setTime, switchMode, getBestSpots, actions }) {
       </ol>
     </div>
     <div class="f-body">${STEPS.map((s, i) => `<section class="f-step" data-step="${i}" hidden><p class="f-lead">${s.lead}</p><div class="f-slot"></div></section>`).join('')}</div>
+    <div class="f-tray"><button type="button" class="f-tray-add" data-tray-add>${icon('plus', 15)} Add this plan to compare</button><button type="button" class="f-tray-go" data-tray-go hidden></button></div>
     <div class="f-nav"><button type="button" class="f-back">${icon('chevronLeft', 16)} Back</button><button type="button" class="f-next">Next</button></div>`;
   const slot = (i) => rail.querySelector(`.f-step[data-step="${i}"] .f-slot`);
 
@@ -97,7 +99,7 @@ export function mountFlow({ app, setTime, switchMode, getBestSpots, actions }) {
     const minDays = Number(s2.querySelector('[data-min]').value);
     const out = s2.querySelector('[data-find-out]');
     const res = findNextWindow(app.site, app.windowStartMs, app.config, { minDays });
-    if (!res) { out.textContent = `No time in the next 12 months has the Sun and Earth up together for ${minDays} days here. Try another site in step 1.`; return; }
+    if (!res) { out.textContent = `No time in the next 12 months has the Sun and Earth up together for ${minDays} days here. ${minDays >= 7 ? 'The Sun and Earth are rarely up together for more than about two weeks: a lunar day lasts about 29.5 Earth days, so the Sun is up for roughly half of it (longer only on the best polar ridges). Try a shorter stay or another site.' : 'Try another site in step 1.'}`; return; }
     const lasts = ((res.endMs - res.ms) / DAY).toFixed(1);
     if (res.ms - app.windowStartMs < 2 * 3600000) { out.textContent = `Good news: this date already works. The Sun and Earth stay up together for ${lasts} days.`; play('go'); return; }
     setTime(res.ms, true);
@@ -117,13 +119,36 @@ export function mountFlow({ app, setTime, switchMode, getBestSpots, actions }) {
   const cmp = document.createElement('div');
   cmp.className = 'f-card';
   cmp.innerHTML = `<b>Compare side by side</b>
-    <div class="f-row f-wrap"><button type="button" data-cmp="slip">Launch slips: +1, +2, +3 months</button>
-    <button type="button" data-cmp="best">This site vs the best spots</button>
-    <button type="button" data-cmp="open">Open the comparison table</button></div>`;
+    <div class="f-row f-wrap"><button type="button" data-cmp="slip">${icon('calendar', 14)} Compare launch dates</button>
+    <button type="button" data-cmp="best">${icon('trophy', 14)} My plan vs the best spot</button>
+    <button type="button" data-cmp="open">${icon('scale', 14)} Open Compare</button></div>`;
   slot(3).appendChild(cmp);
   cmp.querySelector('[data-cmp="slip"]').addEventListener('click', () => actions.slipCompare());
   cmp.querySelector('[data-cmp="best"]').addEventListener('click', () => actions.compareBest());
   cmp.querySelector('[data-cmp="open"]').addEventListener('click', () => switchMode('compare'));
+
+  // Compare tray: collect plans while you work, like a shop's compare basket.
+  const trayAdd = rail.querySelector('[data-tray-add]');
+  const trayGo = rail.querySelector('[data-tray-go]');
+  const trayLabel = () => `${(app.site.short || app.site.name).replace(/ \(.*\)$/, '')} · ${day(app.windowStartMs)}`;
+  const inTray = () => app.scenarios.some((s) => s.site.lat === app.site.lat && s.site.lon === app.site.lon && s.startMs === app.windowStartMs && s.windowDays === app.windowDays);
+  function renderTray() {
+    const n = app.scenarios.length;
+    const here = inTray();
+    trayAdd.innerHTML = here ? `${icon('check', 15)} This plan is in Compare` : `${icon('plus', 15)} Add this plan to compare`;
+    trayAdd.classList.toggle('is-in', here);
+    trayGo.hidden = n === 0;
+    trayGo.innerHTML = n >= 2 ? `Compare ${n} plans ${icon('chevronRight', 14)}` : `1 plan · add one more`;
+    trayGo.disabled = n < 2;
+  }
+  trayAdd.addEventListener('click', () => {
+    if (inTray()) { switchMode('compare'); return; }
+    const sc = addScenario(app, app.site, app.windowStartMs, trayLabel());
+    app.cmpShow = [...(app.cmpShow || []).filter((id) => app.scenarios.some((x) => x.id === id) && id !== sc.id), sc.id].slice(-3);
+    play('pop');
+    renderTray();
+  });
+  trayGo.addEventListener('click', () => { if (app.scenarios.length >= 2) { app.cmpView = 'result'; switchMode('compare'); } });
 
   // 5 · Report
   slot(4).innerHTML = '<div class="f-report" data-report></div><div class="f-row f-wrap"><button type="button" class="f-primary" data-r="print">Print / save as PDF</button><button type="button" data-r="link">Copy link</button><button type="button" data-r="terrain">Terrain 3D ↗</button><button type="button" data-r="lumi">Ask Lumi</button></div>';
@@ -245,6 +270,7 @@ export function mountFlow({ app, setTime, switchMode, getBestSpots, actions }) {
 
   function refresh(force = false) {
     if (!app.site) return;
+    renderTray();
     if (missionDate === null && app.scan) missionDate = app.windowStartMs;
     const sub = (k, t) => { const el = rail.querySelector(`[data-sub="${k}"]`); if (el) el.textContent = t; };
     const v = verdictNow();

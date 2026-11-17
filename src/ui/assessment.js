@@ -33,10 +33,10 @@ export function renderAssessmentPanel(container, app, callbacks = {}) {
 
   const overallStatus =
     now.powerStatus === 'go' && now.commsStatus === 'go'
-      ? { cls: 'bg-emerald-50 border-emerald-300 text-emerald-900', dot: 'bg-emerald-600', label: 'GO · Mission Ready at Current Time', desc: 'Solar array exceeds spacecraft load and direct-to-Earth radio link closes.' }
+      ? { cls: 'bg-emerald-50 border-emerald-300 text-emerald-900', dot: 'bg-emerald-600', label: 'Now · GO: power and radio both work', desc: 'Solar array exceeds spacecraft load and direct-to-Earth radio link closes.' }
       : now.powerStatus === 'no-go' && now.commsStatus === 'no-go'
-      ? { cls: 'bg-red-50 border-red-300 text-red-900', dot: 'bg-red-600', label: 'NO-GO · In Darkness & Radio Blackout', desc: 'Both the Sun and Earth are blocked by the local lunar horizon right now.' }
-      : { cls: 'bg-amber-50 border-amber-300 text-amber-900', dot: 'bg-amber-600', label: 'CAUTION · Partial Constraint Active', desc: now.powerStatus !== 'go' ? 'Solar power is below continuous load; running on battery.' : (now.commsReasons[0] || 'Earth link is degraded or blocked by terrain.') };
+      ? { cls: 'bg-red-50 border-red-300 text-red-900', dot: 'bg-red-600', label: 'Now · NO GO: no sunlight and no radio', desc: 'Both the Sun and Earth are blocked by the local lunar horizon right now.' }
+      : { cls: 'bg-amber-50 border-amber-300 text-amber-900', dot: 'bg-amber-600', label: 'Now · GO WITH CARE: one of the two is limited', desc: now.powerStatus !== 'go' ? 'Solar power is below continuous load; running on battery.' : (now.commsReasons[0] || 'Earth link is degraded or blocked by terrain.') };
 
   const glossBtn = (k) => `<button type="button" data-gloss="${k}" class="inline-flex items-center justify-center w-4 h-4 rounded-full bg-slate-100 hover:bg-blue-100 text-slate-600 hover:text-blue-700 border border-slate-300 text-[10px] font-bold ml-1" title="Definition">?</button>`;
 

@@ -104,7 +104,7 @@ export function createAssistant(api) {
     const head = `At <b>${siteName()}</b>, ${when(app.timeMs)}:`;
     if (focus === 'power') return `${head}<br>${power}`;
     if (focus === 'earth') return `${head}<br>${earth}`;
-    const verdict = n.powerStatus === 'go' && n.commsStatus === 'go' ? 'GO ✅' : n.powerStatus === 'no-go' && n.commsStatus === 'no-go' ? 'NO-GO ⛔' : 'CAUTION ⚠️';
+    const verdict = n.powerStatus === 'go' && n.commsStatus === 'go' ? 'GO right now ✅' : n.powerStatus === 'no-go' && n.commsStatus === 'no-go' ? 'NO GO right now ⛔' : 'GO WITH CARE right now ⚠️';
     return `${head} <b>${verdict}</b><br>${power}<br>${earth}`;
   }
   function summary30() {
@@ -137,12 +137,12 @@ export function createAssistant(api) {
         if (r.site && r.site.id !== app.site.id) selectSite(r.site, true);
         const from = r.from ?? app.windowStartMs;
         const res = findNextWindow(site, from, app.config, { minDays: r.minDays });
-        if (!res) return add('lumi', `I searched 12 months from ${day(from)} at <b>${esc(site.name)}</b>: there is no time with the Sun and Earth up together for ${r.minDays} day${r.minDays > 1 ? 's' : ''}. ${site.lat < -85 && site.group !== 'computed' ? 'Crater floors near the pole can stay dark for years; try a ridge.' : 'Try a shorter stay or another site.'}`,
+        if (!res) return add('lumi', `I searched 12 months from ${day(from)} at <b>${esc(site.name)}</b>: there is no time with the Sun and Earth up together for ${r.minDays} day${r.minDays > 1 ? 's' : ''}. ${site.lat < -85 && site.group !== 'computed' ? 'Crater floors near the pole can stay dark for years; try a ridge.' : r.minDays >= 7 ? 'The Sun and Earth are rarely up together for more than about two weeks: a lunar day lasts about 29.5 Earth days, so the Sun is up for roughly half of it (longer only on the best polar ridges). Try a shorter stay or another site.' : 'Try a shorter stay or another site.'}`,
           [{ label: 'Show me the best spot instead', run: () => ask('best spot') }]);
         const lasts = ((res.endMs - res.ms) / DAY).toFixed(1);
         return add('lumi', `Earliest landing at <b>${esc(site.name)}</b> from ${day(from)} with the Sun and Earth up together for ${r.minDays}+ days:<br><b>${when(res.ms)}</b>, lasting ${lasts} days.`,
           [{ label: 'Go there', run: () => { setTime(res.ms, true); add('lumi', `Done. ${statusText()}`); } },
-           { label: 'Compare with +1 month', run: () => { setTime(res.ms, true); actions.slipCompare?.(); add('lumi', 'Opened the comparison: as planned, +1, +2 and +3 lunar months.'); } }]);
+           { label: 'See every launch day', run: () => { setTime(res.ms, true); actions.slipCompare?.(); add('lumi', 'Here’s every launch day for the next year on one chart. Tap a bar to compare it with your plan.'); } }]);
       }
       case 'bestSpot': {
         const spots = getBestSpots();
@@ -154,7 +154,7 @@ export function createAssistant(api) {
            { label: 'Compare them', run: () => compareSites([app.site, ...spots.map((s) => s.r.site)]) }]);
       }
       case 'compare': {
-        if (r.slip) { actions.slipCompare?.(); return add('lumi', `Comparing <b>${siteName()}</b> as planned and 1, 2 and 3 lunar months later.`); }
+        if (r.slip) { actions.slipCompare?.(); return add('lumi', `Here’s every launch day for the next year at <b>${siteName()}</b>. Tall green bars are the best days; tap one to compare it with your plan.`); }
         const list = r.sites.length === 1 ? [app.site, r.sites[0]] : r.sites;
         if (list.length < 2) return add('lumi', 'Tell me which sites to compare, for example “compare ridge and IM-2”.');
         compareSites(list);

@@ -86,7 +86,7 @@ export function mountPlanCard({ app, selectSite, setTime, getGlobe }) {
     const minDays = Number(card.querySelector('[data-min]').value);
     const res = findNextWindow(app.site, app.windowStartMs, app.config, { minDays });
     if (!res) {
-      say(`No landing time in the next 12 months has the Sun and Earth up together for ${minDays} day${minDays > 1 ? 's' : ''} here. Try another site or a shorter stay.`);
+      say(`No landing time in the next 12 months has the Sun and Earth up together for ${minDays} day${minDays > 1 ? 's' : ''} here. ${minDays >= 7 ? 'The Sun and Earth are rarely up together for more than about two weeks: a lunar day lasts about 29.5 Earth days, so the Sun is up for roughly half of it (longer only on the best polar ridges). ' : ''}Try another site or a shorter stay.`);
       return;
     }
     const lasts = ((res.endMs - res.ms) / DAY).toFixed(1);

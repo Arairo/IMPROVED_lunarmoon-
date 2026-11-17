@@ -2,7 +2,7 @@
 import { esc, fmtHours, fmtLatLon, pct } from './format.js';
 import { SYNODIC_MONTH_DAYS } from '../core/constants.js';
 import { prepareSite, scanWindow } from '../core/analysis.js';
-import { renderCompareLab } from './compareLab.js';
+import { renderCompareFlow } from './compareFlow.js';
 
 export const COLUMNS = [
   { key: 'litFraction', label: 'Sunlit', fmt: (v) => pct(v, 1), better: 'high', tol: 0.03 },
@@ -51,7 +51,7 @@ export function addScenario(app, site, startMs, label) {
 }
 
 export function renderCompareTable(container, app, onOpenScenario) {
-  renderCompareLab(container, app, onOpenScenario, addScenario);
+  renderCompareFlow(container, app, onOpenScenario, addScenario);
 }
 
 export function scenariosToCsv(scenarios) {

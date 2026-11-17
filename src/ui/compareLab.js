@@ -51,7 +51,7 @@ export function scoreOf(sc) {
   return bothFraction(sc) * 100 + st.dteFraction * 20 - Math.min(st.longestDarkH, 720) / 72;
 }
 
-function verdict(sc) {
+export function verdict(sc) {
   const st = sc.scan.stats;
   const both = bothFraction(sc);
   if (st.litFraction < 0.2) return { cls: 'red', text: 'Too dark' };
@@ -98,6 +98,15 @@ function drawStrip(canvas, sc, days, { rows = 3 } = {}) {
 
 let bound = false;
 
+/** Every scenario keeps a colour no other scenario is using (8 named, then golden-angle hues). */
+export function assignColors(list) {
+  const colorAt = (k) => (k < SC_COLORS.length ? SC_COLORS[k] : `hsl(${Math.round((k * 137.508) % 360)} 78% 62%)`);
+  list.forEach((s) => {
+    if (s.color && list.some((o) => o !== s && o.color === s.color && list.indexOf(o) < list.indexOf(s))) s.color = null;
+    if (!s.color) { let k = 0; while (list.some((o) => o.color === colorAt(k))) k++; s.color = colorAt(k); }
+  });
+}
+
 /** The three-step guide shown at the top of the lab; it ticks off as you go. */
 function guideHtml(app) {
   const n = app.scenarios.length;
@@ -117,9 +126,9 @@ function guideHtml(app) {
  * Render the lab into `container`. `onOpen(scenario)` opens a scenario in the
  * planner; `addScenario(app, site, startMs, label)` adds one (from compare.js).
  */
-export function renderCompareLab(container, app, onOpen, addScenario) {
+export function renderCompareLab(container, app, onOpen, addScenario, { details = false, onChange = null } = {}) {
   if (!container) return;
-  const rerender = () => renderCompareLab(container, app, onOpen, addScenario);
+  const rerender = onChange || (() => renderCompareLab(container, app, onOpen, addScenario));
   const setCount = () => {
     const c = document.getElementById('headerCompareCount');
     if (c) { c.textContent = String(app.scenarios.length); c.classList.toggle('has-items', app.scenarios.length > 0); }
@@ -163,12 +172,7 @@ export function renderCompareLab(container, app, onOpen, addScenario) {
 
   if (!list.some((s) => s.id === app.compareBaseId)) app.compareBaseId = list[0].id;
   const base = list.find((s) => s.id === app.compareBaseId);
-  // Every scenario keeps a colour no other scenario is using (8 named, then golden-angle hues).
-  const colorAt = (k) => (k < SC_COLORS.length ? SC_COLORS[k] : `hsl(${Math.round((k * 137.508) % 360)} 78% 62%)`);
-  list.forEach((s) => {
-    if (s.color && list.some((o) => o !== s && o.color === s.color && list.indexOf(o) < list.indexOf(s))) s.color = null;
-    if (!s.color) { let k = 0; while (list.some((o) => o.color === colorAt(k))) k++; s.color = colorAt(k); }
-  });
+  assignColors(list);
   const ranked = [...list].sort((a, b) => scoreOf(b) - scoreOf(a));
   const rank = new Map(ranked.map((s, i) => [s.id, i + 1]));
   const best = ranked[0];
@@ -245,14 +249,16 @@ export function renderCompareLab(container, app, onOpen, addScenario) {
       <thead><tr><th>Scenario</th>${cols.map((c) => `<th>${c}</th>`).join('')}</tr></thead>
       <tbody>${list.map((s) => { const st = s.scan.stats; const ge = (k, o) => (st[o] && st[k] > 0 ? '≥ ' : ''); return `<tr><td><i style="background:${s.color}"></i>${esc(s.label)}</td><td>${fmtPct(st.litFraction)}</td><td>${fmtPct(bothFraction(s))}</td><td>${Math.round(st.avgPowerW)} W</td><td>${ge('longestDarkH', 'longestDarkOpenEnded')}${fmtHours(st.longestDarkH)}</td><td>${ge('batteryKWh', 'batteryOpenEnded')}${st.batteryKWh.toFixed(1)} kWh</td><td>${fmtPct(st.earthCentreFraction)}</td><td>${fmtPct(st.dteFraction)}</td><td>${ge('longestBlackoutH', 'longestBlackoutOpenEnded')}${fmtHours(st.longestBlackoutH)}</td></tr>`; }).join('')}</tbody></table></div></details>`;
 
-  container.innerHTML = `${guideHtml(app)}${winner}
-    <h3 class="cl-h"><span class="h-n">2</span>Your plans <small>Each number is compared with the baseline (${icon('star', 12)} ${esc(base.label)}). Tap ${icon('star', 12)} on another card to measure from it instead.</small></h3>
+  container.innerHTML = `${details ? '' : `${guideHtml(app)}${winner}`}
+    <h3 class="cl-h">${details ? '' : '<span class="h-n">2</span>'}Your plans <small>Each number is compared with the baseline (${icon('star', 12)} ${esc(base.label)}). Tap ${icon('star', 12)} on another card to measure from it instead.</small></h3>
     <div class="cl-cards">${cards}</div>
-    <h3 class="cl-h"><span class="h-n">3</span>Side by side <small>Longer bar = more. ${icon('trophy', 12)} marks the best for each measure.</small></h3>
+    <h3 class="cl-h">${details ? '' : '<span class="h-n">3</span>'}Every measure <small>Longer bar = more. ${icon('trophy', 12)} marks the best for each measure.</small></h3>
     <div class="cl-bars">${bars}</div>
     <h3 class="cl-h">Day by day <small>Each row starts at its touchdown, so you can see when each plan has power and radio.</small></h3>
     ${daysView}
-    ${table}`;
+    ${table}
+    ${details ? `<div class="cl-export"><button type="button" class="cl-btn is-ghost" data-csv>${icon('download', 15)} Export all plans as CSV</button></div>` : ''}`;
+  container.querySelector('[data-csv]')?.addEventListener('click', () => document.getElementById('cmpExportBtn')?.click());
 
   container.querySelectorAll('[data-open]').forEach((b) => b.addEventListener('click', () => { const sc = list.find((x) => x.id === b.dataset.open); if (sc) onOpen(sc); }));
   container.querySelectorAll('[data-base]').forEach((b) => b.addEventListener('click', () => { app.compareBaseId = b.dataset.base; app.compareBaseChosen = true; rerender(); }));
@@ -292,6 +298,7 @@ export function renderCompareLab(container, app, onOpen, addScenario) {
 
 /** Redraw canvases after a theme change or resize. */
 export function redrawCompareLab(container, app) {
+  container = container?.querySelector('.cl-more-body') || container;
   if (!container || !app.scenarios.length) return;
   const maxDays = Math.max(...app.scenarios.map((s) => s.windowDays));
   container.querySelectorAll('[data-strip]').forEach((c) => { const sc = app.scenarios.find((x) => x.id === c.dataset.strip); if (sc) drawStrip(c, sc, sc.windowDays); });

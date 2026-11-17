@@ -200,23 +200,22 @@ export function initExperience(api) {
 
   // ---------- Compare Lab tour ----------
   const cmpTour = createSpotlight([
-    { target: null, mood: 'happy', title: 'The Compare Lab in three steps', body: 'Compare answers one question: which plan is better, and by how much? I’ve added an example (your site launched on time and 1, 2 and 3 months late) so you can see it work.' },
-    { target: '.cl-guide', mood: 'think', title: 'Your three steps', body: '1 Add plans, 2 pick a baseline, 3 read the differences. They stay at the top of the page and tick off as you go. Click one to jump to that part.' },
-    { target: '.cl-actions', mood: 'happy', title: 'Step 1: add plans', body: '“This site & date” adds what’s open in the planner. “Add any site” picks another place. “Launch slips” adds the same site 1, 2 and 3 months late. “Sunnier spots nearby” adds the best-lit ridges.', why: 'A plan is a site plus a touchdown date. Comparing the same site on different dates answers “what if we launch late?”; comparing different sites on the same date answers “where should we land?”.' },
-    { target: '.cl-card.is-base', mood: 'think', title: 'Step 2: pick a baseline', body: 'The baseline (gold star) is the plan you measure the others against, usually the one you’re planning now. Tap the star on any other card to switch.' },
-    { target: '.cl-winner', mood: 'wow', title: 'Step 3: read the differences', body: 'Start here. The winner has the most time with sunlight and Earth in view together, which means power and radio at the same time.' },
-    { target: '.cl-cards', mood: 'happy', title: 'The big number on each card', body: 'It’s the share of time with power and radio together. The chip next to it says how many points it gains (green) or loses (red) against the baseline.' },
-    { target: '.cl-bars', mood: 'think', title: 'Every measure, to scale', body: 'One chart per measure (sunlight, Earth in view, power, longest night, battery). Longer bar = more, so you can see at a glance whether a difference is tiny or huge. The trophy marks the best.' },
-    { target: '.cl-days', mood: 'wow', title: 'Day by day', body: 'Each row starts at its own touchdown. Green is power and radio together, amber is power only, gaps are nights. Great for spotting when trouble starts.' },
-    { target: '.cl-card [data-open]', pad: 8, mood: 'happy', title: 'Back to the planner', body: 'Tap this arrow on any card to open that plan in the planner. Export CSV (top right) saves the whole comparison for a report.' },
+    { target: null, mood: 'happy', title: 'Compare in one minute', body: 'Compare answers one question at a time: two places, launch dates, or your plan vs the best spot. I’ve set up “your plan vs the best spot” so you can see an answer.' },
+    { target: '.ch-verdict', mood: 'wow', title: 'The answer first', body: 'One sentence tells you which plan wins and by how much: the share of time the lander has sunlight for power and Earth in view for radio, at the same time.' },
+    { target: '.ch-cols', mood: 'happy', title: 'The plans, head to head', body: 'Two or three plans side by side. The big number is that same “power and radio together” share. Tap the arrow to open a plan in the planner.' },
+    { target: '.ch-reasons', mood: 'think', title: 'Why it wins', body: 'The reasons the winner comes out on top, and anything the other plan does better, in plain words with the numbers.' },
+    { target: '.ch-diff', mood: 'happy', title: 'Only what’s different', body: 'Measures that are about the same are hidden, so you only read what matters. Tick “Show all measures” to see everything.' },
+    { target: '.cl-more summary', pad: 8, mood: 'think', title: 'Full details, when you want them', body: 'Charts for every measure, a day-by-day view, the full table and CSV export are folded away here.' },
+    { target: '#cmpNewBtn', pad: 8, mood: 'wow', title: 'Ask another question', body: 'Start a new comparison: two places, or the launch-date chart that shows every day of the next year at once. In the planner, “Add to compare” at the bottom of the steps collects plans as you go.' },
   ], { label: 'Compare tour' });
   const startCmpTour = () => {
     store.set('lsp.cmpTourSeen', '1');
     document.getElementById('cmpTourBtn')?.classList.remove('is-new');
     if (app.mode !== 'compare') switchMode('compare');
-    if (app.scenarios.length < 2) document.getElementById('cmpSlipBtn')?.click();
+    if (app.scenarios.length < 2 || app.cmpView !== 'result') exampleCompare();
     setTimeout(() => cmpTour.start(), 350);
   };
+  document.getElementById('cmpNewBtn')?.addEventListener('click', () => { app.cmpView = 'start'; switchMode('compare'); });
   const cmpTourBtn = document.getElementById('cmpTourBtn');
   if (cmpTourBtn) {
     cmpTourBtn.innerHTML = `${icon('route', 15)} Tour`;
@@ -335,16 +334,22 @@ export function initExperience(api) {
       },
     });
   }
+  const exampleCompare = () => {
+    const b = app.cmpBestSite?.();
+    if (!b || !app.cmpSetPlans) return;
+    const nm = (x) => (x.short || x.name).replace(/ \(.*\)$/, '');
+    app.cmpSetPlans([{ site: app.site, startMs: app.windowStartMs, label: `${nm(app.site)} (your plan)` }, { site: b, startMs: app.windowStartMs, label: nm(b) }]);
+  };
   function showCompareWelcome() {
     chooser({
       key: CMP_KEY,
       mood: 'think',
-      title: 'Welcome to the Compare Lab',
-      sub: 'Put two or more plans side by side and see how big each difference is. How would you like to start?',
-      opts: `<button type="button" class="wl-opt" data-w="example"><span class="wl-ic">${icon('calendar', 26)}</span><b>Show me an example</b><small>Your site, launched on time and 1, 2 and 3 months late</small></button>
-          <button type="button" class="wl-opt" data-w="tour"><span class="wl-ic">${icon('route', 26)}</span><b>Take the guided tour</b><small>Lumi walks you through the three steps</small></button>`,
+      title: 'Welcome to Compare',
+      sub: 'Ask one question, get one clear answer: which plan gives your lander more power and radio, and by how much.',
+      opts: `<button type="button" class="wl-opt" data-w="example"><span class="wl-ic">${icon('trophy', 26)}</span><b>Show me an example</b><small>Your plan vs the best spot for the same dates</small></button>
+          <button type="button" class="wl-opt" data-w="tour"><span class="wl-ic">${icon('route', 26)}</span><b>Take the guided tour</b><small>Lumi shows you how to read a comparison</small></button>`,
       onPick: (c) => {
-        if (c === 'example') { if (app.scenarios.length < 2) document.getElementById('cmpSlipBtn')?.click(); }
+        if (c === 'example') exampleCompare();
         else if (c === 'tour') startCmpTour();
       },
     });
@@ -397,6 +402,7 @@ export function initExperience(api) {
           if (overall) best.spots.push({ r: overall, color: '#30d158', title: 'Best overall' });
           if (flown && flown.site.id !== overall?.site.id) best.spots.push({ r: flown, color: '#bf5af2', title: 'Best flown site' });
           best.spots.forEach((sp) => { sp.ctx = prepareSite(sp.r.site, null, app.config); });
+          app.bestSpots = best.spots;
           getGlobe()?.setHighlights(best.spots.map((sp) => ({ lat: sp.r.site.lat, lon: sp.r.site.lon, color: sp.color, title: sp.title, sub: `${pctTxt(sp.r.ops)} power + Earth` })));
           renderBest('done');
           flow.renderBest();
@@ -416,7 +422,7 @@ export function initExperience(api) {
   // ---------- Guided mission flow + Ask Lumi ----------
   const actions = {
     selectSite: (site) => selectSite(site, true),
-    slipCompare: () => { document.getElementById('cmpSlipBtn')?.click(); switchMode('compare'); },
+    slipCompare: () => { app.cmpView = 'dates'; app.cmpDatesSite = null; switchMode('compare'); },
     compareBest: () => api.compareSites?.([app.site, ...best.spots.map((sp) => sp.r.site)]),
     copyLink: () => api.copyLink?.(),
     terrain: () => { const a = document.querySelector('[data-x="terrain"]'); if (a) location.href = a.href; },
@@ -467,7 +473,7 @@ export function initExperience(api) {
       // Terrain 3D opens the Cesium view on the same site and date.
       const t = document.querySelector('[data-x="terrain"]');
       if (t && app.site) {
-        const q = new URLSearchParams({ from: 'pro', t: new Date(app.windowStartMs).toISOString().slice(0, 16) + 'Z', w: '30' });
+        const q = new URLSearchParams({ from: 'pro', t: new Date(app.windowStartMs).toISOString().slice(0, 16) + 'Z', w: String([15, 30, 90, 365].includes(app.windowDays) ? app.windowDays : 30) });
         if (String(app.site.id).startsWith('custom')) q.set('site', `${app.site.lat.toFixed(4)},${app.site.lon.toFixed(4)}`);
         else q.set('id', app.site.id);
         t.href = `./planner.html#${q.toString()}`;

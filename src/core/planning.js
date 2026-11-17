@@ -134,3 +134,31 @@ export function landingCalendar(site, fromMs, days, config, { hourUtc = 12, minD
   }
   return out;
 }
+
+/**
+ * Launch-date curve: for each day from `fromMs` (same time of day), the share
+ * of the following `windowDays` with the Sun up AND Earth's centre above the
+ * terrain. One scan, then a sliding window, so a whole year is cheap.
+ * Returns [{ ms, both, sun, earth }].
+ */
+export function launchDateSeries(site, fromMs, days, config, { windowDays = 30, stepMs = 2 * HOUR } = {}) {
+  const ctx = prepareSite(site, null, config);
+  const sc = scan(ctx, { startMs: fromMs, endMs: fromMs + (days + windowDays) * DAY, stepMs }, config, { withDsn: false });
+  const { times, lit, los } = sc.series;
+  const n = times.length;
+  const pb = new Float64Array(n + 1), ps = new Float64Array(n + 1), pe = new Float64Array(n + 1);
+  for (let i = 0; i < n; i++) {
+    pb[i + 1] = pb[i] + (lit[i] && los[i] ? 1 : 0);
+    ps[i + 1] = ps[i] + (lit[i] ? 1 : 0);
+    pe[i + 1] = pe[i] + (los[i] ? 1 : 0);
+  }
+  const w = Math.round((windowDays * DAY) / stepMs);
+  const out = [];
+  for (let d = 0; d < days; d++) {
+    const i = Math.round((d * DAY) / stepMs);
+    const j = Math.min(n, i + w);
+    if (j - i < w * 0.9) break;
+    out.push({ ms: times[i], both: (pb[j] - pb[i]) / (j - i), sun: (ps[j] - ps[i]) / (j - i), earth: (pe[j] - pe[i]) / (j - i) });
+  }
+  return out;
+}

@@ -54,6 +54,8 @@ Status: ✅ done · 🔨 in progress · ⏳ planned
 | 3.18 | Intro: lunar sunrise (starfield and Milky Way, daylight sweeping across the Moon, gold flare, Earth rising) instead of rainbow ribbons | User request | ✅ |
 | 3.19 | Compare Lab rebuilt: winner banner, ranked scenario cards with big deltas against a chosen baseline, a bar chart per measure, a day-by-day strip view, quick-start presets, “add any site”, and its own guided tour | User request | ✅ |
 | 3.20 | QA pass (independent agent, 17 confirmed bugs fixed): phone Moon tab, tour placement after scrolling and on phones, Find searching from the touchdown date, scenario window restored from Compare, Compare shortcuts, baseline guide state, unique scenario colours, What-if reset after outside changes, keyboard focus in menus/Lumi/choosers, Report window lengths, ±250 m line, and many Lumi phrasings | QA report | ✅ |
+| 3.21 | Compare, question first: “Two places”, “Launch dates” (one chart of every launch day for a year) or “My plan vs the best spot”; head-to-head result with a one-sentence verdict, reasons, only the measures that differ, full details folded away; an “Add this plan to compare” tray in the planner | Apple model compare, Versus.com, Google Flights date graph, shop compare trays | ✅ |
+| 3.22 | Same status words everywhere (GO / GO WITH CARE / NO GO), labelled “Now” or “at touchdown”; Terrain 3D opens with your window; long-stay searches explain the ~2-week limit | QA polish | ✅ |
 
 ## 4. Reach
 
