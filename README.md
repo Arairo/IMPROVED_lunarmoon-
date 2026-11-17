@@ -1,144 +1,114 @@
-# Lunar Site Planner & Mission Explorer
+# Lunar Site Planner
 
-An interactive web application for exploring, learning, and evaluating lunar landing sites and operational dates for Artemis and CLPS missions. For any point on the Moon and any UTC date, it computes topocentric Sun and Earth vectors relative to the local LOLA terrain horizon, estimates solar power generation, evaluates direct-to-Earth (DTE) radio links with DSN coverage, and compares mission scenarios.
+**Where and when should we land on the Moon, so the lander has sunlight for power and Earth in view to call home?**
 
-Built for the NASA Space Apps Challenge, *CLPS Lunar Mission Browser*.
+Lunar Site Planner answers that for any site and any date, against the real terrain skyline from NASA's LRO LOLA laser altimeter. It runs in any browser, on a phone too, with no install, no account and no API key.
 
-> **This is the continued version.** The version submitted to NASA Space Apps 2026 (Kuala Lumpur) stays frozen at [Arairo/NASA_lunarmoon-](https://github.com/Arairo/NASA_lunarmoon-). Work since the event, and the plan for what comes next, is in [IMPROVEMENTS.md](IMPROVEMENTS.md).
->
-> **Latest polish:** a colour-coded landing calendar (green days = sunlight and Earth together), a lunar-sunrise intro, a cleaner top bar with Help and Settings menus, a first-visit "video / tour / skip" chooser, a chattier Lumi and a new promo video.
->
-> **Newest:** Professional mode is now a guided five-step mission flow (Site → Date → Check → What if → Report, with a printable one-page report), and **Ask Lumi** lets you type requests like "best date at the ridge in 2027", "compare ridge and IM-2" or "what is libration?". Lumi is rule-based and runs offline: it turns your words into planner actions and reads every number from the same engine, so it never makes figures up.
->
-> **New since the event:** a "What if?" card in Professional mode (nudge the site 0.25–10 km or the date by a day, with a plain sentence saying what changed and Undo), "Find the next good date" in both modes, a ±250 m uncertainty range, JPL Horizons checks in the test suite plus a Horizons validation workflow, and phone and keyboard fixes.
+**▶ Try it: [arairo.github.io/IMPROVED_lunarmoon-](https://arairo.github.io/IMPROVED_lunarmoon-/)** · [48-second promo](public/tutorial/lunar-site-planner-promo.mp4) · [2-minute tutorial](public/tutorial/pro-tutorial.mp4)
 
----
+Team **Dell Monitors**, Kuala Lumpur · NASA Space Apps Challenge 2026: *Lunar Landing Site Navigator*.
+The version submitted during the event stays frozen at [Arairo/NASA_lunarmoon-](https://github.com/Arairo/NASA_lunarmoon-); this repo is where we kept going. The full change log is in [IMPROVEMENTS.md](IMPROVEMENTS.md).
 
-## 🌟 Application Modes
+![The Check step: a GO WITH CARE verdict at touchdown on the Shackleton connecting ridge, with the 3D Moon and the operations timeline](docs/screenshots/check.jpg)
 
-The application features three integrated modes in `index.html`, plus an advanced CesiumJS expert mode in `planner.html`:
+## The problem, in one example
 
-### 1. 🛰️ Mission Explorer
-- **Interactive 3D Moon Globe**: Real-time Three.js lunar globe with physically oriented Sun direction lighting, sub-Earth/sub-solar line rays, and camera presets (*South Pole*, *Fly to Site*, *Overview*, *Earth-Moon Line*).
-- **South-Pole LOLA Polar Stereographic Map**: High-resolution 2D canvas map with toggleable WAC basemap, 2027 illumination overlay, and Earth visibility contours.
-- **Operations Timeline**: 4-track interactive canvas timeline (Sun elevation, Solar power output, Earth elevation, and Direct-to-Earth link windows) with time scrubbing and playback.
-- **Assessment Panel**: Gauge meters for peak and instantaneous solar power, link margin (dB), horizon skyline SVG with Sun/Earth elevations, and operational event countdowns.
+At the lunar south pole the Sun skims the horizon, so a ridge a few hundred metres high can hide it for days. On the Shackleton connecting ridge, from 16 Nov 2026:
 
-### 2. 🦉 Duolingo-Style Learning Map (Lunar Academy)
-- **Gamified Progression**: Serpentine node map spanning 3 comprehensive curriculum units:
-  - *Unit 1: Polar Light & Shadows* (Why the poles?, Shackleton Crater, Peak of Eternal Light).
-  - *Unit 2: Solar Power & Cold Surviving* (Solar arrays, Battery drawdown, Surviving the lunar night).
-  - *Unit 3: Direct-to-Earth Communications* (Line of sight, DSN coverage, Multi-site trade-offs).
-- **Interactive Lessons & Quizzes**: Multiple-choice questions with immediate visual feedback, explanation callouts, XP tracking, and streak counters.
-- **Lumi the Mascot**: Dynamic animated SVG mascot reacting with custom emotional states (*proud*, *happy*, *thinking*, *crying*, *starry*).
-- **Deep Links**: Lesson simulation buttons link directly into the Mission Explorer configured with exact site and time parameters.
+| | On the ridge | 1 km north | Anywhere within 500 m (landing error) |
+|---|---|---|---|
+| Sunlight, next 30 days | **100 %** | **59 %** | – |
+| Earth in view, next 30 days | 54 % | **9 %** | – |
+| Sunlight and Earth together | 54 % | – | **1 % to 56 %** (typical 46 %) |
 
-### 3. ⚖️ Scenario Comparison Lab
-- **Multi-Site & Launch Slip Evaluation**: Compare landing sites side-by-side across sunlit %, average power, longest darkness, battery drawdown, and DTE link margin.
-- **Schedule Slip ×3**: Automatically calculate trade-offs for +1, +2, and +3 synodic month launch slips (~29.53 days each).
-- **Nearby Alternatives Scanner**: Scan LOLA terrain within 5 km for elevated ridge points with improved solar visibility.
-- **CSV Export**: Export all evaluated metrics and window parameters to spreadsheet-ready CSV.
+One kilometre, or one bad landing, can decide a mission. Lunar Site Planner shows that in a click, in plain words, for planners, teachers and the public alike.
 
-### 4. 🔭 Expert Mode (`planner.html`)
-- Full CesiumJS 3D Moon digital elevation model (DEM) with optional Cesium Ion high-resolution terrain streaming and Artemis candidate region boundaries.
-- **Video tutorial**: new visitors are asked at start-up whether they want a narrated, captioned walkthrough (about 3½ minutes, 11 chapters) built from screenshots of the planner. It can be reopened with the amber **▶ Video tutorial** button, and is also available as an [MP4 download](public/tutorial/lunar-site-planner-tutorial.mp4). **Tour** starts an interactive walkthrough that uses the real controls instead.
+## Two ways in
 
----
+**Beginner**: a calm walk with Lumi, our guide. One question per screen (where, when, what you'd see), a traffic-light verdict, and the "why" only when you want it. Works on a phone.
 
-## 🚀 Quick Start
+**Professional**: a five-step mission flow with the 3D Moon in the middle:
 
-```bash
-npm install
-npm run dev          # Start local dev server at http://localhost:5174
-```
+1. **Site**: Apollo, CLPS (IM-1, IM-2, Blue Ghost), Chandrayaan-3, Chang'e, SLIM, computed best-lit ridges, coordinates, or a click anywhere on the Moon. The best spot for the next 30 days is found for you.
+2. **Date**: a month calendar coloured for your site (green = sunlight and Earth together for 3+ days), or "Find the next good date".
+3. **Check**: GO / GO WITH CARE / NO GO at touchdown, with sunset and Earthset, power, battery, the direct-to-Earth link and the ground slope.
+4. **What if**: move the site 0.25–10 km, slip the date, or **check the landing area**: if the lander touches down anywhere within 100 m to 2 km, how bad can it get, and where is a **safer place to aim**?
+5. **Report**: one page to print or save as PDF, a share link, or a JSON decision summary.
 
-```bash
-npm test             # Run test suite (Node.js ESM test runner)
-npm run build        # Build production-ready bundle into dist/
-```
+![What if: the landing-area check finds a safer aim point](docs/screenshots/what-if.jpg)
 
-Browser end-to-end check of every control on the expert planner, including the tour and phone layout:
+## Compare, one question at a time
 
-```bash
-npm run dev &        # in another terminal is fine too
-npm run test:e2e     # needs Playwright: npm i --no-save playwright && npx playwright install chromium
-```
+Pick a question (two places, launch dates, or your plan vs the best spot) and get one answer: a verdict sentence, why the winner wins, and only the measures that actually differ. The launch-date view puts every day of the next year on one chart, like a flight-price graph.
 
-No API keys are required: terrain data, imagery, ephemeris calculations, and fonts all function offline.
+| | |
+|---|---|
+| ![Head-to-head result](docs/screenshots/compare.jpg) | ![Every launch day for a year](docs/screenshots/launch-dates.jpg) |
 
----
+## Ask Lumi
 
-## 📐 Scientific Model & Data Sources
+Type what you want: "best date at the ridge in 2027", "compare ridge and IM-2", "move 1 km north", "can I see Earth from Chang'e 4?", "what is libration?". Lumi is rule-based and runs offline: it turns your words into planner actions and reads every number from the same engine you see on screen, so it cannot make a figure up.
 
-All calculations run in pure browser-compatible ES modules located in `src/core/`:
-- **Sun & Earth Ephemerides**: Computed via [astronomy-engine](https://github.com/cosinekitty/astronomy) rotated into the lunar body-fixed Mean Earth/Polar Axis frame using IAU/WGCCRE rotational models and optical librations.
-- **Terrain Horizons**: Sampled over LRO LOLA elevation grids (including lunar spherical curvature).
-- **Power Model**: Solar constant $1361\text{ W/m}^2 \times (1\text{ AU} / r)^2 \times \text{visible solar fraction} \times \cos(\theta) \times \text{area} \times \text{efficiency}$.
-- **Communications**: Topocentric free-space path loss and grazing diffraction margin to NASA Deep Space Network (DSN) 34 m ground antennas (Goldstone, Madrid, Canberra).
+![Ask Lumi finding the next good landing date](docs/screenshots/lumi.jpg)
 
----
+## Why you can trust the numbers
 
-## 🎬 Video Tutorial (expert planner)
+Everything below is in the app under **Help → Accuracy, data and sources**, and the checks run as automated tests on every update.
 
-The player (`src/planner/ui/videoTutorial.js`) plays the voice-over track and draws each frame from the current playback time: zooms, spotlights, the cursor and captions are computed from the narration timing, so seeking, speed changes and muting stay in sync. Without audio it runs on an internal clock with captions. Keys: Space play/pause, ←/→ 5 s, Shift+←/→ chapter, C captions, M voice, F full screen.
+- **Checked against NASA JPL Horizons**: 48 Sun and Earth positions (8 sites × 3 dates): worst elevation difference **0.005°**, median 0.001° (the Sun's disk is 0.53° wide). Re-run any time with the *Validate against JPL Horizons* workflow; the scoreboard is published in the app.
+- **Checked against what flew**: the Sun's height at the Apollo 11, 12, 14, 15 and 17 touchdowns is within **0.35°** of the mission reports, and our sunsets at Blue Ghost Mission 1, Chandrayaan-3 and SLIM fall on the days their teams reported.
+- **Real terrain at every site**: NASA LOLA 240 m and 1 km grids near the south pole, and the global LDEM_16 map (~1.9 km) everywhere else, ray-cast 300 km out in every direction. A test checks the horizon over a synthetic mountain against the exact geometric answer.
+- **One engine**: all the maths is in [`src/core/`](src/core): pure functions with tests. The 3D Moon, maps, charts, Lumi and Compare only show what `core/` returns.
+- **Known limits are stated**: terrain detail (boulders and the lander footprint are smaller than a grid cell), the slope is a ~0.5 km average, and the GO / NO GO lights are our own rules of thumb, not a NASA standard.
 
-To change it, edit the narration and the on-screen directions in `src/planner/ui/tutorial/script.json` (`shot`, `zoom`, `spot`, `cursor`, `click`, `label`, `card`), then rebuild the parts that changed:
+![Accuracy, data and sources panel](docs/screenshots/accuracy.jpg)
+
+## NASA and other data
+
+- **NASA LRO LOLA**: south-polar elevation grids (240 m, 1 km) built from LOLA laser altimetry, and the global elevation map LDEM_16 (PDS Geosciences Node), built by the *Build global terrain* workflow.
+- **NASA LRO LROC WAC** global mosaic for the Moon imagery; **NASA Blue Marble** for Earth.
+- **NASA Deep Space Network** station locations for the direct-to-Earth link.
+- **NASA JPL Horizons** as the independent check.
+- Sun and Earth positions: [astronomy-engine](https://github.com/cosinekitty/astronomy) (MIT) with the IAU lunar rotation model.
+- Landing-site positions: NSSDCA, LROC, and the mission teams (ISRO, JAXA, CNSA, Intuitive Machines, Firefly).
+
+## How we used AI
+
+We built the app with Claude Code (Anthropic) as a coding assistant: it wrote most of the code, tests and text, and we reviewed and tested every change in the browser and against NASA tools. The tutorial narration is AI-generated (Kokoro text-to-speech) and the promo's music is synthesised in code; both videos carry an "SI-assisted" label. Lumi, the in-app assistant, is not an AI model: it is a set of rules that runs in your browser. No NASA logos or branding are used.
+
+## Run it yourself
+
+Needs Node 22. All data is committed, so a fresh clone works offline.
 
 ```bash
-pip install kokoro-onnx soundfile numpy           # offline neural text-to-speech
-# kokoro-v1.0.int8.onnx and voices-v1.0.bin from github.com/thewh1teagle/kokoro-onnx/releases (model-files-v1.0)
-python tools/tutorial/build_narration.py kokoro-v1.0.int8.onnx voices-v1.0.bin   # voice-over + timing.json
-
-npm run build && npx vite preview --port 4174 &   # a static build, so edits don't reload the page mid-capture
-npm run tutorial:shots                            # screenshots + control positions (after UI changes)
-npm run tutorial:video                            # downloadable 720p MP4, about 10 MB (rebuild first so it uses the new shots)
+npm ci
+npm run dev      # http://localhost:5173
+npm test         # unit, JPL Horizons and flown-mission tests
+npm run build    # production build into dist/
 ```
 
----
+GitHub Actions (Actions tab):
+- **Test and deploy to GitHub Pages**: on every push.
+- **Validate against JPL Horizons**: compares 48 positions and publishes the scoreboard into the app.
+- **Build global terrain**: downloads LOLA LDEM_16, packs it and rebuilds every site's skyline.
 
-## 📁 Repository Layout
+## Repository layout
 
 ```
-├── index.html                   # Main entry point (Mission Explorer, Academy, Compare Lab)
-├── planner.html                 # CesiumJS 3D expert mode
-├── src/
-│   ├── main.js                  # Main application orchestrator & state manager (index.html)
-│   ├── planner/                 # Expert mode (planner.html): its own entry, UI and styles
-│   │   ├── main.js              # Expert planner orchestrator
-│   │   ├── styles.css           # Expert planner styles
-│   │   ├── scene/moonScene.js   # CesiumJS Moon scene
-│   │   └── ui/                  # Sky plot, timeline, polar map, results, compare, glossary,
-│   │                            # learn mode, tour, video tutorial player and start-up welcome
-│   │                            # (tutorial script, timing and shot positions in ui/tutorial/)
-│   ├── academy/
-│   │   ├── academyView.js       # Duolingo-style learning map UI & quiz modals
-│   │   ├── content.js           # 3 Academy units, nodes, and quiz data
-│   │   └── mascot.js            # Lumi mascot SVG generator
-│   ├── scene/
-│   │   └── globeRenderer.js     # Three.js 3D lunar globe with Sun & Earth vectors
-│   ├── ui/
-│   │   ├── polarMap.js          # 2D LOLA South-Pole canvas renderer
-│   │   ├── timeline.js          # Multi-track operations timeline canvas
-│   │   ├── skyplot.js           # 360° horizon elevation skyline
-│   │   ├── assessment.js        # Power & link assessment panel
-│   │   ├── compare.js           # Comparison Lab & CSV exporter
-│   │   ├── modals.js            # Guided tour & glossary modals
-│   │   └── format.js            # Formatters for coordinates, time, units
-│   ├── core/
-│   │   ├── analysis.js          # Unified site evaluation & window scanner
-│   │   ├── horizon.js           # Ray-marched and precomputed terrain horizons
-│   │   ├── ephemeris.js         # Sun and Earth lunar-centric ephemeris
-│   │   ├── comms.js             # DSN visibility and RF link budgets
-│   │   ├── power.js             # Solar array and battery sizing models
-│   │   ├── geo.js               # Lunar coordinate transformations & ENU frames
-│   │   └── constants.js         # Physical constants, glossary, site metadata
-│   ├── data/                    # Bundled ES module data sources
-│   └── styles.css               # Design tokens, typography & animations
-├── public/data/                 # Static textures, LOLA DEM, and illumination maps
-├── public/tutorial/             # Video tutorial screenshots, voice-over and MP4
-├── tools/                       # Data build scripts; tools/tutorial/ rebuilds the video tutorial
-├── test/
-│   ├── core.spec.js             # 24 automated unit tests
-│   └── browser-e2e.cjs          # Browser end-to-end check of the expert planner
-└── package.json
+index.html / planner.html   the app / the Cesium "Terrain 3D" view
+src/core/                   the science: ephemeris, terrain horizons (polar + global), power,
+                            comms, analysis, planning (nudge, find a date, calendar, launch-date
+                            curve, landing dispersion, robust aim), flown-mission checks
+src/experience/             intro, Beginner walk, the five-step flow, Ask Lumi, tours, menus
+src/ui/                     Compare (question-first flow + full details), timeline, maps
+src/scene/                  the Three.js Moon
+public/data/                LOLA grids, global terrain, imagery, validation scoreboard
+tools/                      data builders, Horizons validation, video pipeline (tools/video)
+test/                       automated tests
 ```
+
+## Team Dell Monitors
+
+Ammar Rasyid Bin Remy Azrai · Ahmad Ibrahim Shahmi · Pratyush Kumar Biswal · Muhammad Nawfal Bin Khairul Azlan
+
+Lunar data from NASA is in the public domain. This is not a NASA product and is not endorsed by NASA.
