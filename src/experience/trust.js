@@ -68,7 +68,7 @@ export async function openTrust({ sites }) {
           <p>NASA’s Planetary Geodesy Data Archive publishes lighting maps of the south pole. We compare our own maps with them, cell by cell, out to 75°S:
           ${['sun', 'earth'].filter((k) => pg.maps?.[k]).map((k) => `${k === 'sun' ? 'sunlight' : 'Earth in view'} agrees with a correlation of <b>${pg.maps[k].r.toFixed(2)}</b> (1.00 = identical pattern), average difference ${pg.maps[k].meanAbsDiff.toFixed(0)} points`).join('; ')}.</p>
           <div class="t-scroll"><table class="a-table"><tr><th>Site</th><th>Sunlight: ours (240 m)</th><th>Ours (20 m)</th><th>NASA PGDA</th><th>Earth: ours</th><th>NASA PGDA</th></tr>
-            ${pg.sites.map((r) => `<tr><td>${esc(r.name)}</td><td>${pct(r.ours240?.sun)}</td><td>${pct(r.ours20?.sun)}</td><td>${pct(r.pgdaSun60 ?? r.pgdaSun120)}</td><td>${pct((r.ours20 || r.ours240)?.earth)}</td><td>${pct(r.pgdaEarth120)}</td></tr>`).join('')}</table></div>
+            ${pg.sites.map((r) => `<tr><td>${esc(r.name)}</td><td>${pct(r.ours240?.sun)}</td><td>${pct(r.ours20?.sun)}</td><td>${pct(r.pgdaSun120)}</td><td>${pct((r.ours20 || r.ours240)?.earth)}</td><td>${pct(r.pgdaEarth120)}</td></tr>`).join('')}</table></div>
           <p class="a-dim">${esc(pg.note)} NASA’s figures count partly visible disks and average over many years; ours count the disk centre over ${esc('2027')}, from a 2 m mast. Rerun with the “Add 20 m terrain and check against NASA PGDA” workflow.</p></section>` : ''}
         <section><h3>Terrain behind each site’s skyline</h3>
           <div class="t-scroll"><table class="a-table"><tr><th>Site</th><th>Terrain</th><th>Ground height</th></tr>

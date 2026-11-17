@@ -17,9 +17,9 @@ At the lunar south pole the Sun skims the horizon, so a ridge a few hundred metr
 
 | | On the ridge | 1 km north | Anywhere within 500 m (landing error) |
 |---|---|---|---|
-| Sunlight, next 30 days | **100 %** | **59 %** | – |
-| Earth in view, next 30 days | 54 % | **9 %** | – |
-| Sunlight and Earth together | 54 % | – | **1 % to 56 %** (typical 46 %) |
+| Sunlight, next 30 days | **100 %** | **56 %** | – |
+| Earth in view, next 30 days | 47 % | **0 %** | – |
+| Sunlight and Earth together | 47 % | 0 % | **0 % to 54 %** (typical 36 %) |
 
 One kilometre, or one bad landing, can decide a mission. Lunar Site Planner shows that in a click, in plain words, for planners, teachers and the public alike.
 
@@ -27,7 +27,7 @@ One kilometre, or one bad landing, can decide a mission. Lunar Site Planner show
 
 **Beginner**: a calm walk with Lumi, our guide. One question per screen (where, when, what you'd see), a traffic-light verdict, and the "why" only when you want it. Works on a phone.
 
-**Professional**: a five-step mission flow with the 3D Moon in the middle:
+**Professional**: a five-step mission flow with the 3D Moon in the middle. **Map layers** colour the whole Moon by sunlight, Earth in view, never-sunlit areas, height or slope, with a live readout under the pointer.
 
 1. **Site**: Apollo, CLPS (IM-1, IM-2, Blue Ghost), Chandrayaan-3, Chang'e, SLIM, computed best-lit ridges, coordinates, or a click anywhere on the Moon. The best spot for the next 30 days is found for you.
 2. **Date**: a month calendar coloured for your site (green = sunlight and Earth together for 3+ days), or "Find the next good date".
@@ -57,15 +57,17 @@ Everything below is in the app under **Help → Accuracy, data and sources**, an
 
 - **Checked against NASA JPL Horizons**: 48 Sun and Earth positions (8 sites × 3 dates): worst elevation difference **0.005°**, median 0.001° (the Sun's disk is 0.53° wide). Re-run any time with the *Validate against JPL Horizons* workflow; the scoreboard is published in the app.
 - **Checked against what flew**: the Sun's height at the Apollo 11, 12, 14, 15 and 17 touchdowns is within **0.35°** of the mission reports, and our sunsets at Blue Ghost Mission 1, Chandrayaan-3 and SLIM fall on the days their teams reported.
-- **Real terrain at every site**: NASA LOLA 240 m and 1 km grids near the south pole, and the global LDEM_16 map (~1.9 km) everywhere else, ray-cast 300 km out in every direction. A test checks the horizon over a synthetic mountain against the exact geometric answer.
+- **Checked against NASA Goddard's lighting maps**: our south-pole sunlight map matches NASA PGDA's average-illumination map with a correlation of **0.92** (Earth in view: **0.975**), average difference about 4 points, across 24,000 cells. At the Shackleton connecting ridge, 20 m terrain gives 66 % sunlight for 2027; NASA's map says 68 %.
+- **Real terrain at every site**: NASA LOLA **20 m** terrain (PGDA, Barker et al. 2023) around the main south-polar sites, 240 m and 1 km grids around the pole, and the global LDEM_16 map (~1.9 km) everywhere else, ray-cast 300 km out in every direction. Each 20 m tile is checked against our 240 m grid before use (2–4 m average difference). A test checks the horizon over a synthetic mountain against the exact geometric answer.
 - **One engine**: all the maths is in [`src/core/`](src/core): pure functions with tests. The 3D Moon, maps, charts, Lumi and Compare only show what `core/` returns.
-- **Known limits are stated**: terrain detail (boulders and the lander footprint are smaller than a grid cell), the slope is a ~0.5 km average, and the GO / NO GO lights are our own rules of thumb, not a NASA standard.
+- **Known limits are stated**: terrain detail (boulders and the lander footprint are smaller than even a 20 m cell), the slope is a ~0.5 km average, and the GO / NO GO lights are our own rules of thumb, not a NASA standard.
 
 ![Accuracy, data and sources panel](docs/screenshots/accuracy.jpg)
 
 ## NASA and other data
 
 - **NASA LRO LOLA**: south-polar elevation grids (240 m, 1 km) built from LOLA laser altimetry, and the global elevation map LDEM_16 (PDS Geosciences Node), built by the *Build global terrain* workflow.
+- **NASA GSFC Planetary Geodesy Data Archive (PGDA)**: LOLA 20 m south-pole terrain (LDEM_80S_20MPP_ADJ) and the lunar polar illumination maps used as an independent check, by the *Add 20 m terrain and check against NASA PGDA* workflow.
 - **NASA LRO LROC WAC** global mosaic for the Moon imagery; **NASA Blue Marble** for Earth.
 - **NASA Deep Space Network** station locations for the direct-to-Earth link.
 - **NASA JPL Horizons** as the independent check.
@@ -91,6 +93,7 @@ GitHub Actions (Actions tab):
 - **Test and deploy to GitHub Pages**: on every push.
 - **Validate against JPL Horizons**: compares 48 positions and publishes the scoreboard into the app.
 - **Build global terrain**: downloads LOLA LDEM_16, packs it and rebuilds every site's skyline.
+- **Add 20 m terrain and check against NASA PGDA**: reads the 20 m tiles and NASA's lighting maps, checks them and publishes the comparison into the app.
 
 ## Repository layout
 

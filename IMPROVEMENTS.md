@@ -61,12 +61,15 @@ Status: ✅ done · 🔨 in progress · ⏳ planned
 | 3.25 | Landing area check: touchdown spread within 100 m–2 km (worst / typical / best) and a safer aim point | Penumbra (robust aim), PolarWindow (landing dispersion) | ✅ |
 | 3.26 | Ground slope at the site (over ~0.5 km) in Check and the report | Darksight, PolarWindow | ✅ |
 | 3.27 | Checked against what flew: Sun height at five Apollo landings (within 0.35°) and sunsets at Blue Ghost, Chandrayaan-3 and SLIM, as automated tests and an in-app panel; JPL Horizons scoreboard (48 checks, worst 0.005°) published in the app | PolarWindow (flown validation), Penumbra (scoreboard) | ✅ |
+| 3.29 | NASA LOLA 20 m terrain (PGDA) around the 12 main south-polar sites, checked against the 240 m grid (2–4 m average difference) and used for skylines, nudges and the landing-area check | Competitive gap: terrain resolution | ✅ |
+| 3.30 | Our lighting maps checked against NASA Goddard PGDA illumination maps: correlation 0.92 (Sun) and 0.975 (Earth); ridge 66 % vs NASA 68 % | Competitive gap: independent validation | ✅ |
+| 3.31 | 3D Moon tumbles freely over the poles (no stop at ±88°); touch drags no longer scroll the page; every tour step has an End tour button | User testing | ✅ |
 | 3.28 | “Accuracy, data and sources” panel and JSON decision-summary export | Darksight (307 sources), Penumbra (provenance, JSON export) | ✅ |
 
 ## 4. Reach
 
 | # | Improvement | Reference | Status |
 |---|---|---|---|
-| 4.1 | Whole-Moon map layers (average sunlight, Earth in view, slope) | Darksight | ⏳ |
+| 4.1 | Whole-Moon map layers on the 3D Moon: sunlight and Earth in view for 2027 (real terrain skylines), never-sunlit polar areas, height and slope, with a live readout | Darksight | ✅ |
 | 4.2 | Ask Lumi: a chat panel that understands typed requests (go to a site or coordinates, best date, best spot, compare, move N km, shift days, sunset/Earthset, status, explain a term, theme, tour, flow steps, print the report, copy the link), small talk (hello, thanks, who are you, jokes, fun facts) and ~30 explained topics, answered from the engine, never by guessing. Runs offline, no AI service or key | Bean Drift (AI assistant), PolarWindow (grounded AI) | ✅ |
 | 4.3 | Public read-only API for site/date queries | Bean Drift (REST + MCP) | ⏳ |
