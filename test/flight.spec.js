@@ -7,7 +7,7 @@ const H = 3600000, D = 86400000;
 
 test('flight: Apollo 11 burns match the mission (TLI, lunar orbit insertion, descent)', () => {
   const T = Date.parse('1969-07-20T20:17Z'), loi = Date.parse('1969-07-19T17:22Z'), tli = Date.parse('1969-07-16T16:22Z');
-  const p = planFlight(T, { route: 'direct', coastDays: (loi - tli) / D, lunarOrbitDays: (T - loi) / D, parkingAltKm: 191 });
+  const p = planFlight(T, { route: 'direct', coastDays: (loi - tli) / D, lunarOrbitDays: (T - loi) / D, parkingAltKm: 191, alignLaunch: false });
   const dv = Object.fromEntries(p.burns.map((b) => [b.id, b.dv]));
   assert.ok(Math.abs(dv.tli - 3.18) < 0.1, `TLI ${dv.tli.toFixed(3)} km/s vs 3.18`);
   assert.ok(Math.abs(dv.loi - 0.94) < 0.1, `LOI ${dv.loi.toFixed(3)} km/s vs 0.94`);
@@ -68,4 +68,20 @@ test('flight: touchdown checks read the site analysis', () => {
   const light = checks.find((c) => c.id === 'light');
   assert.ok(light.ok, light.text); // Apollo 11 landed with the Sun 10.8° high
   assert.ok(checks.find((c) => c.id === 'radio').ok);
+});
+
+test('flight: the launch site changes the launch time and the free push from Earth’s spin', () => {
+  const T = Date.UTC(2027, 1, 10, 12);
+  const ksc = planFlight(T, { route: 'direct', launchSite: 'ksc' });
+  const shar = planFlight(T, { route: 'direct', launchSite: 'shar' });
+  assert.notEqual(ksc.launchMs, shar.launchMs);
+  assert.ok(shar.launchGeom.spinBoostKms > ksc.launchGeom.spinBoostKms, 'lower latitude, bigger boost');
+  assert.ok(ksc.launchGeom.inclDeg >= 28.5 && shar.launchGeom.inclDeg >= 13.7, 'orbit tilt at least the pad latitude');
+});
+
+test('flight: Apollo 11’s launch time from Kennedy comes out within 3 hours of the real one', () => {
+  const T = Date.parse('1969-07-20T20:17Z'), loi = Date.parse('1969-07-19T17:22Z'), tli = Date.parse('1969-07-16T16:22Z');
+  const p = planFlight(T, { route: 'direct', coastDays: (loi - tli) / D, lunarOrbitDays: (T - loi) / D, parkingAltKm: 191, parkingHours: 2.83 });
+  const err = Math.abs(p.launchMs - Date.parse('1969-07-16T13:32Z')) / H;
+  assert.ok(err < 3, `${err.toFixed(1)} h`);
 });

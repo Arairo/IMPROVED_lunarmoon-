@@ -117,6 +117,48 @@ export function descentBudget() {
  * Plan the flight for a touchdown at `touchdownMs`.
  * opts: { route, lander, launchSite, coastDays, earthDays, transferDays, lunarOrbitDays, parkingAltKm }
  */
+// Where you launch from matters twice. (1) Earth's spin gives a free push of
+// 0.465 km/s x cos(inclination) to a rocket heading east, and the parking orbit
+// can't be tilted less than the launch site's latitude, nor less than the
+// Moon's declination (the trans-lunar burn happens roughly opposite the Moon).
+// (2) The rocket must lift off when Earth's rotation carries the pad into that
+// orbit's plane, so the launch time of day depends on the site's longitude.
+const V_EQ = 0.4651; // km/s, Earth's surface speed at the equator
+const ASCENT_NO_SPIN = 9.75; // km/s to a 200 km orbit incl. gravity/drag losses, without Earth's spin
+export function launchGeometry(site, tTliMs, rMoon, parkingHours, align = true, eitherSide = false) {
+  const D = Math.PI / 180;
+  const n = norm(rMoon);
+  const decP = -Math.asin(rMoon[2] / n); // TLI point is roughly opposite the Moon
+  const raP = Math.atan2(-rMoon[1], -rMoon[0]);
+  const phi = Math.abs(site.lat) * D;
+  const inc = Math.max(phi, Math.abs(decP), 0.5 * D);
+  const boost = V_EQ * Math.cos(inc);
+  const out = { latDeg: site.lat, moonDecDeg: -decP / D, inclDeg: inc / D, spinBoostKms: boost, ascentDv: ASCENT_NO_SPIN - boost, launchMs: null, parkingHours };
+  if (!align) return out;
+  const nodeOffset = (u) => Math.atan2(Math.cos(inc) * Math.sin(u), Math.cos(u));
+  const asinC = (x) => Math.asin(Math.max(-1, Math.min(1, x)));
+  const uP = asinC(Math.sin(decP) / Math.sin(inc));
+  const uS = asinC(Math.sin(site.lat * D) / Math.sin(inc));
+  const target = tTliMs - parkingHours * 3600000;
+  const latest = tTliMs - 0.75 * 3600000;
+  const siteRa = (ms) => (Astronomy.SiderealTime(Astronomy.MakeTime(new Date(ms))) * 15 + site.lon) * D;
+  const wrap = (a) => Math.atan2(Math.sin(a), Math.cos(a));
+  const SID_DAY = 86164091; // ms
+  let best = null;
+  for (const up of [uP, Math.PI - uP]) {
+    const node = raP - nodeOffset(up);
+    for (const us of [uS, Math.PI - uS]) {
+      const need = node + nodeOffset(us);
+      let t = target + (wrap(need - siteRa(target)) / (2 * Math.PI)) * SID_DAY;
+      if (!eitherSide) while (t > latest) t -= SID_DAY;
+      if (!best || Math.abs(t - target) < Math.abs(best - target)) best = t;
+    }
+  }
+  out.launchMs = best;
+  out.parkingHours = (tTliMs - best) / 3600000;
+  return out;
+}
+
 export function planFlight(touchdownMs, opts = {}) {
   const route = ROUTES[opts.route] ? opts.route : 'direct';
   const R = ROUTES[route];
@@ -140,7 +182,7 @@ export function planFlight(touchdownMs, opts = {}) {
   if (route === 'lowenergy') {
     coastDays = d.transferDays;
     tTli = tLoi - d.transferDays * DAY;
-    tLaunch = tTli - 0.05 * DAY;
+    tLaunch = launchGeometry(site, tTli, moonAtLoi.r, 1.2).launchMs;
     const c3 = -0.7; // km^2/s^2, typical for low-energy transfers
     tliDv = Math.sqrt(c3 + (2 * MU_E) / rp) - circ(MU_E, rp);
     vinf = 0.3; // arrives slowly: the Sun has already done the work
@@ -149,12 +191,19 @@ export function planFlight(touchdownMs, opts = {}) {
   } else {
     coastDays = Math.max(3, Math.min(4.95, d.coastDays));
     ra = apogeeForCoast(rp, rM, coastDays);
+    tTli = tLoi - timeToRadius(rp, ra, rM) * 1000;
+    if (route === 'direct' && opts.alignLaunch !== false) {
+      // Lift off at the pad's nearest pass under the orbit plane, keep the
+      // usual parking-orbit wait, and let the coast to the Moon absorb the shift.
+      tLaunch = launchGeometry(site, tTli, moonAtLoi.r, d.parkingHours, true, true).launchMs;
+      tTli = tLaunch + d.parkingHours * 3600000;
+      coastDays = Math.max(3, Math.min(4.95, (tLoi - tTli) / DAY));
+      ra = apogeeForCoast(rp, rM, coastDays);
+    }
     const a = (rp + ra) / 2;
     const vPeri = visViva(MU_E, rp, a);
     vinf = arrivalVinf(rp, ra, rM, vMoon);
-    tTli = tLoi - timeToRadius(rp, ra, rM) * 1000;
     if (route === 'direct') {
-      tLaunch = tTli - d.parkingHours * 3600000;
       tliDv = vPeri - circ(MU_E, rp);
       burns.push({ id: 'tli', label: 'Leave Earth (rocket upper stage)', dv: tliDv, byLander: false, t: tTli });
     } else {
@@ -179,6 +228,8 @@ export function planFlight(touchdownMs, opts = {}) {
     }
     burns.push({ id: 'tcm', label: 'Course corrections on the way', dv: 0.03, byLander: true, t: tTli + 0.5 * coastDays * DAY });
   }
+  const geo = launchGeometry(site, tTli, moonAtLoi.r, (tTli - tLaunch) / 3600000, false);
+  burns.unshift({ id: 'ascent', label: `Launch into a ${geo.inclDeg.toFixed(0)}° parking orbit (Earth’s spin gives ${geo.spinBoostKms.toFixed(2)} km/s free)`, dv: geo.ascentDv, byLander: false, t: tLaunch });
   const loi = captureToCircular(vinf, rLo);
   burns.push({ id: 'loi', label: route === 'phasing' ? 'Capture at the Moon and lower the orbit to 100 km' : 'Brake into a 100 km lunar orbit', dv: loi, byLander: true, t: tLoi });
   burns.push({ id: 'doi', label: 'Lower the orbit’s low point to 15 km', dv: desc.doi, byLander: true, t: tDoi });
@@ -208,6 +259,7 @@ export function planFlight(touchdownMs, opts = {}) {
 
   return {
     route, routeInfo: R, lander, launchSite: site, params: { ...d, coastDays },
+    launchGeom: { ...geo, parkingHours: route === 'phasing' ? null : (tTli - tLaunch) / 3600000 },
     touchdownMs, launchMs: tLaunch, tliMs: tTli, loiMs: tLoi, doiMs: tDoi, pdiMs: tPdi,
     rpKm: rp, raKm: ra, moonDistKm: rM, vinf, loops,
     burns, landerDv, totalDv, propKg, wetKg: lander.dryKg + propKg,

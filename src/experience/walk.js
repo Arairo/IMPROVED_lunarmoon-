@@ -156,6 +156,27 @@ export function createWalk({ app, sites, onOpenPro, onToggleTheme, onToggleSound
     guess: null, route: 'direct', flight: null, landed: false, slips: null, readAloud: false,
   };
   try { st.name = localStorage.getItem('lsp.plannerName') || ''; } catch {}
+  // Progress is kept in this browser, so a refresh carries on where you were.
+  const SAVE_KEY = 'lsp.walk';
+  const save = () => {
+    try {
+      const s = st.site;
+      localStorage.setItem(SAVE_KEY, JSON.stringify({
+        step: st.step, visited: st.visited, startMs: st.startMs, route: st.route, landed: st.landed, guess: st.guess,
+        site: s && (String(s.id).startsWith('custom') ? { id: s.id, name: s.name, short: s.short, lat: s.lat, lon: s.lon, group: 'custom' } : { id: s.id }),
+      }));
+    } catch {}
+  };
+  const restore = () => {
+    try {
+      const v = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null');
+      if (!v || !(v.step > 0)) return 0;
+      const site = v.site?.group === 'custom' ? v.site : sites.find((x) => x.id === v.site?.id);
+      Object.assign(st, { visited: v.visited || 0, startMs: v.startMs || st.startMs, route: v.route || 'direct', guess: v.guess || null });
+      if (site) st.site = site;
+      return site ? Math.min(v.step, 4) : Math.min(v.step, 1); // the Survive chapter recomputes, so land there at most
+    } catch { return 0; }
+  };
   const root = document.createElement('section');
   root.id = 'xp-walk';
   root.className = 'w-story';
@@ -644,6 +665,7 @@ export function createWalk({ app, sites, onOpenPro, onToggleTheme, onToggleSound
     const doIt = () => {
       st.step = i;
       st.visited = Math.max(st.visited, i);
+      save();
       render(i);
       STEPS[i].enter?.();
       root.scrollTo({ top: 0, behavior: 'smooth' });
@@ -655,7 +677,8 @@ export function createWalk({ app, sites, onOpenPro, onToggleTheme, onToggleSound
   }
 
   return {
-    open() { if (!scene.childElementCount) go(0); },
+    open() { if (!scene.childElementCount) go(restore()); },
+    restart() { try { localStorage.removeItem(SAVE_KEY); } catch {} Object.assign(st, { visited: 0, site: null, guess: null, landed: false, flight: null, scan: null }); go(0); },
     root,
   };
 }

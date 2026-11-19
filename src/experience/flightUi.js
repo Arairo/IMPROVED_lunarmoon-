@@ -86,7 +86,8 @@ export function mountFlight({ app, viewTabs, switchSubView, setTime }) {
       return `<table class="fl-table"><tr><th>Burn</th><th>Δv</th><th>Who</th></tr>
         ${plan.burns.map((b) => `<tr><td>${esc(b.label)}<br><small>${when(b.t)} UTC</small></td><td>${kms(b.dv)}</td><td>${b.byLander ? 'Lander' : 'Rocket'}</td></tr>`).join('')}
         <tr class="fl-sum"><td>Lander total</td><td>${kms(plan.landerDv)}</td><td></td></tr></table>
-        <p class="fl-dim">Fuel from the rocket equation: ${kg(plan.lander.dryKg)} dry, engine Isp ${plan.lander.isp} s, plus 5% reserve. Arrives at the Moon at ${kms(plan.vinf)} relative to it${plan.raKm ? `; the coast reaches ${Math.round(plan.raKm).toLocaleString('en-GB')} km from Earth at its farthest` : ''}.</p>`;
+        <p class="fl-dim">Fuel from the rocket equation: ${kg(plan.lander.dryKg)} dry, engine Isp ${plan.lander.isp} s, plus 5% reserve. Arrives at the Moon at ${kms(plan.vinf)} relative to it${plan.raKm ? `; the coast reaches ${Math.round(plan.raKm).toLocaleString('en-GB')} km from Earth at its farthest` : ''}.</p>
+        <p class="fl-dim">Launch site: ${esc(plan.launchSite.short)} is at ${Math.abs(plan.launchGeom.latDeg).toFixed(1)}° ${plan.launchGeom.latDeg >= 0 ? 'N' : 'S'}; the Moon is at ${plan.launchGeom.moonDecDeg.toFixed(0)}° declination, so the parking orbit is tilted ${plan.launchGeom.inclDeg.toFixed(0)}° and Earth’s spin gives ${kms(plan.launchGeom.spinBoostKms)} for free. ${plan.route === 'phasing' ? '' : 'Lift-off is timed for when Earth’s rotation carries the pad under that orbit, which is why the launch time changes with the site (good to a few hours: Apollo 11’s comes out 2 h late).'}</p>`;
     }
     if (tab === 'compare') {
       const all = compareRoutes(touchdown(), { lander: opts.lander, launchSite: opts.launchSite });

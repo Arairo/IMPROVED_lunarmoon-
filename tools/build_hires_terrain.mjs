@@ -73,19 +73,24 @@ for (const s of polar) {
   let best = null;
   for (let v = 0; v < 8; v++) {
     const a = variant(raw, n, v);
-    let sum = 0, bias = 0, k = 0;
+    let sum = 0, bias = 0, k = 0, refCoarse = 0;
     for (let r = 4; r < n; r += 8) for (let c = 4; c < n; c += 8) {
       const h = a[r * n + c];
       if (!Number.isFinite(h)) continue;
       const x = meta.centreX - half + (c + 0.5) * cell, y = meta.centreY + half - (r + 0.5) * cell;
-      if (!fine.covers(x, y)) continue;
-      const ref = fine.sample(x, y);
+      // Check against the 240 m grid; sites beyond it (IM-1, Cabeus B, ~84 deg S
+      // and further out) are checked against the 1 km grid instead.
+      const g = fine.covers(x, y) ? fine : coarse.covers(x, y) ? coarse : null;
+      if (!g) continue;
+      if (g === coarse) refCoarse++;
+      const ref = g.sample(x, y);
       if (!Number.isFinite(ref)) continue;
       sum += Math.abs(h - ref); bias += h - ref; k++;
     }
-    if (k > 100 && (!best || sum / k < best.mae)) best = { v, a, mae: sum / k, bias: bias / k, k };
+    if (k > 100 && (!best || sum / k < best.mae)) best = { v, a, mae: sum / k, bias: bias / k, k, ref: refCoarse > k / 2 ? '1 km' : '240 m' };
   }
-  if (!best || best.mae > 60) { console.log(`${s.id}: REJECTED (best mean abs difference vs 240 m grid ${best?.mae?.toFixed(1)} m)`); continue; }
+  const limit = best?.ref === '1 km' ? 100 : 60; // 1 km cells smooth out slopes, so allow more
+  if (!best || best.mae > limit) { console.log(`${s.id}: REJECTED (best mean abs difference vs ${best?.ref ?? 'LOLA'} grid ${best?.mae?.toFixed(1)} m)`); continue; }
   const out = new Int16Array(n * n);
   let filled = 0;
   for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) {
@@ -104,14 +109,14 @@ for (const s of polar) {
     rowOrder: 'row 0 at +y, column 0 at -x (relative to centreX/centreY)',
     source: 'NASA GSFC PGDA: LOLA 20 m south-pole DEM, LDEM_80S_20MPP_ADJ (Barker et al. 2023)',
     sourceUnits: unit, orientationVariant: best.v,
-    checkVs240m: { meanAbsDiffM: Math.round(best.mae * 10) / 10, biasM: Math.round(best.bias * 10) / 10, points: best.k },
+    checkVs240m: { meanAbsDiffM: Math.round(best.mae * 10) / 10, biasM: Math.round(best.bias * 10) / 10, points: best.k, against: best.ref },
     gapsFilledFrom240m: filled,
   };
   fs.writeFileSync(path.join(hiresDir, `${s.id}.bin`), Buffer.from(out.buffer));
   fs.writeFileSync(path.join(hiresDir, `${s.id}.json`), JSON.stringify(gmetaOut, null, 1));
   index.push({ id: s.id, centreX: meta.centreX, centreY: meta.centreY, halfExtent: half, cellSize: cell, size: n, meanAbsDiffM: gmetaOut.checkVs240m.meanAbsDiffM });
   tiles.push(createGrid(gmetaOut, out));
-  console.log(`${s.id.padEnd(16)} 20 m tile ${n}x${n} (${unit}, variant ${best.v}): vs 240 m grid mean |diff| ${best.mae.toFixed(1)} m, bias ${best.bias.toFixed(1)} m, ${filled} gaps filled`);
+  console.log(`${s.id.padEnd(16)} 20 m tile ${n}x${n} (${unit}, variant ${best.v}): vs ${best.ref} grid mean |diff| ${best.mae.toFixed(1)} m, bias ${best.bias.toFixed(1)} m, ${filled} gaps filled`);
 }
 fs.writeFileSync(path.join(hiresDir, 'index.json'), JSON.stringify({ source: 'NASA GSFC PGDA LDEM_80S_20MPP_ADJ (Barker et al. 2023)', url: 'https://pgda.gsfc.nasa.gov/products/90', tiles: index }, null, 1));
 
