@@ -111,6 +111,13 @@ const SOUNDS = {
     tone(a, { freq: 659.3, start: 0.18, dur: 0.6, gain: 0.12 });
     tone(a, { freq: 987.8, start: 0.3, dur: 0.9, gain: 0.1 });
   },
+  // The "commercial" click: a sharp snap over a low thump, with a faint ring.
+  click(a) {
+    noise(a, { dur: 0.06, gain: 0.45, from: 2500, to: 7000 });
+    tone(a, { type: 'sine', freq: 190, to: 55, dur: 0.28, gain: 0.75, attack: 0.002 });
+    tone(a, { type: 'triangle', freq: 2000, to: 1300, dur: 0.05, gain: 0.16, attack: 0.001 });
+    tone(a, { freq: 880, start: 0.05, dur: 0.6, gain: 0.05 });
+  },
   tick(a) { tone(a, { freq: 1200, to: 900, dur: 0.07, gain: 0.08, attack: 0.002 }); },
   pop(a) { tone(a, { type: 'triangle', freq: 520, to: 880, dur: 0.16, gain: 0.12, attack: 0.004 }); },
   go(a) { [523.3, 659.3, 784].forEach((f, i) => tone(a, { freq: f, start: i * 0.09, dur: 0.6, gain: 0.13 })); },

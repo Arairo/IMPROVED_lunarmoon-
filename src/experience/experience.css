@@ -1439,3 +1439,69 @@ html[data-theme='dark'] .cc-badge.amber { color: var(--xp-warn); }
 .xp-flow .f-best .f-linkbtn { background: none; border: 0; color: var(--xp-accent, #0071e3); font-weight: 600; padding: 4px 2px; text-decoration: underline; text-underline-offset: 2px; }
 .xp-viewmenu { display: inline-flex; align-items: center; gap: 3px; }
 .xp-trust .t-photo { width: 100%; height: auto; border-radius: 10px; margin: 8px 0 4px; image-rendering: pixelated; background: #111; }
+
+/* ---- Beginner: cursor demo on the sunlight map ---- */
+.w-demo { position: absolute; inset: 0; pointer-events: none; z-index: 3; }
+.w-cursor { position: absolute; left: 0; top: 0; filter: drop-shadow(0 4px 8px rgba(0,0,0,.6)); transition: transform 0.08s linear; }
+.w-ripple { position: absolute; width: 14px; height: 14px; margin: -7px 0 0 -7px; border-radius: 50%; border: 3px solid #fff; opacity: 0; }
+.w-demo.is-clicked .w-ripple { animation: wRipple 0.9s cubic-bezier(.2,.7,.2,1) forwards; }
+@keyframes wRipple { 0% { opacity: 1; transform: scale(0.4); } 100% { opacity: 0; transform: scale(5); } }
+.w-demo-tag { position: absolute; transform: translate(-50%, -150%); padding: 6px 12px; border-radius: 999px; background: #fff; color: #111; font: 700 13px var(--xp-font); white-space: nowrap; opacity: 0; box-shadow: 0 6px 20px rgba(0,0,0,.45); }
+.w-demo.is-clicked .w-demo-tag { animation: wTag 2.2s var(--xp-spring) forwards; }
+@keyframes wTag { 0% { opacity: 0; transform: translate(-50%, -100%) scale(.7); } 15% { opacity: 1; transform: translate(-50%, -150%) scale(1); } 85% { opacity: 1; } 100% { opacity: 0; } }
+.w-map-hint.is-go { background: #fbbf24; color: #111; }
+
+/* ---- Beginner: where on the Moon ---- */
+.w-where { position: absolute; inset: 0; z-index: 4; background: radial-gradient(circle at 50% 45%, #0b1220, #02040a 70%); display: grid; grid-template-rows: 1fr auto auto; animation: xpSceneIn .5s var(--xp-ease); }
+.w-where-moon { width: 100%; height: 100%; min-height: 0; display: block; }
+.w-where-cap { padding: 0 18px 4px; color: #fff; text-align: center; }
+.w-where-cap b { display: block; font: 700 17px var(--xp-font); }
+.w-where-cap span { font: 400 13.5px/1.45 var(--xp-font); color: rgba(255,255,255,.75); }
+.w-where .w-link { justify-self: center; margin: 6px 0 14px; color: #93c5fd; }
+
+/* ---- Beginner: Pick a day Moon ---- */
+.w-picked { display: flex; gap: 8px; align-items: center; margin: 0 0 12px; padding: 10px 14px; border-radius: 14px; background: rgba(48,209,88,.12); border: 1px solid rgba(48,209,88,.3); font: 500 14px/1.4 var(--xp-font); }
+.w-picked[hidden] { display: none; }
+.w-fc-key > .w-daymoon { display: grid; grid-template-columns: 1fr; gap: 6px; justify-items: center; padding: 12px; background: #05070c; border: 1px solid var(--xp-line); }
+.w-daymoon canvas { width: 100%; max-width: 240px; aspect-ratio: 1; display: block; }
+.w-daymoon-cap { text-align: center; color: #fff; }
+.w-daymoon-cap b { display: block; font: 700 14px var(--xp-font); }
+.w-daymoon-cap span { font: 400 12.5px/1.4 var(--xp-font); color: rgba(255,255,255,.7); }
+.w-daymoon .xp-btn { color: #fff; }
+
+/* ---- Beginner: Fly with a route map ---- */
+.w-flywrap { display: grid; grid-template-columns: minmax(0, 1fr) 210px; gap: 12px; margin-bottom: 12px; }
+.w-flywrap .w-flybox { margin-bottom: 0; }
+.w-inset { display: grid; grid-template-rows: auto 1fr auto; gap: 6px; padding: 12px; border-radius: 22px; background: #05070c; border: 1px solid var(--xp-line); color: #fff; }
+.w-inset b { font: 700 13px var(--xp-font); }
+.w-inset-map { width: 100%; aspect-ratio: 1; display: block; }
+.w-inset-key { display: flex; flex-wrap: wrap; gap: 4px 10px; font: 500 12px var(--xp-font); color: rgba(255,255,255,.75); }
+.w-inset-key i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 4px; vertical-align: -1px; }
+.w-inset-key i.e { background: #3b82f6; } .w-inset-key i.m { background: #d1d5db; } .w-inset-key i.r { background: #ef4444; }
+.w-recentre { position: absolute; right: 12px; bottom: 12px; display: inline-flex; gap: 6px; align-items: center; padding: 8px 14px; border-radius: 999px; border: 0; background: #fbbf24; color: #111; font: 700 13px var(--xp-font); cursor: pointer; box-shadow: 0 6px 18px rgba(0,0,0,.4); }
+.w-recentre[hidden] { display: none; }
+
+/* ---- Beginner: famous places fit in one row on laptops ---- */
+.w-cards-sm { grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); }
+.w-game-side .w-cards-sm .w-card .c-art { height: 34px; }
+@media (min-width: 761px) and (max-height: 860px) {
+  .w-game { grid-template-columns: minmax(0, 440px) minmax(240px, 1fr); }
+  .w-guess { padding: 12px 14px; }
+}
+
+/* ---- Phones: small Lumi beside the title, the map/visual in the first screen ---- */
+@media (max-width: 720px) {
+  .w-main { padding-top: 16px; }
+  .w-scene { display: block; position: relative; }
+  .w-scene > .w-lumi { position: absolute; left: 0; top: 4px; width: 58px; z-index: 2; }
+  .w-scene > .w-lumi svg { width: 58px !important; height: 58px !important; }
+  .w-scene > div:last-child > .w-say, .w-scene > div:last-child > .w-hero > .w-say { margin-left: 66px; padding: 14px 16px; }
+  .w-say h2 { font-size: 24px; }
+  .w-say p { font-size: 14.5px; }
+  .w-flywrap { grid-template-columns: 1fr; }
+  .w-inset { grid-template-columns: 120px 1fr; grid-template-rows: auto auto; align-items: center; }
+  .w-inset b { grid-column: span 2; }
+  .w-inset-key { flex-direction: column; }
+  .w-path ol li button.is-on { font-size: 11px; }
+  .w-path ol li button.is-on::first-letter { font-size: inherit; }
+}

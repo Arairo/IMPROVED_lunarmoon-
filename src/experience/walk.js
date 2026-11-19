@@ -13,7 +13,11 @@ import { play, syncSoundLabels } from './sound.js';
 import { findNextWindow } from '../core/planning.js';
 import { createCalendar } from './calendar.js';
 import { icon } from './icons.js';
-import { planFlight, flightPath, phaseTimes, siteDirection, ROUTES } from '../core/flight.js';
+import { planFlight, flightPath, phaseTimes, siteDirection, moonState, ROUTES } from '../core/flight.js';
+import { evaluate } from '../core/analysis.js';
+import { moonFixedState } from '../core/ephemeris.js';
+const moonThumbs = () => import('../scene/moonThumb.js');
+const reducedMotion = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
 const DAY = 86400000;
 const R = 1737400;
@@ -274,7 +278,9 @@ export function createWalk({ app, sites, onOpenPro, onToggleTheme, onToggleSound
         return `${say(g ? 'Here’s the real sunlight map.' : 'Find the sunny spot.', g ? 'Bright = lots of sunlight in 2027. Dark = little or none. Where do you want to land?' : 'This is the area around the Moon’s south pole, 150 km across. Tap where you think the Sun shines the longest.')}
           <div class="w-content"><div class="w-game">
             <div class="w-mapbox"><canvas class="w-map" width="520" height="520" aria-label="South-pole map: tap to guess the sunniest spot"></canvas>
-              <div class="w-map-hint">${g ? '' : 'Tap the map'}</div></div>
+              <div class="w-map-hint">${g ? '' : 'Tap the map'}</div>
+              <div class="w-demo" hidden aria-hidden="true"><svg class="w-cursor" viewBox="0 0 24 24" width="34" height="34"><path d="M4 2l15 9.5-6.6 1.4 3.7 7.3-2.9 1.4-3.6-7.3L4 19z" fill="#fff" stroke="#111" stroke-width="1.3" stroke-linejoin="round"/></svg><span class="w-ripple"></span><span class="w-demo-tag"></span></div>
+              <div class="w-where" hidden><canvas class="w-where-moon" aria-label="Where this landing site is on the Moon"></canvas><div class="w-where-cap"></div><button type="button" class="w-link" data-a="map">Show the sunlight map again</button></div></div>
             <div class="w-game-side">${result}
               ${g ? `<div class="w-landopts">
                   <button type="button" class="w-opt ${st.landPick === 'guess' && st.site ? 'is-picked' : ''}" data-land="guess"><b>Land at my spot</b><span>${g.value > 0 ? `${Math.round(g.value * 100)}% sunlight in 2027` : 'Brave: no sunlight at all'}</span></button>
@@ -295,8 +301,11 @@ export function createWalk({ app, sites, onOpenPro, onToggleTheme, onToggleSound
     {
       mood: 'happy',
       render: () => `${say('When do we touch down?', `We’re landing at <b>${esc(st.site.name)}</b>. Pick a day, like checking a weather forecast. A lunar day lasts about a month, so the date really matters.`)}
-        <div class="w-content"><div class="w-forecast"><div class="w-calbox"><b>Moon forecast</b><span>For <b>${esc(st.site.short || st.site.name)}</b>, landing at this time of day.</span><div data-cal></div></div>
+        <div class="w-content"><p class="w-picked" data-picked hidden></p><div class="w-forecast"><div class="w-calbox"><b>Moon forecast</b><span>For <b>${esc(st.site.short || st.site.name)}</b>, landing at this time of day.</span><div data-cal></div></div>
           <div class="w-fc-key">
+            <div class="w-daymoon"><canvas aria-label="The Moon on this day: where sunlight falls, with your landing spot"></canvas>
+              <div class="w-daymoon-cap" aria-live="polite"></div>
+              <button type="button" class="xp-btn xp-btn-ghost" data-a="playMonth">${icon('play', 15)} Play the month</button></div>
             <div><i class="g">${icon('sun', 18)}${icon('globe', 18)}</i><b>Sun and Earth</b><span>Power and radio together for 3+ days. Perfect.</span></div>
             <div><i class="a">${icon('sun', 18)}</i><b>Sun only</b><span>Power, but Earth hides behind the hills.</span></div>
             <div><i class="r">${icon('moon', 18)}</i><b>Night</b><span>No sunlight at touchdown.</span></div>
@@ -305,11 +314,56 @@ export function createWalk({ app, sites, onOpenPro, onToggleTheme, onToggleSound
             <p class="w-note" data-local>Touchdown: ${fmtDate(st.startMs)}</p>
           </div></div></div>`,
       bind: () => {
+        // Start on the next perfect day, so a mission isn't doomed by the default date.
+        if (st.dayPickedFor !== st.site.id) {
+          st.dayPickedFor = st.site.id;
+          const res = findNextWindow(st.site, Date.now(), app.config, { minDays: 3 });
+          const pickedEl = scene.querySelector('[data-picked]');
+          if (res) {
+            st.startMs = res.ms; st.scan = null; st.flight = null;
+            pickedEl.innerHTML = `${icon('sparkles', 16)} I picked the next perfect day for you: <b>${fmtDate(res.ms)}</b>. Tap any other day to experiment.`;
+          } else {
+            pickedEl.innerHTML = `${icon('moon', 16)} No day in the next year has sunlight and Earth together for 3 days here. Try it anyway, or go back and pick a sunnier spot.`;
+          }
+          pickedEl.hidden = false;
+        }
+        const ctx = prepareSite(st.site, null, app.config);
+        const moonCanvas = scene.querySelector('.w-daymoon canvas'), moonCap = scene.querySelector('.w-daymoon-cap');
+        let thumbs = null, playing = false;
+        const polar = st.site.lat < -60;
+        const drawMoon = (ms) => {
+          if (!thumbs || !moonCanvas.isConnected) return;
+          const state = moonFixedState(ms);
+          const e = evaluate(ms, ctx, app.config, { withDsn: false });
+          const sun = e.sun.fraction > 0, earth = e.earth.los;
+          const col = sun && earth ? '#22c55e' : sun ? '#f59e0b' : '#ef4444';
+          const view = polar ? { lat: -90, lon: 0, dist: 4.6, earthFlat: true } : { lat: st.site.lat, lon: st.site.lon, dist: 4.4 };
+          thumbs.draw(moonCanvas, { ...view, sun: state.sun, earth: state.earth, pins: [{ lat: st.site.lat, lon: st.site.lon, color: col, r: 6 }] });
+          moonCap.innerHTML = `<b>${fmtDate(ms)}</b><span>${sun && earth ? 'Sun up and Earth in view' : sun ? 'Sun up, Earth hidden' : 'Night at your spot'}${polar ? ' · seen from below the south pole, Earth-facing side at the top' : ''}</span>`;
+        };
+        moonThumbs().then(({ getMoonThumbs }) => getMoonThumbs()).then((t) => { thumbs = t; drawMoon(st.startMs); });
+        window.addEventListener('lsp-moonthumb', () => { if (!playing) drawMoon(st.startMs); });
         const cal = createCalendar({ getSite: () => st.site, getConfig: () => app.config, getSelectedMs: () => st.startMs, compact: true,
-          onPick: (ms) => { st.startMs = ms; st.scan = null; st.flight = null; showLocal(); play('tick'); } });
+          onPick: (ms) => { st.startMs = ms; st.scan = null; st.flight = null; showLocal(); drawMoon(ms); play('tick'); },
+          onHover: (ms) => { if (!playing) drawMoon(ms ?? st.startMs); } });
         scene.querySelector('[data-cal]').appendChild(cal.el);
         const showLocal = () => { scene.querySelector('[data-local]').textContent = `Touchdown: ${fmtDate(st.startMs)}`; cal.refresh(); };
         cal.refresh();
+        showLocal();
+        scene.querySelector('[data-a="playMonth"]').addEventListener('click', (ev) => {
+          if (playing) return;
+          playing = true;
+          const btn = ev.currentTarget; btn.disabled = true;
+          const t0 = performance.now(), span = SYNODIC_MONTH_DAYS * DAY, dur = reducedMotion() ? 1 : 7000;
+          const step = (now) => {
+            if (!moonCanvas.isConnected) return;
+            const k = Math.min(1, (now - t0) / dur);
+            drawMoon(st.startMs + k * span);
+            if (k < 1) requestAnimationFrame(step);
+            else { playing = false; btn.disabled = false; drawMoon(st.startMs); }
+          };
+          requestAnimationFrame(step);
+        });
         scene.querySelector('[data-a="findDate"]').addEventListener('click', () => {
           const outEl = scene.querySelector('[data-find-out]');
           const res = findNextWindow(st.site, st.startMs, app.config, { minDays: 3 });
@@ -319,7 +373,7 @@ export function createWalk({ app, sites, onOpenPro, onToggleTheme, onToggleSound
             return;
           }
           st.startMs = res.ms; st.scan = null; st.flight = null;
-          showLocal();
+          showLocal(); drawMoon(res.ms);
           outEl.textContent = `Found one: ${fmtDate(res.ms)}. Sunlight and Earth stay in view together for about ${((res.endMs - res.ms) / DAY).toFixed(0)} days.`;
           setLumi(scene.querySelector('[data-lumi]'), 'happy', 'cheer', 140);
           play('go');
@@ -336,9 +390,12 @@ export function createWalk({ app, sites, onOpenPro, onToggleTheme, onToggleSound
         return `${say(st.landed ? 'Touchdown!' : 'How do we get there?', st.landed ? `The lander is down at <b>${esc(st.site.short || st.site.name)}</b>. Now the real test: can it survive a month?` : 'Pick a route. Faster isn’t always better: stopping at the Moon takes fuel, and fast arrivals need the most.')}
           <div class="w-content">
             <div class="w-routes">${Object.keys(ROUTE_KID).map((r) => { const p = planFlight(st.startMs, { route: r }); return `<button type="button" class="w-opt ${st.route === r ? 'is-picked' : ''}" data-route="${r}"><b>${ROUTE_KID[r].name}</b><span>${ROUTE_KID[r].line}</span><em>${p.doorToDoorDays < 20 ? p.doorToDoorDays.toFixed(1) : Math.round(p.doorToDoorDays)} days · ${Math.round(p.propKg).toLocaleString('en-GB')} kg of fuel</em></button>`; }).join('')}</div>
-            <div class="w-flybox"><canvas class="w-fly" aria-label="The flight from Earth to the Moon"></canvas>
+            <div class="w-flywrap"><div class="w-flybox"><canvas class="w-fly" aria-label="Following the rocket from Earth to the Moon"></canvas>
               <div class="w-fly-cap" aria-live="polite">${f ? '' : 'Pick a route, then press Launch'}</div>
+              <button type="button" class="w-recentre" data-a="recentre" hidden>${icon('rocket', 14)} Follow the rocket</button>
               <div class="w-count-big" aria-hidden="true"></div></div>
+              <div class="w-inset"><b>The whole route, from above</b><canvas class="w-inset-map" aria-label="Map of the whole route with the rocket's position"></canvas>
+                <div class="w-inset-key"><span><i class="e"></i>Earth</span><span><i class="m"></i>Moon</span><span><i class="r"></i>Rocket</span></div></div></div>
             <div class="w-row"><button type="button" class="xp-btn xp-btn-primary" data-a="launch">${icon('rocket', 16)} ${st.landed ? 'Fly it again' : 'Launch!'}</button>
               ${f ? `<span class="w-note">Launch ${fmtDate(f.launchMs)} from Kennedy · touchdown ${fmtDate(f.touchdownMs)}</span>` : ''}</div>
             ${why('Why do some missions take months?', 'Leaving Earth is the same for everyone, but stopping at the Moon is not. Arrive fast and you must brake hard, which burns lots of fuel. Take a long, curvy route and the Sun’s pull slows you down for free, so you arrive gently. Japan’s SLIM took 4 months; Apollo 11 took 4 days.')}
@@ -474,7 +531,103 @@ export function createWalk({ app, sites, onOpenPro, onToggleTheme, onToggleSound
       ctx.strokeText(label, x + 14, y + 4); ctx.fillText(label, x + 14, y + 4);
     }
     draw();
+    // A quick "commercial" demo the first time: a cursor clicks an ordinary spot.
+    const demo = scene.querySelector('.w-demo');
+    let demoStop = null;
+    if (!st.guess && !st.demoShown && !reducedMotion()) {
+      st.demoShown = true;
+      let pick = null, bestD = Infinity;
+      for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) {
+        const v = illum.illum[r * n + c] / illum.scale;
+        if (v < 0.3 || v > 0.5) continue;
+        const x = -HALF + (c + 0.5) * illum.cellSize, y = HALF - (r + 0.5) * illum.cellSize;
+        const d = Math.hypot(x + 30000, y - 25000);
+        if (d < bestD) { bestD = d; pick = { x, y, v }; }
+      }
+      if (pick) demoStop = runDemo(pick);
+    }
+    function runDemo(pick) {
+      const box = canvas.getBoundingClientRect();
+      const [tx, ty] = toPx(pick.x, pick.y).map((q) => (q / W) * box.width);
+      const cur = demo.querySelector('.w-cursor'), rip = demo.querySelector('.w-ripple'), tag = demo.querySelector('.w-demo-tag');
+      demo.hidden = false;
+      let raf = 0, stopped = false;
+      const t0 = performance.now(), sx = box.width * 0.92, sy = box.height * 0.95;
+      const stop = () => { stopped = true; cancelAnimationFrame(raf); demo.hidden = true; demo.classList.remove('is-clicked'); };
+      const frame = (now) => {
+        if (stopped || !canvas.isConnected) return;
+        const t = (now - t0) / 1000;
+        const u = Math.min(1, Math.max(0, (t - 0.3) / 1.4)), e = u < 0.5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2;
+        // A curved glide, like a hand moving a mouse.
+        const x = sx + (tx - sx) * e + Math.sin(e * Math.PI) * 40, y = sy + (ty - sy) * e - Math.sin(e * Math.PI) * 30;
+        cur.style.transform = `translate(${x - 4}px, ${y - 2}px) scale(${t > 1.85 && t < 2.05 ? 0.82 : 1})`;
+        if (t > 1.9 && !demo.classList.contains('is-clicked')) {
+          demo.classList.add('is-clicked');
+          rip.style.left = `${tx}px`; rip.style.top = `${ty}px`;
+          tag.style.left = `${tx}px`; tag.style.top = `${ty}px`;
+          tag.textContent = `This spot: ${Math.round(pick.v * 100)}% sunlight`;
+          play('click');
+        }
+        if (t > 4.2) {
+          stop();
+          const hint = scene.querySelector('.w-map-hint');
+          if (hint && !st.guess) { hint.textContent = 'Your turn: tap where it’s sunniest'; hint.classList.add('is-go'); }
+          return;
+        }
+        raf = requestAnimationFrame(frame);
+      };
+      raf = requestAnimationFrame(frame);
+      return stop;
+    }
+    // "Where on the Moon is this?" zoom after you choose a place.
+    const where = scene.querySelector('.w-where');
+    scene.querySelector('[data-a="map"]')?.addEventListener('click', () => { where.hidden = true; st.whereHidden = true; });
+    if (st.site && !st.whereHidden) showWhere(st.site, st.whereFor !== st.site.id);
+    async function showWhere(site, animate) {
+      st.whereFor = site.id;
+      where.hidden = false;
+      if (animate) { const r = where.getBoundingClientRect(); if (r.top < 70 || r.bottom > innerHeight - 90) where.scrollIntoView({ block: 'center', behavior: reducedMotion() ? 'auto' : 'smooth' }); }
+      const mc = where.querySelector('canvas'), capEl = where.querySelector('.w-where-cap');
+      const { getMoonThumbs, ease } = await moonThumbs();
+      const m = await getMoonThumbs();
+      if (!mc.isConnected) return;
+      const polar = site.lat < -75;
+      const label = site.short || site.name;
+      const near = Math.abs(((site.lon + 540) % 360) - 180) <= 90;
+      const side = site.lat < -75 ? 'where Earth skims the horizon and the Sun circles low all month' : near ? 'on the side of the Moon that faces Earth' : 'on the far side, where Earth is never in the sky';
+      const band = site.lat < -75 ? 'right by the south pole' : site.lat < -50 ? 'in the southern highlands' : Math.abs(site.lat) < 25 ? 'near the Moon’s equator' : site.lat > 50 ? 'far in the north' : site.lat > 0 ? 'in the northern half' : 'in the southern half';
+      capEl.innerHTML = `<b>${esc(label)}</b><span>${Math.abs(site.lat).toFixed(1)}° ${site.lat < 0 ? 'S' : 'N'}, ${Math.abs(site.lon).toFixed(1)}° ${site.lon < 0 ? 'W' : 'E'} · ${band}, ${side}.</span>`;
+      const end = polar ? { lat: site.lat, lon: site.lon, dist: 1.42, fov: 26 } : { lat: site.lat, lon: site.lon, dist: 1.9, fov: 28 };
+      const start = { lat: polar ? -25 : site.lat * 0.4, lon: site.lon - 70, dist: 4.6, fov: 30 };
+      const upAt = (k) => { const a = new Float32Array([0, 1, 0]); if (!polar) return null; const b = [0, 0, 1]; const v = [a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k, a[2] + (b[2] - a[2]) * k]; const l = Math.hypot(...v); return v.map((q) => q / l); };
+      const frame = (k) => {
+        const e = ease(k);
+        const v = { lat: start.lat + (end.lat - start.lat) * e, lon: start.lon + (end.lon - start.lon) * e, dist: start.dist + (end.dist - start.dist) * e, fov: start.fov + (end.fov - start.fov) * e, up: upAt(e) };
+        const pins = m.draw(mc, { ...v, pins: [{ lat: site.lat, lon: site.lon, hidden: k < 0.85, color: '#fbbf24', r: 6 }] });
+        const p = pins[0];
+        if (k >= 0.85 && p.front) {
+          const g = mc.getContext('2d'), sc = mc.width / (mc.clientWidth || mc.width);
+          g.save(); g.scale(sc, sc);
+          const drop = Math.max(0, 1 - (k - 0.85) / 0.15) * 18;
+          g.font = '700 14px system-ui'; g.lineWidth = 4; g.strokeStyle = 'rgba(0,0,0,.75)'; g.fillStyle = '#fff';
+          g.strokeText(label, p.x + 12, p.y - 10 - drop); g.fillText(label, p.x + 12, p.y - 10 - drop);
+          g.restore();
+        }
+      };
+      if (!animate || reducedMotion()) { frame(1); return; }
+      const t0 = performance.now();
+      let popped = false;
+      const step = (now) => {
+        if (!mc.isConnected) return;
+        const k = Math.min(1, (now - t0) / 2600);
+        frame(k);
+        if (k >= 0.85 && !popped) { popped = true; play('pop'); }
+        if (k < 1) requestAnimationFrame(step);
+      };
+      requestAnimationFrame(step);
+    }
     canvas.addEventListener('click', (e) => {
+      demoStop?.();
       if (st.guess) return;
       const r = canvas.getBoundingClientRect();
       const [x, y] = fromPx(((e.clientX - r.left) / r.width) * W, ((e.clientY - r.top) / r.height) * W);
@@ -488,9 +641,10 @@ export function createWalk({ app, sites, onOpenPro, onToggleTheme, onToggleSound
       const p = b.dataset.land === 'guess' ? st.guess : st.bestSpot;
       setSite({ id: `custom-${p.lat.toFixed(3)}-${p.lon.toFixed(3)}`, name: b.dataset.land === 'guess' ? 'Your spot near the south pole' : 'The sunniest spot on the map', short: b.dataset.land === 'guess' ? 'Your spot' : 'Sunniest spot', lat: p.lat, lon: p.lon, group: 'custom' });
       st.landPick = b.dataset.land;
+      st.whereHidden = false;
       render(1);
     }));
-    scene.querySelectorAll('[data-site]').forEach((b) => b.addEventListener('click', () => { st.landPick = null; setSite(sites.find((s) => s.id === b.dataset.site)); render(1); }));
+    scene.querySelectorAll('[data-site]').forEach((b) => b.addEventListener('click', () => { st.landPick = null; st.whereHidden = false; setSite(sites.find((s) => s.id === b.dataset.site)); render(1); }));
     scene.querySelector('[data-a="retry"]')?.addEventListener('click', () => { st.guess = null; setSite(null); render(1); });
   }
 
@@ -504,19 +658,23 @@ export function createWalk({ app, sites, onOpenPro, onToggleTheme, onToggleSound
     const { createFlightScene } = await import('../scene/flightScene.js');
     if (!canvas.isConnected) return;
     flyScene?.dispose?.();
-    flyScene = createFlightScene(canvas);
+    const recentre = scene.querySelector('[data-a="recentre"]');
+    flyScene = createFlightScene(canvas, { chase: true, onHint: (h) => { if (h === 'follow-off') recentre.hidden = false; } });
+    recentre.addEventListener('click', () => { flyScene.setFollow(true); recentre.hidden = true; });
     const plan = planFlight(st.startMs, { route: st.route });
     plan.site = { lat: st.site.lat, lon: st.site.lon, name: st.site.short || st.site.name };
     plan.siteDir = siteDirection(st.site.lat, st.site.lon, plan.touchdownMs);
     const path = flightPath(plan, 0, phaseTimes(plan, 120));
     st.flight = plan;
     flyScene.setPlan(plan, path);
+    const inset = routeInset(scene.querySelector('.w-inset-map'), plan, path);
     const n = plan.phases.length;
     const tAt = (u) => { const k = Math.min(n - 1, Math.floor(u * n)), f = u * n - k, ph = plan.phases[k]; return ph.start + Math.min(1, f) * (ph.end - ph.start); };
     const idxAt = (t) => { let lo = 0, hi = path.length - 1; while (lo < hi) { const m = (lo + hi) >> 1; if (path[m].t < t) lo = m + 1; else hi = m; } return lo; };
     const show = (u) => {
       const i = u >= 1 ? path.length - 1 : idxAt(tAt(u));
       flyScene.setIndex(i);
+      inset(i);
       const ph = plan.phases.find((p) => path[i].t >= p.start && path[i].t <= p.end) || plan.phases.at(-1);
       cap.textContent = u >= 1 ? `Touchdown at ${plan.site.name}!` : `${ph.label} · day ${((path[i].t - plan.launchMs) / DAY).toFixed(1)}`;
     };
@@ -525,6 +683,8 @@ export function createWalk({ app, sites, onOpenPro, onToggleTheme, onToggleSound
     scene.querySelector('[data-a="launch"]').addEventListener('click', async () => {
       const btn = scene.querySelector('[data-a="launch"]');
       btn.disabled = true;
+      // Start again from the pad, following the rocket, however the view was left.
+      flyScene.resetView(); recentre.hidden = true; show(0); cap.textContent = 'Counting down…';
       for (const c of ['3', '2', '1', 'Liftoff!']) {
         big.textContent = c; big.classList.remove('pop'); void big.offsetWidth; big.classList.add('pop');
         play(c === 'Liftoff!' ? 'whoosh' : 'tick');
@@ -680,6 +840,39 @@ export function createWalk({ app, sites, onOpenPro, onToggleTheme, onToggleSound
     open() { if (!scene.childElementCount) go(restore()); },
     restart() { try { localStorage.removeItem(SAVE_KEY); } catch {} Object.assign(st, { visited: 0, site: null, guess: null, landed: false, flight: null, scan: null }); go(0); },
     root,
+  };
+}
+
+// Top-down map of the whole route: Earth, the Moon where it is now, the path
+// (bright where flown) and the rocket. Same plane as the 3D view (the Moon's orbit).
+function routeInset(canvas, plan, path) {
+  const ctx = canvas.getContext('2d');
+  const m = moonState(plan.loiMs);
+  const nrm = (v) => { const k = Math.hypot(v[0], v[1], v[2]); return [v[0] / k, v[1] / k, v[2] / k]; };
+  const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+  const e1 = nrm(m.r), nn = nrm(cross(m.r, m.v)), e2 = cross(nn, e1);
+  const P = (v) => [v[0] * e1[0] + v[1] * e1[1] + v[2] * e1[2], v[0] * e2[0] + v[1] * e2[1] + v[2] * e2[2]];
+  const pts = path.map((s) => P(s.pos));
+  let ext = 420000;
+  for (const [x, y] of pts) ext = Math.max(ext, Math.abs(x) * 1.08, Math.abs(y) * 1.08);
+  return (i) => {
+    const w = canvas.clientWidth || 200, h = canvas.clientHeight || 200, dpr = Math.min(2, window.devicePixelRatio || 1);
+    if (canvas.width !== Math.round(w * dpr)) { canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr); }
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, w, h);
+    const s = (Math.min(w, h) / 2 - 10) / ext, cx = w / 2, cy = h / 2;
+    const xy = ([x, y]) => [cx + x * s, cy - y * s];
+    // Moon's orbit
+    ctx.strokeStyle = 'rgba(148,163,184,.35)'; ctx.setLineDash([3, 4]); ctx.beginPath(); ctx.arc(cx, cy, 384400 * s, 0, 7); ctx.stroke(); ctx.setLineDash([]);
+    // Route: faint, then the flown part bright
+    ctx.lineWidth = 1.5; ctx.strokeStyle = 'rgba(251,191,36,.28)'; ctx.beginPath(); pts.forEach((p, k) => { const [x, y] = xy(p); k ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }); ctx.stroke();
+    ctx.lineWidth = 2.2; ctx.strokeStyle = '#fbbf24'; ctx.beginPath(); pts.slice(0, i + 1).forEach((p, k) => { const [x, y] = xy(p); k ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }); ctx.stroke();
+    const dotAt = ([x, y], r, col) => { ctx.fillStyle = col; ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill(); };
+    dotAt([cx, cy], 6, '#3b82f6');
+    dotAt(xy(P(moonState(path[i].t).r)), 4.5, '#d1d5db');
+    const [rx, ry] = xy(pts[i]);
+    ctx.fillStyle = 'rgba(239,68,68,.25)'; ctx.beginPath(); ctx.arc(rx, ry, 9, 0, 7); ctx.fill();
+    dotAt([rx, ry], 4, '#ef4444');
   };
 }
 

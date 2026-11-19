@@ -22,7 +22,7 @@ export function describeDay(d) {
  * opts: { getSite, getConfig, getSelectedMs, onPick(ms), compact }
  * Returns { el, refresh(force) }.
  */
-export function createCalendar({ getSite, getConfig, getSelectedMs, onPick, compact = false }) {
+export function createCalendar({ getSite, getConfig, getSelectedMs, onPick, onHover = null, compact = false }) {
   const el = document.createElement('div');
   el.className = `xp-cal${compact ? ' is-compact' : ''}`;
   el.innerHTML = `
@@ -36,6 +36,7 @@ export function createCalendar({ getSite, getConfig, getSelectedMs, onPick, comp
     <div class="c-legend"><span><i class="green"></i>Best</span><span><i class="amber"></i>Power only</span><span><i class="red"></i>No sunlight</span></div>
     <p class="c-tip" aria-live="polite"></p>`;
   const grid = el.querySelector('.c-grid');
+  grid.addEventListener('mouseleave', () => onHover?.(null));
   const tip = el.querySelector('.c-tip');
   let month = null; // UTC ms of the 1st of the shown month
   let key = '';
@@ -79,7 +80,7 @@ export function createCalendar({ getSite, getConfig, getSelectedMs, onPick, comp
     grid.innerHTML = html;
     grid.querySelectorAll('.c-day').forEach((b) => {
       const d = cal[Number(b.dataset.i)];
-      b.addEventListener('mouseenter', () => { tip.textContent = `${LONG.format(d.dayMs)}: ${describeDay(d)}`; });
+      b.addEventListener('mouseenter', () => { tip.textContent = `${LONG.format(d.dayMs)}: ${describeDay(d)}`; onHover?.(d.ms); });
       b.addEventListener('focus', () => { tip.textContent = `${LONG.format(d.dayMs)}: ${describeDay(d)}`; });
       b.addEventListener('click', () => { onPick(d.ms); tip.textContent = `Picked ${LONG.format(d.dayMs)}: ${describeDay(d)}`; });
     });
