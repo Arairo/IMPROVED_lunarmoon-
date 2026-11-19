@@ -15,7 +15,7 @@ is automated, so you can re-run it with the tests or a GitHub workflow.
 | Year-long Earth-in-view map | NASA PGDA Earth visibility, 120 m | **r = 0.975**, mean difference 4.7 points | same |
 | Sunlight at the Shackleton connecting ridge | NASA PGDA | Ours **66%** of 2027 with 20 m terrain vs PGDA **68%** (79% with our 240 m grid) | same |
 | 20 m terrain tiles | Our 240 m LOLA grid (1 km beyond it) | Mean height difference **2.0–3.6 m** at every tile | same |
-| Real shadows | LROC NAC controlled mosaic of the Peak Near Cabeus B Artemis III region, 8 images on 18 Sep 2017 | See `public/data/lroc_check.json` and the Accuracy panel (agreement and Cohen's κ, with and without the 20 m terrain) | *Check shadows against an LROC photo* workflow |
+| Real shadows | LROC NAC controlled mosaic of the Peak Near Cabeus B Artemis III region, 8 images on 18 Sep 2017 | **93%** of 103,569 40 m cells agree (Cohen's κ **0.86**) with 20 m terrain; 88% (κ 0.76) with the 240 m grid. Almost every miss is a cell we call lit that is dark in the photo, along shadow edges: our shadows run slightly short | *Check shadows against an LROC photo* workflow |
 | Flight burns | Apollo 11 | Leaving Earth orbit 3.16 vs 3.18 km/s; lunar orbit insertion 0.93 vs 0.94; descent 2.01 vs 2.06 | `npm test` (test/flight.spec.js) |
 | Flight timelines | Apollo 11, IM-1, Chandrayaan-3, Blue Ghost M1, SLIM | Launch-to-landing time within a factor 0.55–1.6 of flown for the matching route | `npm test` |
 | Launch time from the pad | Apollo 11 from Kennedy | Ours 15:40 UTC vs flown 13:32 UTC (2.1 h late; tested to under 3 h) | `npm test` |

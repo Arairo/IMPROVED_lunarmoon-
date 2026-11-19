@@ -42,8 +42,10 @@ with 240 m terrain to 66% with 20 m terrain, against 68% from [2]: terrain
 resolution, not ephemeris, dominates the error budget. Against an LROC NAC
 controlled mosaic of the Peak Near Cabeus B region (eight images, 18 September
 2017) [5], predicted lit and shadowed terrain agrees with the photo in
-[XX]% of 40 m cells (Cohen's κ = [X.XX]) with 20 m terrain, versus [XX]% with
-240 m terrain. For flight, Apollo 11's trans-lunar injection, lunar orbit
+93% of 103,569 comparable 40 m cells (Cohen's κ = 0.86) with 20 m terrain,
+versus 88% (κ = 0.76) with 240 m terrain. Nearly all disagreements are cells we
+predict lit that the photo shows dark, along shadow edges: our shadows are
+slightly too short, as expected from terrain that is partly interpolated. For flight, Apollo 11's trans-lunar injection, lunar orbit
 insertion and descent are reproduced to within 0.05 km/s.
 
 **Results:** [Table: for each of the nine Artemis III region centres over 2027,
