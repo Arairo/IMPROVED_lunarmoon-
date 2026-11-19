@@ -32,7 +32,7 @@ How big each source of error is, and what it does to the answers.
 | Sun as a disk vs a point | The Sun is 0.53° wide | We count "Sun up" when any part of the disk is up (window summaries) or its centre (year maps). The two differ by a few points at grazing sites. NASA PGDA reports the visible fraction of the disk. |
 | Mast height | 2 m by default (settings) | Matters only at grazing sites, where a taller mast sees over nearby rises; change it in the spacecraft settings to test. |
 | Time sampling | 20 min to 4 h steps by window length; 6 h for the year maps | Event times (sunrise, Earthset) are good to about half a step; the Lumi "when is sunset" search refines to ~30 s. |
-| Region centres | Artemis III regions are 20 × 20 km (Mons Mouton Plateau ~66 km) | A centre is one point. Lighting changes a lot within a region; test spots inside the outline. |
+| Region centres | Artemis III regions are 20 × 20 km (Mons Mouton Plateau ~66 km) | A centre is one point. Lighting changes a lot within a region; test spots inside the outline. Example: the Malapert Massif centre sits on a ~4° slope, so with 20 m terrain it sees the Sun 22% of 2027, against 38% in NASA's 120 m map and 43% with our coarser grid, which both smooth the slope away. |
 | Flight model (patched conics) | Δv within ~0.05–0.1 km/s of Apollo 11; launch time within a few hours | Good for comparing routes and dates; not for navigation. The low-energy route is a typical transfer, not an optimised trajectory. |
 
 ## 3. What this tool is not
