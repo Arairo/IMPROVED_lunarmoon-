@@ -475,6 +475,36 @@ export function createGlobeRenderer(canvas, onPickSite, options = {}) {
       renderGlobe();
     },
     setHighlights,
+    /**
+     * Region outlines on the surface, e.g. NASA's Artemis III candidate regions.
+     * list: [{ ring: [[lon, lat], ...], color, selected }]. Edges are drawn
+     * straight in polar stereographic, as the published outlines are.
+     */
+    setOutlines(list = []) {
+      if (!three) return;
+      const T = three.T;
+      if (!three.outlineGroup) { three.outlineGroup = new T.Group(); three.scene.add(three.outlineGroup); }
+      const g = three.outlineGroup;
+      while (g.children.length) { const c = g.children.pop(); c.geometry.dispose(); c.material.dispose(); }
+      const R2 = 2 * 1737.4;
+      const toXY = ([lon, lat]) => { const sgn = lat < 0 ? 1 : -1; const rho = R2 * Math.tan((Math.PI / 2 - Math.abs(lat) * DEG) / 2); return [rho * Math.sin(lon * DEG), sgn * rho * Math.cos(lon * DEG), lat < 0]; };
+      const toLL = (x, y, south) => { const rho = Math.hypot(x, y); const lat = (90 - (2 * Math.atan(rho / R2)) / DEG) * (south ? -1 : 1); return [Math.atan2(x, south ? y : -y) / DEG, lat]; };
+      for (const o of list) {
+        const pts = [];
+        for (let i = 0; i < o.ring.length - 1; i++) {
+          const a = toXY(o.ring[i]), b = toXY(o.ring[i + 1]);
+          for (let k = 0; k < 24; k++) {
+            const t = k / 24;
+            const [lon, lat] = toLL(a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2]);
+            pts.push(new T.Vector3(...latLonToVec3(lat, lon, 1.0035)));
+          }
+        }
+        pts.push(pts[0].clone());
+        const line = new T.Line(new T.BufferGeometry().setFromPoints(pts), new T.LineBasicMaterial({ color: new T.Color(o.color || '#8b9dff'), transparent: true, opacity: o.selected ? 1 : 0.75 }));
+        g.add(line);
+      }
+      renderGlobe();
+    },
     /** Grey marker where the site was before a nudge (null hides it). */
     setGhost(lat, lon) {
       if (!three) return;

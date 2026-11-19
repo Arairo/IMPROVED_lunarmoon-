@@ -122,7 +122,7 @@ function renderSiteList() {
     if (q && !s.name.toLowerCase().includes(q)) continue;
     (groups[s.group] ||= []).push(s);
   }
-  const order = ['computed', 'south', 'clps', 'intl', 'apollo'];
+  const order = ['artemis', 'computed', 'south', 'clps', 'intl', 'apollo'];
   $('#siteList').innerHTML = order
     .filter((g) => groups[g]?.length)
     .map(

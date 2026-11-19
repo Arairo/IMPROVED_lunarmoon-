@@ -15,6 +15,7 @@ export const wrap360 = (d) => ((d % 360) + 360) % 360;
 export const wrap180 = (d) => wrap360(d + 180) - 180;
 
 export const SITE_GROUPS = {
+  artemis: 'NASA Artemis III Candidate Regions',
   computed: 'Best-Lit LOLA Peaks',
   south: 'South Pole Features & Targets',
   clps: 'CLPS & Commercial Landers',
@@ -23,6 +24,15 @@ export const SITE_GROUPS = {
 };
 
 export const SITE_BADGES = {
+  'a3-cb': { text: 'Artemis III', cls: 'bg-indigo-50 text-indigo-800 border-indigo-200' },
+  'a3-hw': { text: 'Artemis III', cls: 'bg-indigo-50 text-indigo-800 border-indigo-200' },
+  'a3-ma': { text: 'Artemis III', cls: 'bg-indigo-50 text-indigo-800 border-indigo-200' },
+  'a3-mp': { text: 'Artemis III', cls: 'bg-indigo-50 text-indigo-800 border-indigo-200' },
+  'a3-mm': { text: 'Artemis III', cls: 'bg-indigo-50 text-indigo-800 border-indigo-200' },
+  'a3-n1': { text: 'Artemis III', cls: 'bg-indigo-50 text-indigo-800 border-indigo-200' },
+  'a3-n2': { text: 'Artemis III', cls: 'bg-indigo-50 text-indigo-800 border-indigo-200' },
+  'a3-g2': { text: 'Artemis III', cls: 'bg-indigo-50 text-indigo-800 border-indigo-200' },
+  'a3-sp': { text: 'Artemis III', cls: 'bg-indigo-50 text-indigo-800 border-indigo-200' },
   ridge: { text: '66% Sun / yr', cls: 'bg-amber-100 text-amber-900 border-amber-300' },
   'peak-shackleton': { text: 'High Massif', cls: 'bg-amber-100 text-amber-900 border-amber-300' },
   'best-0': { text: '#1 LOLA 2027', cls: 'bg-amber-100 text-amber-900 border-amber-300' },

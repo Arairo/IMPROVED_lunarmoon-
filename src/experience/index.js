@@ -474,9 +474,24 @@ export function initExperience(api) {
     mountIntro({ siteCount: sites.length, onChoose: (m) => setMode(m), onAbout: () => openAbout({ onVideo: openVideo }) });
   }
 
+  // NASA's nine Artemis III candidate regions, outlined on the 3D Moon; the
+  // selected region is drawn brighter.
+  const regions = { features: null, key: '' };
+  fetch(`${import.meta.env?.BASE_URL ?? '/'}data/artemis_regions.geojson`).then((r) => (r.ok ? r.json() : null)).then((g) => { regions.features = g?.features || []; drawRegions(); }).catch(() => {});
+  function drawRegions() {
+    const g = getGlobe?.();
+    if (!g?.setOutlines || !regions.features) return;
+    const sel = app.site?.region || '';
+    const key = `${sel}|${regions.features.length}`;
+    if (key === regions.key) return;
+    regions.key = key;
+    g.setOutlines(regions.features.map((f) => ({ ring: f.geometry.coordinates[0], color: f.properties.RegionCode === sel ? '#c7d2fe' : '#818cf8', selected: f.properties.RegionCode === sel })));
+  }
+
   return {
     busy: () => notchBusy(),
     update: () => {
+      drawRegions();
       notchUpdate(app.lastNow, { playing: app.playing });
       plan.refresh();
       flow.refresh();

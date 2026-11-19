@@ -1,0 +1,38 @@
+cff-version: 1.2.0
+message: "If you use Lunar Site Planner or its data, please cite it as below."
+title: "Lunar Site Planner: terrain-aware Sun, Earth, power and flight planning for lunar landing sites"
+type: software
+authors:
+  # Add each team member as: - family-names: "…"  given-names: "…"  orcid: "https://orcid.org/…"
+  - name: "Team Dell Monitors (NASA Space Apps Challenge 2026, Kuala Lumpur)"
+version: "1.0.0"
+date-released: "2026-11-19"
+license: MIT
+repository-code: "https://github.com/Arairo/IMPROVED_lunarmoon-"
+url: "https://arairo.github.io/IMPROVED_lunarmoon-/"
+keywords:
+  - Moon
+  - lunar south pole
+  - landing site selection
+  - illumination
+  - LOLA
+  - Artemis
+abstract: >-
+  A browser tool that tells you, for a lander at a given site and window, when
+  the Sun and Earth are above the real terrain skyline, how much power and
+  radio contact that gives, and how to fly there. Skylines come from NASA LRO
+  LOLA terrain (20 m PGDA tiles near the main south-polar sites), the Sun and
+  Earth from astronomy-engine with the IAU lunar rotation model. Checked
+  against JPL Horizons, NASA Goddard PGDA lighting maps, five Apollo landings
+  and flown CLPS and international missions (see docs/VALIDATION.md).
+references:
+  - type: data
+    title: "LOLA 20 m south-pole DEM, LDEM_80S_20MPP_ADJ"
+    authors: [{ family-names: Barker, given-names: M. K. }]
+    year: 2023
+    url: "https://pgda.gsfc.nasa.gov/products/90"
+  - type: data
+    title: "Down Selected Artemis III Candidate Landing Site Navigational Grids"
+    authors: [{ family-names: McClernan, given-names: M. T. }]
+    year: 2024
+    doi: "10.5066/P1MEQ6UK"

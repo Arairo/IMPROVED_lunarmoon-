@@ -305,7 +305,7 @@ export function renderSiteList() {
     if (q && !s.name.toLowerCase().includes(q)) continue;
     (groups[s.group] = groups[s.group] || []).push(s);
   }
-  const order = ['computed', 'south', 'clps', 'apollo', 'intl'];
+  const order = ['artemis', 'computed', 'south', 'clps', 'apollo', 'intl'];
   const container = document.getElementById('siteListContainer');
   if (!container) return;
 
