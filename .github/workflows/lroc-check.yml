@@ -1,0 +1,47 @@
+name: Check shadows against an LROC photo
+
+# Reads an LROC NAC controlled mosaic of the Peak Near Cabeus B Artemis III
+# region (8 images, 18 Sep 2017), puts it on our 20 m terrain tile and scores
+# our predicted shadows against the real ones. Commits public/data/lroc_check.*
+# (shown in the app's Accuracy panel). Needs the a3-cb 20 m tile from the
+# "Add 20 m terrain and check against NASA PGDA" workflow.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Install GDAL
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq gdal-bin python3-gdal python3-numpy
+      - name: Fetch the LROC mosaic onto our tile
+        run: python3 tools/lroc_fetch.py data-raw/lroc 2>&1 | tee fetch.log
+      - name: Compare shadows
+        run: node tools/lroc_shadow_check.mjs data-raw/lroc 2>&1 | tee check.log
+      - name: Picture
+        run: python3 tools/lroc_fetch.py data-raw/lroc --png
+      - name: Summary
+        if: always()
+        run: |
+          { echo '## LROC shadow check'; echo '```'; cat fetch.log check.log 2>/dev/null; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+          git add public/data/lroc_check.json public/data/lroc_check.png
+          git commit -m "Update LROC shadow check" || echo "Nothing changed"
+          git pull --rebase -q origin main && git push

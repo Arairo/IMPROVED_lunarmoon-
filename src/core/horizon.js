@@ -105,6 +105,31 @@ export async function loadTerrain(baseUrl, names = ['sp_fine', 'sp_coarse']) {
  * horizon-forming terrain), groundHeight, mastHeight, source }.
  * Without terrain data the profile is the bare-sphere dip for the mast height.
  */
+/**
+ * Highest terrain elevation angle (deg) seen from (lat, lon) looking along one
+ * azimuth, and its distance (m). -90 when nothing is found.
+ */
+export function rayHorizon(terrain, lat, lon, az, { ground = terrain.heightAt(lat, lon), mastHeight = 2, maxDistM = 300000 } = {}) {
+  if (!ground) return { el: -90, dist: 0 };
+  const r0 = MOON_RADIUS_M + ground.height + mastHeight;
+  const minStep = ground.cell / 2;
+  let best = -90;
+  let bestDist = 0;
+  let s = Math.max(60, ground.cell * 0.75);
+  while (s < maxDistM) {
+    const p = destination(lat, lon, az, s);
+    const h = terrain.heightAt(p.lat, p.lon);
+    if (h) {
+      const theta = s / MOON_RADIUS_M;
+      const r1 = MOON_RADIUS_M + h.height;
+      const el = Math.atan2(r1 * Math.cos(theta) - r0, r1 * Math.sin(theta)) * RAD;
+      if (el > best) { best = el; bestDist = s; }
+    } else if (s > 20000) break; // walked off the grids
+    s += Math.max(minStep, s * 0.015);
+  }
+  return { el: best, dist: bestDist };
+}
+
 export function computeHorizon(terrain, lat, lon, { mastHeight = 2, maxDistM = 300000, azStepDeg = AZ_STEP_DEG } = {}) {
   const count = Math.round(360 / azStepDeg);
   const elevations = new Float32Array(count);
@@ -116,29 +141,10 @@ export function computeHorizon(terrain, lat, lon, { mastHeight = 2, maxDistM = 3
     distances.fill(Math.sqrt(2 * MOON_RADIUS_M * mastHeight));
     return { elevations, distances, groundHeight: 0, mastHeight, source: 'smooth sphere (no terrain data)', terrain: false };
   }
-  const r0 = MOON_RADIUS_M + ground.height + mastHeight;
-  const minStep = ground.cell / 2;
   for (let i = 0; i < count; i++) {
-    const az = i * azStepDeg;
-    let best = -90;
-    let bestDist = 0;
-    let s = Math.max(60, ground.cell * 0.75);
-    while (s < maxDistM) {
-      const p = destination(lat, lon, az, s);
-      const h = terrain.heightAt(p.lat, p.lon);
-      if (h) {
-        const theta = s / MOON_RADIUS_M;
-        const r1 = MOON_RADIUS_M + h.height;
-        const el = Math.atan2(r1 * Math.cos(theta) - r0, r1 * Math.sin(theta)) * RAD;
-        if (el > best) {
-          best = el;
-          bestDist = s;
-        }
-      } else if (s > 20000) break; // walked off the grids
-      s += Math.max(minStep, s * 0.015);
-    }
-    elevations[i] = best > -90 ? best : dip;
-    distances[i] = bestDist;
+    const r = rayHorizon(terrain, lat, lon, i * azStepDeg, { ground, mastHeight, maxDistM });
+    elevations[i] = r.el > -90 ? r.el : dip;
+    distances[i] = r.dist;
   }
   return {
     elevations,
