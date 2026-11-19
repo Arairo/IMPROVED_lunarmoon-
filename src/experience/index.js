@@ -106,15 +106,12 @@ export function initExperience(api) {
     headerRight.prepend(tools);
 
     createMenu(tools.querySelector('[data-x="help"]'), () => [
-      { icon: 'video', label: 'Watch the tutorial video', sub: 'Two minutes, narrated', run: () => openVideo() },
-      { icon: 'route', label: 'Guided tour of this page', sub: 'Lumi points things out, one by one', run: () => (app.mode === 'compare' ? startCmpTour() : proTour.start()) },
-      { icon: 'mouse', label: 'Mouse and keyboard controls', sub: 'Spin, pan and zoom the Moon', run: () => controlsCoach.start() },
-      { icon: 'play', label: 'Watch the promo', sub: '48 seconds, with music', run: () => openVideo('promo') },
-      { icon: 'scale', label: 'Compare Lab tour', sub: 'How to read a side-by-side comparison', run: () => startCmpTour() },
-      { sep: true },
+      { icon: 'route', label: 'Guided tour', sub: 'Lumi shows you this screen, controls included', run: () => (app.mode === 'compare' ? startCmpTour() : proTour.start()) },
+      { icon: 'video', label: 'Tutorial video', sub: 'Two minutes, narrated', run: () => openVideo() },
       { icon: 'sparkles', label: 'Ask Lumi a question', run: () => document.querySelector('[data-x="lumi"]')?.click() },
       { icon: 'check', label: 'Accuracy, data and sources', sub: 'How we know the numbers are right', run: () => import('./trust.js').then((m) => m.openTrust({ sites })) },
-      { icon: 'info', label: 'About this project', run: () => openAbout({ onVideo: openVideo }) },
+      { sep: true },
+      { icon: 'info', label: 'About this project', sub: 'Team, data, the 48-second promo', run: () => openAbout({ onVideo: openVideo }) },
     ]);
     createMenu(tools.querySelector('[data-x="settings"]'), () => {
       const dark = document.documentElement.dataset.theme === 'dark';
@@ -133,53 +130,60 @@ export function initExperience(api) {
     applyTheme(document.documentElement.dataset.theme);
   }
 
-  // Terrain 3D sits with the other views (3D Moon, South-Pole Map).
+  // Terrain 3D is opened from the Check step ("See it up close"), the Report
+  // and Lumi; this hidden link keeps its address in step with the site/date.
   const viewTabs = document.getElementById('tabPolarBtn')?.parentElement;
-  if (viewTabs) {
-    const t = document.createElement('a');
-    t.dataset.x = 'terrain';
-    t.href = './planner.html#from=pro';
-    t.className = 'xp-viewtab';
-    t.title = 'Open this site and date over real LOLA 3D terrain with shadows (CesiumJS)';
-    t.innerHTML = `${icon('mountain', 14)} Terrain 3D ${icon('external', 12)}`;
-    viewTabs.appendChild(t);
-  }
-  const mapLayers = mountLayers({ getGlobe, viewTabs, app });
-  const flight = mountFlight({ app, viewTabs, switchSubView: api.switchSubView, setTime });
+  const terrainLink = document.createElement('a');
+  terrainLink.dataset.x = 'terrain';
+  terrainLink.href = './planner.html#from=pro';
+  terrainLink.hidden = true;
+  document.body.appendChild(terrainLink);
   window.addEventListener('lsp-fly-site', () => getGlobe?.()?.flyToSite(app.site));
 
   // ---------- Globe view cluster + gesture hint ----------
   const gv = document.getElementById('globeViewport');
   if (gv) {
     document.getElementById('globeZoomInBtn')?.parentElement?.remove();
-    const cube = document.createElement('div');
-    cube.className = 'xp-viewcube';
-    cube.innerHTML = `
-      <button type="button" data-v="in" title="Zoom in" aria-label="Zoom in">+</button>
-      <button type="button" data-v="out" title="Zoom out" aria-label="Zoom out">−</button>
-      <hr>
-      <button type="button" data-v="front" title="Front view (near side)" aria-label="Front view">F</button>
-      <button type="button" data-v="top" title="Top view (north pole)" aria-label="Top view">T</button>
-      <button type="button" data-v="bottom" title="Bottom view (south pole)" aria-label="Bottom view">B</button>
-      <button type="button" data-v="reset" title="Reset view" aria-label="Reset view">⟲</button>
-      <hr>
-      <button type="button" data-v="help" title="How to move the Moon" aria-label="How to move the Moon">?</button>`;
-    gv.appendChild(cube);
     const hint = document.createElement('div');
     hint.className = 'xp-mode-hint';
     gv.appendChild(hint);
     api.setHint = (txt) => { hint.textContent = txt || ''; hint.classList.toggle('is-on', !!txt); };
-    cube.addEventListener('click', (e) => {
-      const v = e.target.closest('button')?.dataset.v;
-      const g = getGlobe();
-      if (!v || !g) return;
-      if (v === 'in') g.zoomBy(0.75);
-      else if (v === 'out') g.zoomBy(1.32);
-      else if (v === 'reset') g.reset();
-      else if (v === 'help') controlsCoach.start();
-      else g.view(v);
-    });
   }
+  // The window length is chosen in the Date step; the timeline's copy of
+  // those buttons is hidden.
+  const tw = document.getElementById('timelineWinButtons');
+  if (tw) tw.hidden = true;
+  // Camera: four buttons in the toolbar (South Pole, Site, Earth–Moon, View ▾);
+  // the less-used views live in the View menu.
+  const camBar = document.getElementById('camPoleBtn')?.parentElement;
+  const toolRow = camBar?.parentElement;
+  ['camStandSunBtn', 'camStandEarthBtn'].forEach((id) => { const b = document.getElementById(id); if (b) b.hidden = true; });
+  if (camBar) {
+    document.getElementById('camSiteBtn').textContent = 'Site';
+    const viewBtn = document.createElement('button');
+    viewBtn.type = 'button';
+    viewBtn.className = 'px-2 py-0.5 rounded text-xs font-medium hover:bg-white text-slate-700 xp-viewmenu';
+    viewBtn.setAttribute('aria-haspopup', 'menu');
+    viewBtn.innerHTML = `View ${icon('chevronDown', 12)}`;
+    camBar.appendChild(viewBtn);
+    const g = () => { api.switchSubView?.('globe'); return getGlobe(); };
+    createMenu(viewBtn, () => [
+      { icon: 'sun', label: 'Look toward the Sun', sub: 'From the lander mast', run: () => clickOld('camStandSunBtn') },
+      { icon: 'globe', label: 'Look toward Earth', sub: 'From the lander mast', run: () => clickOld('camStandEarthBtn') },
+      { sep: true },
+      { icon: 'moon', label: 'Front (near side)', run: () => g()?.view('front') },
+      { icon: 'arrowUp', label: 'Top (north pole)', run: () => g()?.view('top') },
+      { icon: 'chevronDown', label: 'Bottom (south pole)', run: () => g()?.view('bottom') },
+      { icon: 'plus', label: 'Zoom in', run: () => g()?.zoomBy(0.75), keepOpen: true },
+      { icon: 'minus', label: 'Zoom out', run: () => g()?.zoomBy(1.32), keepOpen: true },
+      { icon: 'reset', label: 'Reset view', run: () => g()?.reset() },
+      { sep: true },
+      { icon: 'mouse', label: 'How to move the Moon', run: () => controlsCoach.start() },
+    ]);
+  }
+
+  const mapLayers = mountLayers({ getGlobe, viewTabs: toolRow || viewTabs, app });
+  const flight = mountFlight({ app, viewTabs, switchSubView: api.switchSubView, setTime });
 
   const controlsCoach = createSpotlight([
     {
@@ -187,7 +191,7 @@ export function initExperience(api) {
       title: 'Move the Moon like a CAD model',
       body: 'The controls work like PTC Creo. No middle button? Left-drag and right-drag do the same jobs.',
       extra: GESTURES,
-      why: 'Engineers spend hours in CAD tools like Creo, so we copied their mouse layout. The buttons on the right jump to standard views: F (front, the side facing Earth), T (top, north pole), B (bottom, south pole) and ⟲ to reset.',
+      why: 'Engineers spend hours in CAD tools like Creo, so we copied their mouse layout. The View menu above the Moon jumps to standard views (front, the side facing Earth; top, north pole; bottom, south pole), zooms, resets, and looks toward the Sun or Earth from the lander.',
     },
   ], { label: 'Controls', onDone: () => store.set('lsp.controlsSeen', '1') });
 
@@ -196,12 +200,12 @@ export function initExperience(api) {
     { target: null, mood: 'happy', title: 'Welcome to Professional mode', body: 'Professional mode walks you through a landing plan in five steps, with the 3D Moon in the middle. I’ll show you round in under a minute.' },
     { target: '#paneSite .f-top', mood: 'think', title: 'Five steps, in order', body: 'Site → Date → Check → What if → Report. Each step shows only what it needs. Tap a number to jump, or use Next at the bottom.', why: 'Mission planners work in this order: choose where, choose when, check it works, test what happens if plans change, then write it up.' },
     { target: '#paneSite .f-body', before: () => flow.go(0, { quiet: true }), mood: 'happy', title: 'Step 1: pick a landing site', body: 'Choose from Apollo, CLPS, Chandrayaan-3, Chang’e and computed best-lit spots, type coordinates with “+ Coords”, or tap the best-spot shortcut.', why: 'Sites marked “computed” were found by scanning NASA LOLA terrain for the places that see the most Sun.' },
-    { target: '#globeViewport', pad: 0, mood: 'wow', title: 'The 3D Moon', body: 'Gold is the direction of the Sun from your site; blue is Earth. Click anywhere on the surface to test that exact spot.', extra: GESTURES },
+    { target: '#globeViewport', pad: 0, mood: 'wow', title: 'The 3D Moon', body: 'Gold is the direction of the Sun from your site; blue is Earth. Click anywhere on the surface to test that exact spot. Map layers (top right) colours the Moon by sunlight, Earth in view, shadow, height or slope.', extra: GESTURES },
     { target: '#xp-notch', pad: 8, mood: 'happy', title: 'Live status', body: 'This pill tells you, at a glance, whether you have power and a radio link right now. The numbers flash green when they rise and red when they fall.' },
     { target: '#clockToolbar', mood: 'think', title: 'Travel through time', body: 'Press Play to watch the Sun circle the sky, or scrub the timeline below. Step 2 (Date) is where you set the touchdown date.', why: 'At the south pole the Sun circles the whole horizon once every 29.5 days. Play at 6 h/s to watch it skim the ridges.' },
     { target: '#timelineWrap', mood: 'happy', title: 'The operations timeline', body: 'Each row is a resource over the window: sunlight, power, Earth in view, Deep Space Network coverage and the direct-to-Earth link. Drag across it to scrub time.' },
     { target: '[data-x="lumi"]', pad: 6, mood: 'wow', title: 'Ask Lumi', body: 'Stuck? Type what you want: “best date at the ridge in 2027”, “compare ridge and IM-2”, “move 1 km north” or “what is libration?”.', why: 'Lumi runs in your browser with no AI service: it turns your words into planner actions and reads every number from the same engine you see on screen.' },
-    { target: '[data-x="help"]', pad: 6, mood: 'happy', title: 'Help is always here', body: 'Help has the tutorial video, this tour and the mouse controls. Settings (the gear) has light and dark mode, sound, the spacecraft assumptions and the Beginner walk.' },
+    { target: '[data-x="help"]', pad: 6, mood: 'happy', title: 'Help is always here', body: 'Help has this tour, the tutorial video, Ask Lumi and how we check the numbers. The View menu above the Moon has the mouse controls and standard views. Settings (the gear) has light and dark mode, sound, the spacecraft assumptions and the Beginner walk.' },
   ], { label: 'Tour' });
 
   // ---------- Compare Lab tour ----------
@@ -369,7 +373,8 @@ export function initExperience(api) {
   const card = document.createElement('div');
   card.className = matchMedia?.('(max-width: 720px)').matches ? 'xp-best is-min' : 'xp-best';
   card.innerHTML = '<div class="b-head"><span>Best spots · next 30 days</span><button type="button" class="b-x" aria-label="Hide best spots" title="Hide">–</button></div><div class="b-body"></div>';
-  document.getElementById('globeViewport')?.appendChild(card);
+  // Shown once: as the shortcut in the Site step (the card stays off-screen;
+  // the globe still marks both spots).
   const minBtn = card.querySelector('.b-x');
   const syncMin = () => { const m = card.classList.contains('is-min'); minBtn.textContent = m ? '+' : '–'; minBtn.setAttribute('aria-label', m ? 'Show best spots' : 'Hide best spots'); };
   minBtn.addEventListener('click', () => { card.classList.toggle('is-min'); syncMin(); });

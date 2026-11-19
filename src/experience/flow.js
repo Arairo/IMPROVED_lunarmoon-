@@ -113,9 +113,10 @@ export function mountFlow({ app, setTime, switchMode, getBestSpots, actions }) {
   });
 
   // 3 · Check: verdict at touchdown + the full assessment panel.
-  slot(2).innerHTML = '<div class="f-verdict" data-verdict></div><details class="f-more" open><summary>Full assessment</summary><div data-assess></div></details>';
+  slot(2).innerHTML = '<div class="f-verdict" data-verdict></div><button type="button" class="f-flightlink" data-terrain>' + icon('mountain', 16) + '<span><b>See it up close</b><small>This site and date on 3D terrain with real shadows</small></span>' + icon('external', 13) + '</button><details class="f-more" open><summary>Full assessment</summary><div data-assess></div></details>';
   const assess = document.getElementById('assessmentRoot');
   if (assess) slot(2).querySelector('[data-assess]').appendChild(assess);
+  slot(2).querySelector('[data-terrain]').addEventListener('click', () => actions.terrain());
 
   // 4 · What if: the nudge card + comparison shortcuts.
   const planCard = document.querySelector('.xp-plan');
@@ -217,8 +218,9 @@ export function mountFlow({ app, setTime, switchMode, getBestSpots, actions }) {
     if (k === keys.best) return;
     keys.best = k;
     bestBox.innerHTML = spots.length
-      ? `<small>Shortcut: best spots for the next 30 days</small><div class="f-row f-wrap">${spots.map((sp, k) => `<button type="button" data-best="${k}"><i style="background:${sp.color}"></i>${esc(sp.title)}: ${esc(sp.r.site.short || sp.r.site.name)} · ${pct(sp.r.ops)}</button>`).join('')}</div>`
+      ? `<small>Shortcut: best spots for the next 30 days</small><div class="f-row f-wrap">${spots.map((sp, k) => `<button type="button" data-best="${k}" title="Share of the window with the Sun up and Earth in view"><i style="background:${sp.color}"></i>${esc(sp.title)}: ${esc(sp.r.site.short || sp.r.site.name)} · ${pct(sp.r.ops)}</button>`).join('')}<button type="button" class="f-linkbtn" data-best-cmp>Compare side by side</button></div>`
       : '<small>Finding the best spots…</small>';
+    bestBox.querySelector('[data-best-cmp]')?.addEventListener('click', () => actions.compareBest());
     bestBox.querySelectorAll('[data-best]').forEach((b) => b.addEventListener('click', () => actions.selectSite(getBestSpots()[Number(b.dataset.best)].r.site)));
   }
   function renderDate() {

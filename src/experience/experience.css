@@ -1434,3 +1434,7 @@ html[data-theme='dark'] .cc-badge.amber { color: var(--xp-warn); }
   .w-path ol li button::first-letter { font-size: 11px; }
   .w-story .w-brand { display: none; }
 }
+
+/* Cleanup: single best-spots shortcut, View menu */
+.xp-flow .f-best .f-linkbtn { background: none; border: 0; color: var(--xp-accent, #0071e3); font-weight: 600; padding: 4px 2px; text-decoration: underline; text-underline-offset: 2px; }
+.xp-viewmenu { display: inline-flex; align-items: center; gap: 3px; }
