@@ -30,10 +30,10 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - name: Install GDAL
-        run: sudo apt-get update -qq && sudo apt-get install -y -qq gdal-bin python3-gdal python3-numpy
+      - name: Get GDAL (official container; apt on the runner is slow)
+        run: docker pull -q ghcr.io/osgeo/gdal:ubuntu-small-latest
       - name: Read the PGDA products
-        run: python3 tools/pgda_fetch.py data-raw/pgda 2>&1 | tee fetch.log
+        run: docker run --rm --user "$(id -u):$(id -g)" -e HOME=/tmp -v "$PWD":/w -w /w ghcr.io/osgeo/gdal:ubuntu-small-latest python3 tools/pgda_fetch.py data-raw/pgda 2>&1 | tee fetch.log
       - name: Check and pack the 20 m tiles, compare illumination
         run: node tools/build_hires_terrain.mjs data-raw/pgda 2>&1 | tee check.log
       - name: Rebuild skylines at the sites with 20 m terrain
