@@ -697,7 +697,7 @@ function boot() {
   xp = initExperience(xpApi);
   window.addEventListener('lsp-theme', () => updateCurrentTime(false));
   if (shared?.t) { app.timeMs = app.windowStartMs = shared.t; }
-  selectSite(shared?.site || app.sites[0], true);
+  selectSite(shared?.site || app.sites.find((s) => s.id === 'ridge') || app.sites[0], true);
   // Whole-Moon LOLA terrain for points outside the polar grids (custom pins,
   // nudges): loaded quietly after first paint; re-checks the current custom site.
   setTimeout(async () => {
