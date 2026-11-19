@@ -1,0 +1,67 @@
+name: Fetch Artemis III candidate regions
+
+# Downloads the outlines of NASA's nine Artemis III candidate landing regions
+# (Oct 2024) from the USGS data release "Down Selected Artemis III Candidate
+# Landing Site Navigational Grids" (McClernan 2024, doi:10.5066/P1MEQ6UK,
+# CC0; regions sourced from LROC QuickMap) and writes them as GeoJSON for the
+# app: public/data/artemis_regions.geojson.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  regions:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install GDAL
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq gdal-bin
+      - name: Download the region outlines
+        run: |
+          mkdir -p raw && cd raw
+          for u in \
+            https://sciencebase.usgs.gov/manager/download/cm4aea2di00gx0uo7c1j7dlg3 \
+            "https://www.sciencebase.gov/catalog/file/get/671a6fa8d34efed5620f89f8?name=A3_9regions-lonlat-simplified.zip" \
+            https://prod-is-usgs-sb-prod-content.s3.amazonaws.com/671a6fa8d34efed5620f89f8/A3_9regions-lonlat-simplified.zip ; do
+            echo "trying $u"
+            curl -sSL -m 120 -o regions.zip "$u" || true
+            if unzip -tq regions.zip >/dev/null 2>&1; then echo "got it"; break; fi
+            head -c 300 regions.zip; echo
+          done
+          unzip -o regions.zip
+          find . -type f | head -50
+      - name: Inspect
+        run: |
+          shp=$(find raw -name '*.shp' | head -1)
+          echo "shapefile: $shp"
+          ogrinfo -so -al "$shp"
+          ogrinfo -al -geom=SUMMARY "$shp" | head -120
+      - name: Convert to GeoJSON
+        run: |
+          shp=$(find raw -name '*.shp' | head -1)
+          ogr2ogr -f GeoJSON -lco COORDINATE_PRECISION=5 -lco RFC7946=NO public/data/artemis_regions.geojson "$shp"
+          python3 - <<'EOF'
+          import json
+          g = json.load(open('public/data/artemis_regions.geojson'))
+          for f in g['features']:
+              geom = f['geometry']
+              rings = geom['coordinates'] if geom['type'] == 'Polygon' else [r for p in geom['coordinates'] for r in p]
+              pts = [p for r in rings for p in r]
+              print(f['properties'], geom['type'], len(pts), 'points',
+                    'lat', round(min(p[1] for p in pts), 3), round(max(p[1] for p in pts), 3),
+                    'lon', round(min(p[0] for p in pts), 3), round(max(p[0] for p in pts), 3))
+          EOF
+          ls -la public/data/artemis_regions.geojson
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+          git add public/data/artemis_regions.geojson
+          git commit -m "Add Artemis III candidate region outlines (USGS, from LROC QuickMap)" || echo "Nothing changed"
+          git pull --rebase -q origin main && git push
