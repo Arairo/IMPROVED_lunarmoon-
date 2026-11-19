@@ -1,5 +1,5 @@
 {
- "generated": "2026-11-17T10:54:43.311Z",
+ "generated": "2026-11-19T12:29:56.448Z",
  "note": "PGDA \"average visibility\" (Mazarico et al. 2011 method; product 201608) is a multi-year average of the visible fraction of the Sun's / Earth's disk at the surface. Ours is the share of 2027 with the disk centre above the skyline from a 2 m mast. Expect differences of several points; the comparison is about the pattern.",
  "products": {
   "sun": "https://pgda.gsfc.nasa.gov/data/MoonIllumination/AVGVISIB_75S_120M_201608.TIF",
@@ -28,6 +28,138 @@
  },
  "sites": [
   {
+   "id": "a3-cb",
+   "name": "Artemis III region: Peak Near Cabeus B",
+   "ours240": {
+    "sun": 43.8,
+    "earth": 44.2
+   },
+   "ours20": {
+    "sun": 34.2,
+    "earth": 26.8
+   },
+   "pgdaSun60": null,
+   "pgdaSun120": 38.4,
+   "pgdaEarth120": 44.1
+  },
+  {
+   "id": "a3-hw",
+   "name": "Artemis III region: Haworth",
+   "ours240": {
+    "sun": 11.3,
+    "earth": 37.1
+   },
+   "ours20": {
+    "sun": 9,
+    "earth": 37.1
+   },
+   "pgdaSun60": 8.5,
+   "pgdaSun120": 10.3,
+   "pgdaEarth120": 43.9
+  },
+  {
+   "id": "a3-ma",
+   "name": "Artemis III region: Malapert Massif",
+   "ours240": {
+    "sun": 42.7,
+    "earth": 47.4
+   },
+   "ours20": {
+    "sun": 21.6,
+    "earth": 46
+   },
+   "pgdaSun60": 28.2,
+   "pgdaSun120": 38.1,
+   "pgdaEarth120": 52.9
+  },
+  {
+   "id": "a3-mp",
+   "name": "Artemis III region: Mons Mouton Plateau",
+   "ours240": {
+    "sun": 26.3,
+    "earth": 65.4
+   },
+   "ours20": {
+    "sun": 23.6,
+    "earth": 60.1
+   },
+   "pgdaSun60": 25.6,
+   "pgdaSun120": 26.2,
+   "pgdaEarth120": 66.4
+  },
+  {
+   "id": "a3-mm",
+   "name": "Artemis III region: Mons Mouton",
+   "ours240": {
+    "sun": 31.6,
+    "earth": 40.7
+   },
+   "ours20": {
+    "sun": 21.6,
+    "earth": 35.8
+   },
+   "pgdaSun60": null,
+   "pgdaSun120": 18.8,
+   "pgdaEarth120": 36.6
+  },
+  {
+   "id": "a3-n1",
+   "name": "Artemis III region: Nobile Rim 1",
+   "ours240": {
+    "sun": 29.1,
+    "earth": 32.5
+   },
+   "ours20": {
+    "sun": 29.5,
+    "earth": 32.8
+   },
+   "pgdaSun60": null,
+   "pgdaSun120": 30,
+   "pgdaEarth120": 37
+  },
+  {
+   "id": "a3-n2",
+   "name": "Artemis III region: Nobile Rim 2",
+   "ours240": {
+    "sun": 39.5,
+    "earth": 63.2
+   },
+   "ours20": {
+    "sun": 39.9,
+    "earth": 63.2
+   },
+   "pgdaSun60": null,
+   "pgdaSun120": 41.6,
+   "pgdaEarth120": 68.8
+  },
+  {
+   "id": "a3-g2",
+   "name": "Artemis III region: de Gerlache Rim 2",
+   "ours240": {
+    "sun": 35.8,
+    "earth": 49.6
+   },
+   "ours20": {
+    "sun": 36,
+    "earth": 49.6
+   },
+   "pgdaSun60": null,
+   "pgdaSun120": 37.1,
+   "pgdaEarth120": 54.8
+  },
+  {
+   "id": "a3-sp",
+   "name": "Artemis III region: Slater Plain",
+   "ours240": {
+    "sun": 2.1,
+    "earth": 35
+   },
+   "ours20": null,
+   "pgdaSun60": null,
+   "pgdaSun120": 3,
+   "pgdaEarth120": 41.4
+  },
+  {
    "id": "ridge",
    "name": "Shackleton connecting ridge",
    "ours240": {
@@ -38,7 +170,7 @@
     "sun": 66.4,
     "earth": 43.8
    },
-   "pgdaSun60": 0,
+   "pgdaSun60": null,
    "pgdaSun120": 67.7,
    "pgdaEarth120": 52.3
   },
@@ -113,7 +245,7 @@
     "sun": 0,
     "earth": 0
    },
-   "pgdaSun60": null,
+   "pgdaSun60": 0.1,
    "pgdaSun120": 0.1,
    "pgdaEarth120": 0
   },
@@ -128,7 +260,7 @@
     "sun": 0,
     "earth": 15.3
    },
-   "pgdaSun60": null,
+   "pgdaSun60": 0,
    "pgdaSun120": 0,
    "pgdaEarth120": 24.4
   },
@@ -199,7 +331,10 @@
     "sun": 41.7,
     "earth": 100
    },
-   "ours20": null,
+   "ours20": {
+    "sun": 37.8,
+    "earth": 100
+   },
    "pgdaSun60": null,
    "pgdaSun120": 35.6,
    "pgdaEarth120": 100
@@ -215,7 +350,7 @@
     "sun": 43.9,
     "earth": 80.9
    },
-   "pgdaSun60": 46.4,
+   "pgdaSun60": null,
    "pgdaSun120": 47,
    "pgdaEarth120": 93.6
   }

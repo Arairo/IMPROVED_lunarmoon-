@@ -3,6 +3,78 @@
  "url": "https://pgda.gsfc.nasa.gov/products/90",
  "tiles": [
   {
+   "id": "a3-cb",
+   "centreX": -180000,
+   "centreY": 70000,
+   "halfExtent": 8000,
+   "cellSize": 20,
+   "size": 800,
+   "meanAbsDiffM": 11
+  },
+  {
+   "id": "a3-hw",
+   "centreX": -38000,
+   "centreY": 90500,
+   "halfExtent": 8000,
+   "cellSize": 20,
+   "size": 800,
+   "meanAbsDiffM": 2.6
+  },
+  {
+   "id": "a3-ma",
+   "centreX": -500,
+   "centreY": 121500,
+   "halfExtent": 8000,
+   "cellSize": 20,
+   "size": 800,
+   "meanAbsDiffM": 2.7
+  },
+  {
+   "id": "a3-mp",
+   "centreX": 87500,
+   "centreY": 148000,
+   "halfExtent": 8000,
+   "cellSize": 20,
+   "size": 800,
+   "meanAbsDiffM": 2.8
+  },
+  {
+   "id": "a3-mm",
+   "centreX": 73000,
+   "centreY": 118000,
+   "halfExtent": 8000,
+   "cellSize": 20,
+   "size": 800,
+   "meanAbsDiffM": 2.9
+  },
+  {
+   "id": "a3-n1",
+   "centreX": 84000,
+   "centreY": 110060,
+   "halfExtent": 8000,
+   "cellSize": 20,
+   "size": 800,
+   "meanAbsDiffM": 3.5
+  },
+  {
+   "id": "a3-n2",
+   "centreX": 157000,
+   "centreY": 95000,
+   "halfExtent": 8000,
+   "cellSize": 20,
+   "size": 800,
+   "meanAbsDiffM": 3.2
+  },
+  {
+   "id": "a3-g2",
+   "centreX": -48500,
+   "centreY": 23000,
+   "halfExtent": 8000,
+   "cellSize": 20,
+   "size": 800,
+   "meanAbsDiffM": 2.7
+  },
+  {
    "id": "ridge",
    "centreX": -11300,
    "centreY": -12260,
@@ -100,6 +172,15 @@
    "cellSize": 20,
    "size": 800,
    "meanAbsDiffM": 2
+  },
+  {
+   "id": "im1",
+   "centreX": 7540,
+   "centreY": 299940,
+   "halfExtent": 8000,
+   "cellSize": 20,
+   "size": 800,
+   "meanAbsDiffM": 19.6
   },
   {
    "id": "im2",

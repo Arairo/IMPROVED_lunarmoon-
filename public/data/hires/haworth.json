@@ -17,7 +17,8 @@
  "checkVs240m": {
   "meanAbsDiffM": 2.4,
   "biasM": -0.2,
-  "points": 10000
+  "points": 10000,
+  "against": "240 m"
  },
  "gapsFilledFrom240m": 0
 }
