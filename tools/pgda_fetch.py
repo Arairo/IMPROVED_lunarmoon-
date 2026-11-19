@@ -13,6 +13,7 @@ Writes to OUT_DIR:
 No orientation is assumed beyond the polar stereographic definition; the Node
 step (tools/build_hires_terrain.mjs) checks it against the app's own LOLA grids.
 """
+import time
 import json, math, sys, os
 import numpy as np
 from osgeo import gdal
@@ -69,7 +70,16 @@ def window(ds, meta, x, y, half):
     xs1, ys1 = min(ds.RasterXSize, x0 + n), min(ds.RasterYSize, y0 + n)
     out = np.full((n, n), np.nan, dtype=np.float32)
     if xs1 > xs0 and ys1 > ys0:
-        a = ds.GetRasterBand(1).ReadAsArray(xs0, ys0, xs1 - xs0, ys1 - ys0).astype(np.float32)
+        # NASA's server sometimes returns an empty range read; retry a few times.
+        for attempt in range(5):
+            try:
+                a = ds.GetRasterBand(1).ReadAsArray(xs0, ys0, xs1 - xs0, ys1 - ys0).astype(np.float32)
+                break
+            except RuntimeError as e:
+                print(f'window read failed (try {attempt + 1}/5):', str(e)[:160], flush=True)
+                time.sleep(3 * (attempt + 1))
+        else:
+            raise RuntimeError('window read kept failing')
         nd = meta['noData']
         if nd is not None and nd != 'nan':
             a[a == nd] = np.nan
@@ -105,7 +115,11 @@ dmeta = info(dem)
 print('DEM', json.dumps(dmeta, default=str)[:900], flush=True)
 for s in POLAR:
     x, y = xy(s['lat'], s['lon'])
-    a, n, cx, cy = window(dem, dmeta, x, y, HALF)
+    try:
+        a, n, cx, cy = window(dem, dmeta, x, y, HALF)
+    except RuntimeError as e:
+        print(f"{s['id']}: SKIPPED, could not read the 20 m window ({e})", flush=True)
+        continue
     good = np.isfinite(a)
     print(f"{s['id']}: {n}x{n}, {good.mean() * 100:.1f}% data, median {np.nanmedian(a) if good.any() else float('nan'):.3f}", flush=True)
     a.tofile(os.path.join(OUT, f"dem_{s['id']}.f32"))

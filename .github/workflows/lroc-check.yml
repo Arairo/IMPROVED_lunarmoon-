@@ -29,11 +29,11 @@ jobs:
       - name: Get GDAL (official container; apt on the runner is slow)
         run: docker pull -q ghcr.io/osgeo/gdal:ubuntu-small-latest
       - name: Fetch the LROC mosaic onto our tile
-        run: docker run --rm --user "$(id -u):$(id -g)" -e HOME=/tmp -v "$PWD":/w -w /w ghcr.io/osgeo/gdal:ubuntu-small-latest python3 tools/lroc_fetch.py data-raw/lroc 2>&1 | tee fetch.log
+        run: docker run --rm --user "$(id -u):$(id -g)" -e HOME=/tmp -e GDAL_HTTP_MAX_RETRY=6 -e GDAL_HTTP_RETRY_DELAY=3 -v "$PWD":/w -w /w ghcr.io/osgeo/gdal:ubuntu-small-latest python3 tools/lroc_fetch.py data-raw/lroc 2>&1 | tee fetch.log
       - name: Compare shadows
         run: node tools/lroc_shadow_check.mjs data-raw/lroc 2>&1 | tee check.log
       - name: Picture
-        run: docker run --rm --user "$(id -u):$(id -g)" -e HOME=/tmp -v "$PWD":/w -w /w ghcr.io/osgeo/gdal:ubuntu-small-latest python3 tools/lroc_fetch.py data-raw/lroc --png
+        run: docker run --rm --user "$(id -u):$(id -g)" -e HOME=/tmp -e GDAL_HTTP_MAX_RETRY=6 -e GDAL_HTTP_RETRY_DELAY=3 -v "$PWD":/w -w /w ghcr.io/osgeo/gdal:ubuntu-small-latest python3 tools/lroc_fetch.py data-raw/lroc --png
       - name: Summary
         if: always()
         run: |
