@@ -3,7 +3,7 @@
 **Title:** LUNAR SITE PLANNER: AN OPEN, VALIDATED BROWSER TOOL FOR SUN, EARTH,
 POWER AND FLIGHT PLANNING AT THE ARTEMIS III CANDIDATE REGIONS
 
-**Authors:** [Name 1]¹, [Name 2]¹, … ¹[Institution, Kuala Lumpur, Malaysia] ([email])
+**Authors:** A. R. Bin Remy Azrai¹, [mentor / co-authors]², ¹[School or institution, Kuala Lumpur, Malaysia], ²[mentor's institution] ([contact email, added when submitting])
 
 **Introduction:** Choosing where and when to land near the lunar south pole
 comes down to four linked questions: will the lander see the Sun, will it see

@@ -3,7 +3,9 @@ message: "If you use Lunar Site Planner or its data, please cite it as below."
 title: "Lunar Site Planner: terrain-aware Sun, Earth, power and flight planning for lunar landing sites"
 type: software
 authors:
-  # Add each team member as: - family-names: "…"  given-names: "…"  orcid: "https://orcid.org/…"
+  # Add teammates the same way; affiliation and orcid ("https://orcid.org/…") are optional.
+  - given-names: "Ammar Rasyid"
+    family-names: "Bin Remy Azrai"
   - name: "Team Dell Monitors (NASA Space Apps Challenge 2026, Kuala Lumpur)"
 version: "1.0.0"
 date-released: "2026-11-19"

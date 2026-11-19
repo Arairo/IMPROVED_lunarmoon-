@@ -2,10 +2,31 @@
   "title": "Lunar Site Planner",
   "upload_type": "software",
   "description": "Terrain-aware Sun, Earth, power, radio and flight planning for lunar landing sites, built on NASA LRO LOLA terrain. Validation: docs/VALIDATION.md. Public API: docs/API.md.",
-  "creators": [{ "name": "Team Dell Monitors (NASA Space Apps Challenge 2026, Kuala Lumpur)" }],
+  "creators": [
+    {
+      "name": "Bin Remy Azrai, Ammar Rasyid"
+    }
+  ],
   "license": "MIT",
-  "keywords": ["Moon", "lunar south pole", "landing site selection", "illumination", "LOLA", "Artemis"],
+  "keywords": [
+    "Moon",
+    "lunar south pole",
+    "landing site selection",
+    "illumination",
+    "LOLA",
+    "Artemis"
+  ],
   "related_identifiers": [
-    { "identifier": "https://arairo.github.io/IMPROVED_lunarmoon-/", "relation": "isDocumentedBy", "resource_type": "other" }
+    {
+      "identifier": "https://arairo.github.io/IMPROVED_lunarmoon-/",
+      "relation": "isDocumentedBy",
+      "resource_type": "other"
+    }
+  ],
+  "contributors": [
+    {
+      "name": "Team Dell Monitors (NASA Space Apps Challenge 2026, Kuala Lumpur)",
+      "type": "ProjectMember"
+    }
   ]
 }
