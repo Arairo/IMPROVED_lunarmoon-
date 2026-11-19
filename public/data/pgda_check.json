@@ -1,5 +1,5 @@
 {
- "generated": "2026-11-19T12:29:56.448Z",
+ "generated": "2026-11-19T12:42:04.842Z",
  "note": "PGDA \"average visibility\" (Mazarico et al. 2011 method; product 201608) is a multi-year average of the visible fraction of the Sun's / Earth's disk at the surface. Ours is the share of 2027 with the disk centre above the skyline from a 2 m mast. Expect differences of several points; the comparison is about the pattern.",
  "products": {
   "sun": "https://pgda.gsfc.nasa.gov/data/MoonIllumination/AVGVISIB_75S_120M_201608.TIF",
@@ -68,7 +68,7 @@
     "sun": 21.6,
     "earth": 46
    },
-   "pgdaSun60": 28.2,
+   "pgdaSun60": null,
    "pgdaSun120": 38.1,
    "pgdaEarth120": 52.9
   },
@@ -83,7 +83,7 @@
     "sun": 23.6,
     "earth": 60.1
    },
-   "pgdaSun60": 25.6,
+   "pgdaSun60": null,
    "pgdaSun120": 26.2,
    "pgdaEarth120": 66.4
   },
@@ -200,7 +200,7 @@
     "sun": 0,
     "earth": 0
    },
-   "pgdaSun60": null,
+   "pgdaSun60": 0,
    "pgdaSun120": 0,
    "pgdaEarth120": 0
   },
@@ -215,7 +215,7 @@
     "sun": 66.6,
     "earth": 54.9
    },
-   "pgdaSun60": null,
+   "pgdaSun60": 68,
    "pgdaSun120": 79.7,
    "pgdaEarth120": 61.1
   },
@@ -245,7 +245,7 @@
     "sun": 0,
     "earth": 0
    },
-   "pgdaSun60": 0.1,
+   "pgdaSun60": null,
    "pgdaSun120": 0.1,
    "pgdaEarth120": 0
   },
@@ -260,7 +260,7 @@
     "sun": 0,
     "earth": 15.3
    },
-   "pgdaSun60": 0,
+   "pgdaSun60": null,
    "pgdaSun120": 0,
    "pgdaEarth120": 24.4
   },
