@@ -32,7 +32,7 @@ if (fs.existsSync(regionsPath)) {
   const ring = (r) => r.map((p) => `${p[0]},${p[1]},0`).join(' ');
   const poly = (rings) => `<Polygon><outerBoundaryIs><LinearRing><coordinates>${ring(rings[0])}</coordinates></LinearRing></outerBoundaryIs></Polygon>`;
   write('artemis_regions.kml', kml('NASA Artemis III candidate landing regions (Oct 2024)', g.features.map((f) => {
-    const name = f.properties.name || f.properties.Name || f.properties.NAME || Object.values(f.properties)[0];
+    const name = f.properties.Region || f.properties.name || f.properties.Name || Object.values(f.properties)[0];
     const geom = f.geometry.type === 'Polygon' ? poly(f.geometry.coordinates) : `<MultiGeometry>${f.geometry.coordinates.map(poly).join('')}</MultiGeometry>`;
     return `<Placemark><name>${esc(name)}</name>${geom}</Placemark>`;
   }).join('\n')));
