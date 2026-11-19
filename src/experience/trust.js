@@ -41,6 +41,8 @@ export async function openTrust({ sites }) {
   const worstEl = val ? Math.max(...val.rows.map((r) => r.dEl)) : null;
   let pg = null;
   try { const r = await fetch(`${import.meta.env.BASE_URL}data/pgda_check.json`); if (r.ok) pg = await r.json(); } catch {}
+  let lr = null;
+  try { const r = await fetch(`${import.meta.env.BASE_URL}data/lroc_check.json`); if (r.ok) lr = await r.json(); } catch {}
   const pct = (v) => (v == null ? '–' : `${Math.round(v)}%`);
 
   box.innerHTML = `<div class="v-card a-card">
@@ -62,7 +64,7 @@ export async function openTrust({ sites }) {
           <p class="a-dim">Apollo figures: Sun elevation above a level horizon at touchdown, from the mission reports. Apollo 16 is left out because its landing came 5 h 42 min late and published figures differ on which time they mean. These checks also run as automated tests on every update.</p></section>
         ${(() => {
           const T = Date.parse('1969-07-20T20:17Z'), loi = Date.parse('1969-07-19T17:22Z'), tli = Date.parse('1969-07-16T16:22Z');
-          const a = planFlight(T, { route: 'direct', coastDays: (loi - tli) / 864e5, lunarOrbitDays: (T - loi) / 864e5, parkingAltKm: 191 });
+          const a = planFlight(T, { route: 'direct', coastDays: (loi - tli) / 864e5, lunarOrbitDays: (T - loi) / 864e5, parkingAltKm: 191, alignLaunch: false });
           const dv = Object.fromEntries(a.burns.map((b) => [b.id, b.dv]));
           const row = (n, ours, flown) => `<tr><td>${n}</td><td>${flown.toFixed(2)} km/s</td><td>${ours.toFixed(2)} km/s</td></tr>`;
           return `<section><h3>Flight model vs what flew</h3>
@@ -83,12 +85,17 @@ export async function openTrust({ sites }) {
           <div class="t-scroll"><table class="a-table"><tr><th>Site</th><th>Sunlight: ours (240 m)</th><th>Ours (20 m)</th><th>NASA PGDA</th><th>Earth: ours</th><th>NASA PGDA</th></tr>
             ${pg.sites.map((r) => `<tr><td>${esc(r.name)}</td><td>${pct(r.ours240?.sun)}</td><td>${pct(r.ours20?.sun)}</td><td>${pct(r.pgdaSun120)}</td><td>${pct((r.ours20 || r.ours240)?.earth)}</td><td>${pct(r.pgdaEarth120)}</td></tr>`).join('')}</table></div>
           <p class="a-dim">${esc(pg.note)} Rerun with the “Add 20 m terrain and check against NASA PGDA” workflow.</p></section>` : ''}
+        ${lr ? `<section><h3>Checked against a real photo: LROC shadows</h3>
+          <p>LROC’s narrow-angle camera photographed the ${esc(lr.region)} on ${new Date(lr.imageTimes[0]).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })} (${lr.images.length} image pairs, ${lr.imageTimes[0].slice(11, 16)}–${lr.imageTimes[lr.imageTimes.length - 1].slice(11, 16)} UTC). We predicted which ground would be lit at those moments and compared it with the photo, ${lr.gridM} m cell by cell over a ${lr.areaKm} km square:
+          with our 20 m terrain the prediction matches the photo in <b>${lr.with20m.agreement}%</b> of cells (Cohen’s κ ${lr.with20m.kappa.toFixed(2)}; 1 = perfect, 0 = chance); with the 240 m grid alone, ${lr.with240m.agreement}% (κ ${lr.with240m.kappa.toFixed(2)}).</p>
+          <img class="t-photo" src="${import.meta.env.BASE_URL}data/lroc_check.png" alt="Left: the LROC mosaic. Right: yellow lit in both, navy shadow in both, red we said lit but the photo is dark, light blue we said shadow but the photo is lit, grey skipped." loading="lazy">
+          <p class="a-dim">Left: the photo. Right: yellow = lit in both, navy = shadow in both, red = we said lit but it is dark, light blue = we said shadow but it is lit, grey = skipped. ${esc(lr.method)} Source: ${esc(lr.citation)}</p></section>` : ''}
         <section><h3>Terrain behind each site’s skyline</h3>
           <div class="t-scroll"><table class="a-table"><tr><th>Site</th><th>Terrain</th><th>Ground height</th></tr>
             ${terrainRows.map(({ s, h }) => `<tr><td>${esc(s.name)}</td><td>${esc(h.source)}</td><td>${h.groundHeight} m</td></tr>`).join('')}</table></div></section>
         <section><h3>Data and software</h3><ul class="t-src">${SOURCES.map(([t, d, url, lic]) => `<li><a href="${url}" target="_blank" rel="noopener">${esc(t)}</a><span>${esc(d)}</span><small>${esc(lic)}</small></li>`).join('')}</ul></section>
-        <section><h3>Honest limits</h3><ul>
-          <li>Terrain detail: 20 m around the main south-polar sites${pg ? '' : ' (once the PGDA workflow has run)'}, 240 m near the south pole, 1 km a little further out, about 1.9 km elsewhere. Boulders, small craters and the exact lander footprint are smaller than that, so use the “Check the landing area” tool and high-resolution images before committing.</li>
+        <section><h3>Honest limits</h3><p>The full error budget and every check are written up in <a href="https://github.com/Arairo/IMPROVED_lunarmoon-/blob/main/docs/VALIDATION.md" target="_blank" rel="noopener">docs/VALIDATION.md</a>.</p><ul>
+          <li>Terrain detail: 20 m around the main south-polar sites and the Artemis III region centres${pg ? '' : ' (once the PGDA workflow has run)'}, 240 m near the south pole, 1 km a little further out, about 1.9 km elsewhere. Boulders, small craters and the exact lander footprint are smaller than that, so use the “Check the landing area” tool and high-resolution images before committing.</li>
           <li>The ground slope is an average over about half a kilometre, not the slope under the lander’s legs.</li>
           <li>Earth’s and the Sun’s full disks are modelled for sunlight; Earth contact uses Earth’s centre above the terrain.</li>
           <li>GO / GO WITH CARE / NO GO use our own rules of thumb, not a NASA standard.</li>
