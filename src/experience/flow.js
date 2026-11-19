@@ -10,6 +10,7 @@ import { fmtLatLon, fmtHours } from '../ui/format.js';
 import { play } from './sound.js';
 import { createCalendar } from './calendar.js';
 import { icon } from './icons.js';
+import { scanToCsv } from '../core/exportCsv.js';
 import { addScenario } from '../ui/compare.js';
 import { groundSlope } from '../core/horizon.js';
 import { planFlight, ROUTES } from '../core/flight.js';
@@ -156,19 +157,20 @@ export function mountFlow({ app, setTime, switchMode, getBestSpots, actions }) {
   trayGo.addEventListener('click', () => { if (app.scenarios.length >= 2) { app.cmpView = 'result'; switchMode('compare'); } });
 
   // 5 · Report
-  slot(4).innerHTML = '<div class="f-report" data-report></div><div class="f-row f-wrap"><button type="button" class="f-primary" data-r="print">Print / save as PDF</button><button type="button" data-r="json">Download JSON</button><button type="button" data-r="link">Copy link</button><button type="button" data-r="terrain">Terrain 3D ↗</button><button type="button" data-r="lumi">Ask Lumi</button></div>';
+  slot(4).innerHTML = '<div class="f-report" data-report></div><div class="f-row f-wrap"><button type="button" class="f-primary" data-r="print">Print / save as PDF</button><button type="button" data-r="json">Download JSON</button><button type="button" data-r="csv" title="Sun, power, Earth, DSN and link margin at every time step of the window">Time series (CSV)</button><button type="button" data-r="link">Copy link</button><button type="button" data-r="terrain">Terrain 3D ↗</button><button type="button" data-r="lumi">Ask Lumi</button></div><p class="f-note">For GIS and scripts: <a href="https://github.com/Arairo/IMPROVED_lunarmoon-/blob/main/docs/API.md" target="_blank" rel="noopener">GeoTIFF lighting maps, day-by-day tables, Artemis III region outlines and the engine as a JavaScript module</a>.</p>';
   const s5 = slot(4);
   s5.querySelector('[data-r="print"]').addEventListener('click', () => printReport());
   s5.querySelector('[data-r="link"]').addEventListener('click', () => actions.copyLink());
-  s5.querySelector('[data-r="json"]').addEventListener('click', () => {
-    const blob = new Blob([JSON.stringify(decisionSummary(), null, 2)], { type: 'application/json' });
+  const saveFile = (text, type, ext) => {
     const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `lunar-plan-${(app.site.short || app.site.name).replace(/[^a-z0-9]+/gi, '-').toLowerCase()}-${new Date(app.windowStartMs).toISOString().slice(0, 10)}.json`;
+    a.href = URL.createObjectURL(new Blob([text], { type }));
+    a.download = `lunar-plan-${(app.site.short || app.site.name).replace(/[^a-z0-9]+/gi, '-').toLowerCase()}-${new Date(app.windowStartMs).toISOString().slice(0, 10)}.${ext}`;
     a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 2000);
     play('go');
-  });
+  };
+  s5.querySelector('[data-r="json"]').addEventListener('click', () => saveFile(JSON.stringify(decisionSummary(), null, 2), 'application/json', 'json'));
+  s5.querySelector('[data-r="csv"]').addEventListener('click', () => { if (app.scan) saveFile(scanToCsv(app.scan, { site: app.site, config: app.config }), 'text/csv', 'csv'); });
   s5.querySelector('[data-r="terrain"]').addEventListener('click', () => actions.terrain());
   s5.querySelector('[data-r="lumi"]').addEventListener('click', () => actions.lumi());
 

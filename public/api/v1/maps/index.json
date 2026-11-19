@@ -1,0 +1,22 @@
+{
+ "files": [
+  "south_sun_2027_5km.tif",
+  "south_earth_2027_5km.tif",
+  "south_both_2027_5km.tif",
+  "north_sun_2027_5km.tif",
+  "north_earth_2027_5km.tif",
+  "north_both_2027_5km.tif",
+  "global_sun_2027_1deg.tif",
+  "global_earth_2027_1deg.tif",
+  "global_both_2027_1deg.tif",
+  "south_sun_disk_2027_1km.tif",
+  "south_earth_2027_1km.tif",
+  "south_longest_dark_2027_1km.tif"
+ ],
+ "crs": {
+  "south": "IAU_2015:30135",
+  "north": "IAU_2015:30130",
+  "global": "IAU_2015:30100"
+ },
+ "note": "Percent of 2027 unless the file says hours. GeoTIFF, Float32, nodata -1. Built by tools/export_geotiff.py."
+}
