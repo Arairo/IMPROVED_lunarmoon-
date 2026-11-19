@@ -1,0 +1,17 @@
+{
+"type": "FeatureCollection",
+"name": "A3_9regions-lonlat-simplified",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:ESRI::104903" } },
+"xy_coordinate_resolution": 1e-05,
+"features": [
+{ "type": "Feature", "properties": { "OBJECTID": 1, "Region": "Nobile Rim 2", "Area_km2": 400.0, "RegionCode": "N2", "Shape_Leng": 80000, "Shape_Area": 400000000.0 }, "geometry": { "type": "Polygon", "coordinates": [ [ [ 54.46178, -84.04797 ], [ 57.8402, -83.50158 ], [ 63.02425, -83.82638 ], [ 59.96161, -84.40465 ], [ 54.46178, -84.04797 ] ] ] } },
+{ "type": "Feature", "properties": { "OBJECTID": 2, "Region": "Mons Mouton", "Area_km2": 256.0, "RegionCode": "MM", "Shape_Leng": 64000, "Shape_Area": 256000000.0 }, "geometry": { "type": "Polygon", "coordinates": [ [ [ 27.28799, -85.32705 ], [ 32.73523, -85.0633 ], [ 36.36658, -85.49737 ], [ 30.57923, -85.78834 ], [ 27.28799, -85.32705 ] ] ] } },
+{ "type": "Feature", "properties": { "OBJECTID": 3, "Region": "Malapert Massif", "Area_km2": 441.0, "RegionCode": "MA", "Shape_Leng": 84000, "Shape_Area": 441000000.0 }, "geometry": { "type": "Polygon", "coordinates": [ [ [ -4.76364, -85.63394 ], [ 4.33231, -85.63656 ], [ 5.14788, -86.32589 ], [ -5.65948, -86.32279 ], [ -4.76364, -85.63394 ] ] ] } },
+{ "type": "Feature", "properties": { "OBJECTID": 4, "Region": "de Gerlache Rim 2", "Area_km2": 400.0, "RegionCode": "G2", "Shape_Leng": 80000, "Shape_Area": 400000000.0 }, "geometry": { "type": "Polygon", "coordinates": [ [ [ -60.57254, -87.78529 ], [ -49.39871, -88.32789 ], [ -71.34211, -88.65999 ], [ -77.47119, -88.02393 ], [ -60.57254, -87.78529 ] ] ] } },
+{ "type": "Feature", "properties": { "OBJECTID": 5, "Region": "Mons Mouton Plateau", "Area_km2": 4451.83602, "RegionCode": "MP", "Shape_Leng": 269580, "Shape_Area": 4451836025.0 }, "geometry": { "type": "Polygon", "coordinates": [ [ [ 15.49417, -83.9502 ], [ 35.44246, -82.84671 ], [ 46.61204, -84.28934 ], [ 22.39284, -85.75564 ], [ 15.49417, -83.9502 ] ] ] } },
+{ "type": "Feature", "properties": { "OBJECTID": 6, "Region": "Slater Plain", "Area_km2": 399.800025, "RegionCode": "SP", "Shape_Leng": 79980, "Shape_Area": 399800025.0 }, "geometry": { "type": "Polygon", "coordinates": [ [ [ 123.69062, -87.62216 ], [ 116.5672, -87.05106 ], [ 126.86961, -86.70324 ], [ 134.99761, -87.20229 ], [ 123.69062, -87.62216 ] ] ] } },
+{ "type": "Feature", "properties": { "OBJECTID": 7, "Region": "Peak Near Cabeus B", "Area_km2": 399.800025, "RegionCode": "CB", "Shape_Leng": 79980, "Shape_Area": 399800025.0 }, "geometry": { "type": "Polygon", "coordinates": [ [ [ -67.16672, -83.2095 ], [ -64.79989, -83.81001 ], [ -70.55948, -84.06005 ], [ -72.47353, -83.43644 ], [ -67.16672, -83.2095 ] ] ] } },
+{ "type": "Feature", "properties": { "OBJECTID": 8, "Region": "Nobile Rim 1", "Area_km2": 400.0, "RegionCode": "N1", "Shape_Leng": 80000, "Shape_Area": 400000000.0 }, "geometry": { "type": "Polygon", "coordinates": [ [ [ 31.64367, -85.3514 ], [ 38.05472, -84.9746 ], [ 43.20664, -85.47479 ], [ 36.47997, -85.89749 ], [ 31.64367, -85.3514 ] ] ] } },
+{ "type": "Feature", "properties": { "OBJECTID": 9, "Region": "Haworth", "Area_km2": 888.04, "RegionCode": "HW", "Shape_Leng": 119200, "Shape_Area": 888040000.0 }, "geometry": { "type": "Polygon", "coordinates": [ [ [ -26.65196, -86.1124 ], [ -12.36178, -86.44277 ], [ -16.99082, -87.39353 ], [ -34.98185, -86.95784 ], [ -26.65196, -86.1124 ] ] ] } }
+]
+}
