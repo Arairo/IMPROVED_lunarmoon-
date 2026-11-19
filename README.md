@@ -57,9 +57,23 @@ Type what you want: "best date at the ridge in 2027", "compare ridge and IM-2", 
 
 ![Ask Lumi finding the next good landing date](docs/screenshots/lumi.jpg)
 
+## Artemis III regions, exports and the API
+
+- **NASA's nine Artemis III candidate regions** (Oct 2024) are in the site list
+  under *Artemis III* and outlined on the 3D Moon. The outlines come from the
+  USGS release (McClernan 2024, doi:10.5066/P1MEQ6UK), which took them from LROC
+  QuickMap. Each region centre has 20 m terrain; click inside an outline to test
+  other spots.
+- **Exports:** the Report step downloads the decision summary (JSON) and the
+  full time series (CSV). GeoTIFF lighting maps in the IAU Moon projections NASA
+  PGDA uses are in `public/api/v1/maps`.
+- **Public API:** static, read-only, CORS-open files on GitHub Pages: sites,
+  region outlines, day-by-day 2027 tables per site, the maps, and the engine as
+  an ES module you can import. See [docs/API.md](docs/API.md).
+
 ## Why you can trust the numbers
 
-Everything below is in the app under **Help → Accuracy, data and sources**, and the checks run as automated tests on every update.
+Everything below is in the app under **Help → Accuracy, data and sources**, written up with an error budget in [docs/VALIDATION.md](docs/VALIDATION.md), and the checks run as automated tests on every update.
 
 - **Checked against NASA JPL Horizons**: 48 Sun and Earth positions (8 sites × 3 dates): worst elevation difference **0.005°**, median 0.001° (the Sun's disk is 0.53° wide). Re-run any time with the *Validate against JPL Horizons* workflow; the scoreboard is published in the app.
 - **Checked against what flew**: the Sun's height at the Apollo 11, 12, 14, 15 and 17 touchdowns is within **0.35°** of the mission reports, and our sunsets at Blue Ghost Mission 1, Chandrayaan-3 and SLIM fall on the days their teams reported.
