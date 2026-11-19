@@ -1,0 +1,55 @@
+{
+ "generated": "2026-11-19T12:34:36.085Z",
+ "product": "NAC_ROI_CABEUSPKLOB_P836S2912_20M",
+ "url": "https://pds.lroc.im-ldi.com/data/LRO-L-LROC-5-RDR-V1.0/LROLRC_2001/DATA/BDR/NAC_ROI/CABEUSPKLOB/NAC_ROI_CABEUSPKLOB_P836S2912_20M.IMG",
+ "images": [
+  "M1260376212",
+  "M1260383231",
+  "M1260390268",
+  "M1260397299"
+ ],
+ "imageTimes": [
+  "2017-09-18T12:15:45.682000Z",
+  "2017-09-18T14:12:44.682000Z",
+  "2017-09-18T16:10:01.682000Z",
+  "2017-09-18T18:07:12.682000Z"
+ ],
+ "site": "a3-cb",
+ "region": "Peak Near Cabeus B (Artemis III candidate region)",
+ "gridM": 40,
+ "areaKm": 16,
+ "otsuThreshold": 9718.571968078613,
+ "with20m": {
+  "n": 103569,
+  "agree": 96289,
+  "litLit": 46702,
+  "litDark": 7245,
+  "darkLit": 35,
+  "darkDark": 49587,
+  "skippedPhoto": 53149,
+  "skippedPred": 3282,
+  "agreement": 93,
+  "kappa": 0.86
+ },
+ "with240m": {
+  "n": 103668,
+  "agree": 90889,
+  "litLit": 46748,
+  "litDark": 12779,
+  "darkLit": 0,
+  "darkDark": 44141,
+  "skippedPhoto": 53149,
+  "skippedPred": 3183,
+  "agreement": 87.7,
+  "kappa": 0.757
+ },
+ "legend": {
+  "yellow": "lit in both",
+  "navy": "shadow in both",
+  "red": "we said lit, photo is dark",
+  "blue": "we said shadow, photo is lit",
+  "grey": "skipped (mixed pixel, Sun on the skyline, or the four image times disagree)"
+ },
+ "method": "Photo: Otsu threshold on the 20 m mosaic, 40 m cells kept only when all four 20 m pixels agree. Prediction: Sun centre above the LOLA skyline 0.5 m above the ground at all four image times, skipped within the Sun radius of the skyline. Same comparison with and without the 20 m terrain tile.",
+ "citation": "Henriksen et al. (2023), Optimized Illuminated Terrain Coverage of the Candidate Artemis III Landing Sites with LROC NAC Controlled Mosaics, European Lunar Symposium. NASA/GSFC/Arizona State University."
+}
