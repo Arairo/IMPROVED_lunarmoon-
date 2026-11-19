@@ -8,7 +8,7 @@
 
 import { esc } from './format.js';
 import { icon } from '../experience/icons.js';
-import { METRICS, bothFraction, scoreOf, verdict, assignColors, renderCompareLab } from './compareLab.js';
+import { METRICS, bothFraction, scoreOf, verdict, assignColors, renderCompareLab, moonCell, drawPlanMoons, bestWorst } from './compareLab.js';
 import { launchDateSeries } from '../core/planning.js';
 
 const DAY = 86400000;
@@ -241,11 +241,13 @@ export function renderCompareFlow(container, app, onOpen, addScenario) {
     <div class="ch-verdict"><span class="cv-ico">${icon('trophy', 24)}</span><p>${sentence}</p></div>
     <div class="ch-cols" style="--n:${shown.length}">${shown.map((s) => {
       const v = verdict(s);
-      return `<div class="ch-col${s === win ? ' is-win' : ''}" style="--c:${s.color}">
+      const worst = bestWorst(shown).worst;
+      return `<div class="ch-col${s === win ? ' is-win' : ''}${s === worst ? ' is-worst' : ''}" style="--c:${s.color}">
         <div class="cc-top">${s === win ? `<span class="ch-crown">${icon('trophy', 14)} Best</span>` : '<span></span>'}<span class="cc-acts">
           <button type="button" data-open="${s.id}" title="Open in planner" aria-label="Open ${esc(s.label)} in the planner">${icon('arrowUpRight', 15)}</button>
           ${all.length > 2 ? `<button type="button" data-rm="${s.id}" title="Remove" aria-label="Remove ${esc(s.label)}">${icon('x', 15)}</button>` : ''}</span></div>
         <h4>${esc(s.label)}</h4><p class="cc-sub">Touchdown ${dShort(s.startMs)} · ${s.windowDays} days</p>
+        ${moonCell(s)}
         <div class="ch-big"><b>${pct(hero.get(s))}</b><span>of the time with<br>power and radio</span></div>
         <span class="cc-badge ${v.cls}">${v.text}</span>
       </div>`;
@@ -263,6 +265,7 @@ export function renderCompareFlow(container, app, onOpen, addScenario) {
     </div>
     <details class="cl-more" ${app.cmpDetailsOpen ? 'open' : ''}><summary>See full details: every measure as a chart, day by day, the full table and CSV export</summary><div class="cl-more-body"></div></details>`;
 
+  drawPlanMoons(container.querySelector('.ch-cols'), shown);
   container.querySelectorAll('[data-open]').forEach((b) => b.addEventListener('click', () => { const sc = all.find((x) => x.id === b.dataset.open); if (sc) onOpen(sc); }));
   container.querySelectorAll('[data-rm]').forEach((b) => b.addEventListener('click', () => {
     app.scenarios = app.scenarios.filter((x) => x.id !== b.dataset.rm);

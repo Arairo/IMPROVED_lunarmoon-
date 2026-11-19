@@ -338,11 +338,12 @@ export function createWalk({ app, sites, onOpenPro, onToggleTheme, onToggleSound
           const sun = e.sun.fraction > 0, earth = e.earth.los;
           const col = sun && earth ? '#22c55e' : sun ? '#f59e0b' : '#ef4444';
           const view = polar ? { lat: -90, lon: 0, dist: 4.6, earthFlat: true } : { lat: st.site.lat, lon: st.site.lon, dist: 4.4 };
-          thumbs.draw(moonCanvas, { ...view, sun: state.sun, earth: state.earth, pins: [{ lat: st.site.lat, lon: st.site.lon, color: col, r: 6 }] });
+          thumbs.draw(moonCanvas, { ...view, sun: state.sun, earth: polar ? state.earth : null, pins: [{ lat: st.site.lat, lon: st.site.lon, color: col, r: 6 }] });
           moonCap.innerHTML = `<b>${fmtDate(ms)}</b><span>${sun && earth ? 'Sun up and Earth in view' : sun ? 'Sun up, Earth hidden' : 'Night at your spot'}${polar ? ' · seen from below the south pole, Earth-facing side at the top' : ''}</span>`;
         };
         moonThumbs().then(({ getMoonThumbs }) => getMoonThumbs()).then((t) => { thumbs = t; drawMoon(st.startMs); });
-        window.addEventListener('lsp-moonthumb', () => { if (!playing) drawMoon(st.startMs); });
+        const onImg = () => { if (!moonCanvas.isConnected) { window.removeEventListener('lsp-moonthumb', onImg); return; } if (!playing) drawMoon(st.startMs); };
+        window.addEventListener('lsp-moonthumb', onImg);
         const cal = createCalendar({ getSite: () => st.site, getConfig: () => app.config, getSelectedMs: () => st.startMs, compact: true,
           onPick: (ms) => { st.startMs = ms; st.scan = null; st.flight = null; showLocal(); drawMoon(ms); play('tick'); },
           onHover: (ms) => { if (!playing) drawMoon(ms ?? st.startMs); } });

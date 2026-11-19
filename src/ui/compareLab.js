@@ -126,6 +126,46 @@ function guideHtml(app) {
  * Render the lab into `container`. `onOpen(scenario)` opens a scenario in the
  * planner; `addScenario(app, site, startMs, label)` adds one (from compare.js).
  */
+/**
+ * A small Moon for each plan: where the site is and where sunlight falls at
+ * its touchdown. All drawn by the one shared renderer (src/scene/moonThumb.js),
+ * so 2 or 10 plans cost the same.
+ */
+export function moonCell(s) {
+  const sun = s.scan?.series?.sunFrac?.[0] > 0, earth = s.scan?.series?.los?.[0] === 1;
+  return `<div class="cc-moon"><canvas data-moon="${s.id}" aria-label="Where ${esc(s.label)} is on the Moon and the sunlight at touchdown"></canvas>
+    <span>At touchdown: <b>${sun ? 'Sun up' : 'night'}</b> · <b>${earth ? 'Earth in view' : 'Earth hidden'}</b></span></div>`;
+}
+export function drawPlanMoons(container, list) {
+  const canvases = [...container.querySelectorAll('canvas[data-moon]')];
+  if (!canvases.length) return;
+  Promise.all([import('../scene/moonThumb.js'), import('../core/ephemeris.js')]).then(async ([{ getMoonThumbs }, { moonFixedState }]) => {
+    const m = await getMoonThumbs();
+    const draw = () => canvases.forEach((c) => {
+      const sc = list.find((x) => x.id === c.dataset.moon);
+      if (!sc || !c.isConnected) return;
+      const lat = sc.site.lat ?? 0, lon = sc.site.lon ?? 0, st = moonFixedState(sc.startMs);
+      // Polar plans: a close view of the pole (whole-Moon views of sites 50 km
+      // apart look identical), with the other plans as small grey dots.
+      const allPolar = list.every((x) => (x.site.lat ?? 0) < -75);
+      const view = lat < -60 ? { lat: -90, lon: 0, dist: allPolar ? 1.75 : 4.6, earthFlat: true } : lat > 60 ? { lat: 90, lon: 0, dist: 4.6, earthFlat: true } : { lat: lat * 0.6, lon, dist: 4.4 };
+      const others = list.filter((x) => x !== sc).map((x) => ({ lat: x.site.lat ?? 0, lon: x.site.lon ?? 0, color: 'rgba(200,205,215,.85)', r: 3 }));
+      m.draw(c, { ...view, ambient: allPolar ? 0.35 : undefined, sun: st.sun, earth: allPolar || Math.abs(lat) <= 60 ? null : st.earth, pins: [...others, { lat, lon, color: sc.color, r: 6 }] });
+    });
+    draw();
+    // Redraw when the sharper images arrive; stop listening once these cards are gone.
+    const onLoad = () => { if (!canvases.some((c) => c.isConnected)) { window.removeEventListener('lsp-moonthumb', onLoad); return; } draw(); };
+    window.addEventListener('lsp-moonthumb', onLoad);
+  });
+}
+/** Best and worst of a list (no 'worst' when they tie). */
+export function bestWorst(list) {
+  if (list.length < 2) return { best: null, worst: null };
+  const ranked = [...list].sort((a, b) => scoreOf(b) - scoreOf(a));
+  const best = ranked[0], worst = ranked.at(-1);
+  return { best, worst: scoreOf(worst) < scoreOf(best) ? worst : null };
+}
+
 export function renderCompareLab(container, app, onOpen, addScenario, { details = false, onChange = null } = {}) {
   if (!container) return;
   const rerender = onChange || (() => renderCompareLab(container, app, onOpen, addScenario));
@@ -193,12 +233,13 @@ export function renderCompareLab(container, app, onOpen, addScenario, { details 
         <button type="button" class="cl-btn" data-open="${best.id}">${icon('arrowUpRight', 15)} Open in planner</button></div>`
     : `<div class="cl-winner is-hint"><span class="w-ico">${icon('plus', 24)}</span><div><b>Add one more scenario to compare</b><span>Try a launch slip, a sunnier ridge, or any site from the menu above.</span></div></div>`;
 
+  const bw = bestWorst(list);
   const cards = list.map((s) => {
     const v = verdict(s);
     const val = hero.get(s);
     const d = deltaText(hero, val, hero.get(base));
     const st = s.scan.stats;
-    return `<article class="cl-card${s.id === base.id ? ' is-base' : ''}" style="--c:${s.color}">
+    return `<article class="cl-card${s.id === base.id ? ' is-base' : ''}${s === bw.best ? ' is-best' : s === bw.worst ? ' is-worst' : ''}" style="--c:${s.color}">
       <div class="cc-top"><span class="cc-rank" title="Overall rank">#${rank.get(s.id)}</span><span class="cc-badge ${v.cls}">${v.text}</span>
         <span class="cc-acts">
           <button type="button" data-base="${s.id}" title="${s.id === base.id ? 'This is the baseline' : 'Use as baseline'}" aria-label="Use as baseline" class="${s.id === base.id ? 'is-on' : ''}">${icon('star', 15)}</button>
@@ -206,6 +247,7 @@ export function renderCompareLab(container, app, onOpen, addScenario, { details 
           <button type="button" data-rm="${s.id}" title="Remove" aria-label="Remove">${icon('x', 15)}</button></span></div>
       <h4>${esc(s.label)}</h4>
       <p class="cc-sub">${fmtLatLon(s.site.lat ?? 0, s.site.lon ?? 0, 2)} · ${dateTxt(s.startMs)} · ${s.windowDays} days</p>
+      ${moonCell(s)}
       <div class="cc-hero"><b>${hero.fmt(val)}</b><span>Sun + Earth<br>together</span>
         ${s.id === base.id ? '<em class="cc-delta base">Baseline</em>' : `<em class="cc-delta ${d.zero ? 'same' : d.good ? 'up' : 'down'}">${d.zero ? 'Same' : d.txt}</em>`}</div>
       <div class="cc-meter"><span style="width:${Math.round(val * 100)}%"></span></div>
@@ -270,6 +312,7 @@ export function renderCompareLab(container, app, onOpen, addScenario, { details 
   }));
   requestAnimationFrame(() => {
     container.querySelectorAll('[data-strip]').forEach((c) => { const sc = list.find((x) => x.id === c.dataset.strip); if (sc) drawStrip(c, sc, sc.windowDays); });
+    drawPlanMoons(container, list);
     container.querySelectorAll('[data-day]').forEach((c) => { const sc = list.find((x) => x.id === c.dataset.day); if (sc) { c.style.width = `${(sc.windowDays / maxDays) * 100}%`; drawStrip(c, sc, sc.windowDays, { rows: 1 }); } });
     // Bars grow in so the size of each difference reads at a glance.
     container.querySelectorAll('.cm-bar, .cc-meter span').forEach((b) => { const w = b.style.width; b.style.width = '0'; requestAnimationFrame(() => { b.style.width = w; }); });

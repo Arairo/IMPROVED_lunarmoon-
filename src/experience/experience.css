@@ -1505,3 +1505,13 @@ html[data-theme='dark'] .cc-badge.amber { color: var(--xp-warn); }
   .w-path ol li button.is-on { font-size: 11px; }
   .w-path ol li button.is-on::first-letter { font-size: inherit; }
 }
+
+/* ---- Compare: a Moon on each plan; green outline for the best, red for the worst ---- */
+.cc-moon { display: grid; grid-template-columns: 92px 1fr; gap: 10px; align-items: center; margin: 10px 0 6px; padding: 8px; border-radius: 14px; background: #05070c; }
+.cc-moon canvas { width: 92px; height: 92px; display: block; border-radius: 10px; }
+.cc-moon span { font: 500 12.5px/1.45 var(--xp-font); color: rgba(255,255,255,.75); }
+.cc-moon b { color: #fff; font-weight: 650; }
+.ch-col .cc-moon { grid-template-columns: 1fr; justify-items: center; text-align: center; }
+.ch-col .cc-moon canvas { width: min(200px, 100%); height: auto; aspect-ratio: 1; border-radius: 12px; }
+.ch-col.is-win, .cl-card.is-best { border-color: #30d158; box-shadow: 0 0 0 2px rgba(48,209,88,.55), 0 0 28px rgba(48,209,88,.18), var(--xp-shadow-md); }
+.ch-col.is-worst, .cl-card.is-worst { border-color: #ff453a; box-shadow: 0 0 0 2px rgba(255,69,58,.55), 0 0 28px rgba(255,69,58,.16), var(--xp-shadow-sm); }

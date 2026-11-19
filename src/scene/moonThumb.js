@@ -68,7 +68,7 @@ export function getMoonThumbs() {
         const sunV = o.sun ? toScene(o.sun).normalize() : eye.clone().normalize();
         sun.position.copy(sunV.multiplyScalar(10));
         sun.intensity = o.sun ? 2.4 : 1.6;
-        scene.children.find((c) => c.isAmbientLight).intensity = o.sun ? 0.07 : 0.55;
+        scene.children.find((c) => c.isAmbientLight).intensity = o.ambient ?? (o.sun ? 0.07 : 0.55);
         earthDot.visible = !!o.earth;
         if (o.earth) {
           const e = toScene(o.earth).normalize();
