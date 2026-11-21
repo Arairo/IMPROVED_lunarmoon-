@@ -56,5 +56,7 @@ without one.
   by hand from the Actions tab; pinning the image to a digest would make them
   reproducible.
 - GitHub Pages can't set HTTP response headers (Content-Security-Policy,
-  `X-Content-Type-Options`, `Referrer-Policy`). They should be added, report-only
-  first, if the site moves to a host that supports them; see `docs/HOSTING.md`.
+  `X-Content-Type-Options`, `Referrer-Policy`). A tested set is ready in
+  `docs/hosting/_headers.example` (both CSPs enforced against the production build
+  with no violations); add it, report-only first, if the site moves to a host that
+  supports headers. See `docs/HOSTING.md`.
