@@ -34,12 +34,29 @@ const cache = new Map();
 const CACHE_LIMIT = 20000;
 
 /**
+ * The period the engine has been checked over: JPL Horizons comparisons at
+ * 1969 and 2026–2028 (tools/validate-horizons.mjs, test/horizons.spec.js) and
+ * flown missions from Apollo 11 (1969) to Blue Ghost M1 (2025)
+ * (test/flown.spec.js). astronomy-engine itself has no hard limit, but outside
+ * this period nobody has compared the numbers with an independent source.
+ */
+export const CHECKED_PERIOD = { fromMs: Date.UTC(1969, 0, 1), toMs: Date.UTC(2029, 0, 1), label: '1969–2028' };
+
+/** 'checked' inside CHECKED_PERIOD, 'unchecked' outside it (still computed, but labelled). */
+export function epochStatus(ms) {
+  if (!Number.isFinite(ms)) return { status: 'invalid', note: 'Not a valid date.' };
+  if (ms >= CHECKED_PERIOD.fromMs && ms < CHECKED_PERIOD.toMs) return { status: 'checked', note: null };
+  return { status: 'unchecked', note: `This date is outside ${CHECKED_PERIOD.label}, the period our Sun and Earth positions have been checked against NASA JPL Horizons and flown missions. The numbers are computed the same way but have not been independently checked.` };
+}
+
+/**
  * Moon-centred, Moon-fixed positions (metres) of the Sun and Earth at `date`.
  * Results are cached by millisecond so a time scan shared by many sites costs
  * one ephemeris evaluation per sample.
  */
 export function moonFixedState(date) {
   const ms = date instanceof Date ? date.getTime() : Number(date);
+  if (!Number.isFinite(ms)) throw new RangeError(`moonFixedState: time must be a finite UTC millisecond value, got ${date}`);
   const hit = cache.get(ms);
   if (hit) return hit;
   const time = Astronomy.MakeTime(new Date(ms));

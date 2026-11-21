@@ -31,12 +31,12 @@
    "id": "a3-cb",
    "name": "Artemis III region: Peak Near Cabeus B",
    "ours240": {
-    "sun": 43.8,
-    "earth": 44.2
+    "sun": 35.5,
+    "earth": 25
    },
    "ours20": {
     "sun": 34.2,
-    "earth": 26.8
+    "earth": 26.2
    },
    "pgdaSun60": null,
    "pgdaSun120": 38.4,
@@ -46,12 +46,12 @@
    "id": "a3-hw",
    "name": "Artemis III region: Haworth",
    "ours240": {
-    "sun": 11.3,
+    "sun": 11.2,
     "earth": 37.1
    },
    "ours20": {
     "sun": 9,
-    "earth": 37.1
+    "earth": 36.9
    },
    "pgdaSun60": 8.5,
    "pgdaSun120": 10.3,
@@ -61,7 +61,7 @@
    "id": "a3-ma",
    "name": "Artemis III region: Malapert Massif",
    "ours240": {
-    "sun": 42.7,
+    "sun": 42.5,
     "earth": 47.4
    },
    "ours20": {
@@ -76,7 +76,7 @@
    "id": "a3-mp",
    "name": "Artemis III region: Mons Mouton Plateau",
    "ours240": {
-    "sun": 26.3,
+    "sun": 26.2,
     "earth": 65.4
    },
    "ours20": {
@@ -137,11 +137,11 @@
    "name": "Artemis III region: de Gerlache Rim 2",
    "ours240": {
     "sun": 35.8,
-    "earth": 49.6
+    "earth": 49.5
    },
    "ours20": {
     "sun": 36,
-    "earth": 49.6
+    "earth": 49.5
    },
    "pgdaSun60": null,
    "pgdaSun120": 37.1,
@@ -163,12 +163,12 @@
    "id": "ridge",
    "name": "Shackleton connecting ridge",
    "ours240": {
-    "sun": 79.2,
-    "earth": 50.8
+    "sun": 74.1,
+    "earth": 50.6
    },
    "ours20": {
-    "sun": 66.4,
-    "earth": 43.8
+    "sun": 63.6,
+    "earth": 42.5
    },
    "pgdaSun60": null,
    "pgdaSun120": 67.7,
@@ -178,8 +178,8 @@
    "id": "peak-shackleton",
    "name": "Ridge high point near Shackleton (88.8°S)",
    "ours240": {
-    "sun": 83.6,
-    "earth": 55.8
+    "sun": 77.1,
+    "earth": 55.7
    },
    "ours20": {
     "sun": 63.6,
@@ -208,11 +208,11 @@
    "id": "best-1",
    "name": "Best-lit cell #2 (1 km map, 2027)",
    "ours240": {
-    "sun": 70.1,
+    "sun": 66.4,
     "earth": 54.9
    },
    "ours20": {
-    "sun": 66.6,
+    "sun": 66.4,
     "earth": 54.9
    },
    "pgdaSun60": 68,
@@ -223,11 +223,11 @@
    "id": "best-2",
    "name": "Best-lit cell #3 (1 km map, 2027)",
    "ours240": {
-    "sun": 65.1,
+    "sun": 57.9,
     "earth": 49.6
    },
    "ours20": {
-    "sun": 51,
+    "sun": 49.7,
     "earth": 48.4
    },
    "pgdaSun60": 50,
@@ -298,12 +298,12 @@
    "id": "nobile",
    "name": "Nobile crater",
    "ours240": {
-    "sun": 34.5,
+    "sun": 34.4,
     "earth": 21
    },
    "ours20": {
     "sun": 34.4,
-    "earth": 21.2
+    "earth": 21
    },
    "pgdaSun60": null,
    "pgdaSun120": 35.8,
@@ -318,7 +318,7 @@
    },
    "ours20": {
     "sun": 0,
-    "earth": 15.8
+    "earth": 15.5
    },
    "pgdaSun60": null,
    "pgdaSun120": 0,
@@ -354,5 +354,13 @@
    "pgdaSun120": 47,
    "pgdaEarth120": 93.6
   }
- ]
+ ],
+ "sitesRecomputed": {
+  "at": "2026-11-21T13:39:40.154Z",
+  "engine": {
+   "growth": 0.015,
+   "refine": true
+  },
+  "by": "tools/refresh_pgda_site_shares.mjs"
+ }
 }

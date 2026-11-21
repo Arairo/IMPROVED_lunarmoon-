@@ -11,11 +11,11 @@ is automated, so you can re-run it with the tests or a GitHub workflow.
 | Sun and Earth positions seen from the surface | NASA JPL Horizons, 48 site/time pairs (8 sites × 3 dates × Sun and Earth) | Worst elevation difference **0.005°**, median 0.001°, worst azimuth 0.02° (the Sun's disk is 0.53° wide) | *Validate against JPL Horizons* workflow; `public/data/validation.json` |
 | Sun height at landing | Five Apollo landings (mission reports) | All within **0.35°**: Apollo 11 −0.10°, 12 +0.04°, 14 +0.04°, 15 −0.18°, 17 +0.35° | `npm test` (test/flown.spec.js) |
 | Local sunset | Blue Ghost M1, Chandrayaan-3, SLIM (dates the teams reported) | Within **0.4 days** for all three | `npm test` |
-| Year-long sunlight map, south pole | NASA Goddard PGDA average visibility, 120 m (Mazarico et al. method) | Correlation **r = 0.92**, mean difference 4.2 percentage points over 24,344 cells | *Add 20 m terrain and check against NASA PGDA* workflow; `public/data/pgda_check.json` |
+| Year-long sunlight map, south pole | NASA Goddard PGDA average visibility, 120 m (Mazarico et al. method) | Correlation **r = 0.92**, mean difference 4.2 percentage points over 24,344 cells. Ours averages 34.4% vs PGDA 31.5%: about 3 points sunnier. The map comes from `tools/build_map_layers.mjs` (skyline in 72 directions); it has not been rebuilt with the ridge-crest refinement below, which is expected to lower it | *Add 20 m terrain and check against NASA PGDA* workflow; `public/data/pgda_check.json` |
 | Year-long Earth-in-view map | NASA PGDA Earth visibility, 120 m | **r = 0.975**, mean difference 4.7 points | same |
-| Sunlight at the Shackleton connecting ridge | NASA PGDA | Ours **66%** of 2027 with 20 m terrain vs PGDA **68%** (79% with our 240 m grid) | same |
+| Sunlight at the Shackleton connecting ridge | NASA PGDA | Ours **64%** (63.6%) of 2027 with 20 m terrain vs PGDA **68%** (74% with our 240 m grid). Until 21 Nov 2026 this read 66% / 79%: the skyline ray-caster could step over the crest that hides the Sun (section 3). PGDA's figure is a multi-year average of the visible *fraction of the disk*; ours is the disk *centre* in 2027, which reads lower at a site where the Sun grazes the skyline | same; site rows recomputed with `tools/refresh_pgda_site_shares.mjs` |
 | 20 m terrain tiles | Our 240 m LOLA grid (1 km beyond it) | Mean height difference **2.0–3.6 m** at every tile | same |
-| Real shadows | LROC NAC controlled mosaic of the Peak Near Cabeus B Artemis III region, 8 images on 18 Sep 2017 | **93%** of 103,569 40 m cells agree (Cohen's κ **0.86**) with 20 m terrain; 88% (κ 0.76) with the 240 m grid. Almost every miss is a cell we call lit that is dark in the photo, along shadow edges: our shadows run slightly short | *Check shadows against an LROC photo* workflow |
+| Real shadows | LROC NAC controlled mosaic of the Peak Near Cabeus B Artemis III region, 8 images on 18 Sep 2017 | **93%** of 103,569 40 m cells agree (Cohen's κ **0.86**) with 20 m terrain; 88% (κ 0.76) with the 240 m grid. Almost every miss is a cell we call lit that is dark in the photo, along shadow edges: our shadows run slightly short. Split by kind (20 m): of the cells the photo shows **dark**, we call **12.7% lit** (7,245 of 56,832); of the cells it shows **lit**, we call **0.07% dark** (35 of 46,737). With 240 m: 22.5% and 0%. So the tool errs towards too much sunlight, never towards too little. *Measured before the ridge-crest refinement (21 Nov 2026); to be re-run* | *Check shadows against an LROC photo* workflow |
 | Flight burns | Apollo 11 | Leaving Earth orbit 3.16 vs 3.18 km/s; lunar orbit insertion 0.93 vs 0.94; descent 2.01 vs 2.06 | `npm test` (test/flight.spec.js) |
 | Flight timelines | Apollo 11, IM-1, Chandrayaan-3, Blue Ghost M1, SLIM | Launch-to-landing time within a factor 0.55–1.6 of flown for the matching route | `npm test` |
 | Launch time from the pad | Apollo 11 from Kennedy | Ours 15:40 UTC vs flown 13:32 UTC (2.1 h late; tested to under 3 h) | `npm test` |
@@ -27,7 +27,8 @@ How big each source of error is, and what it does to the answers.
 | Source | Size | Effect on the answer |
 |---|---|---|
 | Ephemeris (astronomy-engine, IAU lunar rotation) | ≤ 0.005° | None you can see: 1/100 of the Sun's width. |
-| Terrain resolution: 240 m / 1 km grids | Ridges and crests are smoothed by tens of metres | At crests, sunlight shares can be **10–20 points too high** (ridge: 79% at 240 m vs 66% at 20 m). Craters and flat ground change by under 1 point. This is the dominant error, which is why we use 20 m tiles near the main south-polar sites and the Artemis III regions. |
+| Skyline sampling (ray steps, 2° azimuth storage) | Up to 0.9° on one skyline; typically under 0.2° | Yearly sunlight share within **0.2 points**, Earth within **0.1 points** of a 4× finer computation on the same terrain (section 3). Before 21 Nov 2026 (no crest refinement) up to 2.8 points too sunny. |
+| Terrain resolution: 240 m / 1 km grids | Ridges and crests are smoothed by tens of metres | At crests, sunlight shares can be **10–20 points too high** (ridge: 74% at 240 m vs 64% at 20 m). Craters and flat ground change by under 1 point. This is the dominant error, which is why we use 20 m tiles near the main south-polar sites and the Artemis III regions. |
 | Terrain resolution: 20 m tiles | LOLA tracks are interpolated between shots; NASA's 5 m products quote 0.3–0.5 m RMS height error | Matters only within a few hundred metres of where the Sun or Earth grazes the skyline. |
 | Sun as a disk vs a point | The Sun is 0.53° wide | We count "Sun up" when any part of the disk is up (window summaries) or its centre (year maps). The two differ by a few points at grazing sites. NASA PGDA reports the visible fraction of the disk. |
 | Mast height | 2 m by default (settings) | Matters only at grazing sites, where a taller mast sees over nearby rises; change it in the spacecraft settings to test. |
@@ -35,7 +36,46 @@ How big each source of error is, and what it does to the answers.
 | Region centres | Artemis III regions are 20 × 20 km (Mons Mouton Plateau ~66 km) | A centre is one point. Lighting changes a lot within a region; test spots inside the outline. Example: the Malapert Massif centre sits on a ~4° slope, so with 20 m terrain it sees the Sun 22% of 2027, against 38% in NASA's 120 m map and 43% with our coarser grid, which both smooth the slope away. |
 | Flight model (patched conics) | Δv within ~0.05–0.1 km/s of Apollo 11; launch time within a few hours | Good for comparing routes and dates; not for navigation. The low-energy route is a typical transfer, not an optimised trajectory. |
 
-## 3. What this tool is not
+## 3. Horizon sampling convergence
+
+The skyline is found by marching rays outward over the LOLA grids. Steps start at
+half a grid cell and grow to 1.5% of the distance (1.5 km at 100 km), so far-off
+crests can fall between two samples. Since 21 Nov 2026 each ray re-samples the
+stretch either side of its highest sample at half the local grid cell
+(`RAY_REFINE` in `src/core/horizon.js`).
+
+We compared each setting with a much finer computation on the same terrain
+(skyline every 0.25°, steps 0.3% of the distance, refined) at the 19 sites south
+of 84° S, counting the Sun's and Earth's centre above the skyline every 2 hours
+through 2027 (numbers from 21 Nov 2026; `test/horizonSampling.spec.js` repeats the check for two sites on every test run):
+
+| Setting | Worst sunlight error | Mean | Worst Earth error | Worst skyline error | Time per site |
+|---|---|---|---|---|---|
+| Shipped before (0.5° rays stored every 2°, no refinement) | 2.79 points | 0.25 | 1.32 | 1.9° | 0.13 s |
+| 0.5°, steps 0.5% of distance, no refinement | 2.74 | 0.22 | 1.32 | 1.9° | 0.30 s |
+| 0.25°, no refinement | 2.76 | 0.24 | 1.32 | 1.9° | 0.25 s |
+| **Shipped now** (0.5° rays, refined, stored every 2°) | **0.18** | 0.02 | **0.09** | 0.86° | 0.13 s |
+| 0.5°, refined | 0.07 | 0.01 | 0.05 | 0.89° | 0.12 s |
+| 0.25°, refined | 0.02 | 0.00 | 0.05 | 0.04° | 0.22 s |
+
+Finer steps alone hardly help; refining around the crest does. A crest narrower than the ray step that no sample touches can still be missed; on real LOLA grids (which smooth features to at least two cells) the table above bounds the effect. Rays also no longer stop at the first stretch without data: they skip gaps of up to 30 km. The largest
+changes were at the Shackleton connecting ridge (66.4% → 63.6% with 20 m
+terrain), Best-lit #3 (51.0% → 49.8%) and, on the 240 m grid, Peak Near Cabeus B
+(43.8% → 35.5%): part of what looked like a 240 m-vs-20 m difference there was
+the ray steps. Craters and flat ground did not change.
+
+Not yet rebuilt with refinement (they need data only CI has, or a long run):
+the skylines of sites north of 80° S (built from the full-resolution LOLA map by
+*Build global terrain*), the year-long map layers, and the LROC shadow check.
+
+Each horizon result now carries a `quality` record (grid size at the site and
+farther out, largest ray step, azimuth spacing, refinement, method) and a tier:
+`fine` (20 m at the site), `standard` (240 m / 1 km / global grid), `coarse`
+(a 5 km grid used only before the detailed terrain has loaded) or `none` (smooth
+sphere: no terrain). Coarse and no-terrain results are flagged in the app and in
+exported reports.
+
+## 4. What this tool is not
 
 - Not mission-certified. Final site and date decisions use NASA's own analyses
   at 5 m or finer, with uncertainty maps.
@@ -44,7 +84,7 @@ How big each source of error is, and what it does to the answers.
 - Far-side sites have no direct Earth link; the tool reports that rather than
   modelling a relay.
 
-## 4. Data and references
+## 5. Data and references
 
 - LOLA terrain: NASA LRO LOLA (PDS); 20 m: Barker et al. 2023, LDEM_80S_20MPP_ADJ (NASA GSFC PGDA product 90).
 - Illumination reference: Mazarico et al. 2011, Icarus 211; PGDA AVGVISIB products.

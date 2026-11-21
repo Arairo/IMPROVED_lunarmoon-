@@ -13,6 +13,8 @@ import { icon } from './icons.js';
 import { scanToCsv } from '../core/exportCsv.js';
 import { addScenario } from '../ui/compare.js';
 import { groundSlope } from '../core/horizon.js';
+import { epochStatus } from '../core/ephemeris.js';
+import { terrainWarning, epochWarning } from '../ui/assessment.js';
 import { planFlight, ROUTES } from '../core/flight.js';
 
 const DAY = 86400000;
@@ -249,6 +251,8 @@ export function mountFlow({ app, setTime, switchMode, getBestSpots, actions }) {
       ${line('power', 'Power', `${sunTxt} Sunlight ${pct(s.litFraction)} of the window, longest night ${fmtHours(s.longestDarkH)}.`)}
       ${line('earth', 'Earth contact', `${earthTxt} Earth in view ${pct(s.earthCentreFraction)}, direct link ${pct(s.dteFraction)}.`)}
       ${slopeLine()}
+      ${terrainWarning(app.ctx?.horizon)}
+      ${epochWarning(app.windowStartMs)}
       <p class="f-note">Traffic lights use our own rules of thumb, not a NASA standard.</p>`;
   }
   function slopeLine() {
@@ -302,8 +306,8 @@ export function mountFlow({ app, setTime, switchMode, getBestSpots, actions }) {
     const r2 = (x) => (x == null ? null : Math.round(x * 1000) / 1000);
     return {
       tool: 'Lunar Site Planner', generatedUtc: new Date().toISOString(), link: location.href,
-      site: { name: app.site.name, latDeg: r2(app.site.lat), lonDeg: r2(app.site.lon), terrain: app.ctx?.horizon?.source || null },
-      touchdownUtc: new Date(app.windowStartMs).toISOString(), windowDays: app.windowDays,
+      site: { name: app.site.name, latDeg: r2(app.site.lat), lonDeg: r2(app.site.lon), terrain: app.ctx?.horizon?.source || null, terrainQuality: app.ctx?.horizon?.quality || null },
+      touchdownUtc: new Date(app.windowStartMs).toISOString(), windowDays: app.windowDays, ephemerisCheck: epochStatus(app.windowStartMs),
       verdictAtTouchdown: v ? { overall: LIGHT[v.overall][0], power: LIGHT[v.power][0], earthContact: LIGHT[v.earth][0], rules: 'Lunar Site Planner rules of thumb, not a NASA standard' } : null,
       window: {
         sunlightFraction: r2(s.litFraction), earthInViewFraction: r2(s.earthCentreFraction), sunAndEarthTogetherFraction: r2(ws.both),

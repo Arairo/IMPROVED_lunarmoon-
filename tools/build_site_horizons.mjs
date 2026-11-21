@@ -6,7 +6,9 @@
 //
 // 20 m tiles in public/data/hires/ (tools/build_hires_terrain.mjs) are used first
 // where present. --only-hires rebuilds just the sites that have a 20 m tile and
-// keeps every other site as it is.
+// keeps every other site as it is. --polar rebuilds just the sites at or south of
+// 80° S, whose skylines come entirely from the committed south-polar grids, so the
+// result doesn't depend on which whole-Moon grid is available.
 //
 // With an LDEM image the full-resolution map is used (best); without one it
 // falls back to public/data/global_dem.bin. Writes src/data/precomputedHorizons.{js,json}
@@ -33,6 +35,7 @@ function globalGrid(imgPath) {
 
 const args = process.argv.slice(2);
 const onlyHires = args.includes('--only-hires');
+const polarOnly = args.includes('--polar');
 const imgArg = args.find((a) => !a.startsWith('--'));
 const hiresIndex = path.join(dataDir, 'hires/index.json');
 const tiles = fs.existsSync(hiresIndex)
@@ -41,14 +44,18 @@ const tiles = fs.existsSync(hiresIndex)
 const hiresIds = new Set(tiles.map((t) => t.meta.name.replace(/^hires_/, '')));
 const sites = JSON.parse(fs.readFileSync(path.join(root, 'src/data/sites.json'), 'utf8'));
 const terrain = createTerrain([...tiles, grid('sp_fine'), grid('sp_coarse')], globalGrid(imgArg));
-const out = onlyHires ? JSON.parse(fs.readFileSync(path.join(root, 'src/data/precomputedHorizons.json'), 'utf8')) : {};
+const out = onlyHires || polarOnly ? JSON.parse(fs.readFileSync(path.join(root, 'src/data/precomputedHorizons.json'), 'utf8')) : {};
 for (const s of sites) {
   if (onlyHires && !hiresIds.has(s.id)) continue;
+  if (polarOnly && s.lat > -80) continue;
   const h = computeHorizon(terrain, s.lat, s.lon, { mastHeight: 2 });
+  const q = h.quality;
   out[s.id] = {
     groundHeight: Math.round(h.groundHeight),
     source: h.source,
     terrain: h.terrain,
+    // How it was sampled (see horizonQuality in src/core/horizon.js).
+    siteCellM: q.siteCellM, coarsestCellM: q.coarsestCellM, maxStepM: q.maxStepM, growth: q.growth, refine: q.refine,
     el180: Array.from({ length: 180 }, (_, k) => Math.round(h.elevations[k * 4] * 100) / 100),
   };
   const maxEl = Math.max(...out[s.id].el180);

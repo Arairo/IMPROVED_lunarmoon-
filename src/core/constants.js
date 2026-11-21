@@ -33,7 +33,7 @@ export const SITE_BADGES = {
   'a3-n2': { text: 'Artemis III', cls: 'bg-indigo-50 text-indigo-800 border-indigo-200' },
   'a3-g2': { text: 'Artemis III', cls: 'bg-indigo-50 text-indigo-800 border-indigo-200' },
   'a3-sp': { text: 'Artemis III', cls: 'bg-indigo-50 text-indigo-800 border-indigo-200' },
-  ridge: { text: '66% Sun / yr', cls: 'bg-amber-100 text-amber-900 border-amber-300' },
+  ridge: { text: '64% Sun / yr', cls: 'bg-amber-100 text-amber-900 border-amber-300' },
   'peak-shackleton': { text: 'High Massif', cls: 'bg-amber-100 text-amber-900 border-amber-300' },
   'best-0': { text: '#1 LOLA 2027', cls: 'bg-amber-100 text-amber-900 border-amber-300' },
   'best-1': { text: '#2 LOLA 2027', cls: 'bg-amber-100 text-amber-900 border-amber-300' },
