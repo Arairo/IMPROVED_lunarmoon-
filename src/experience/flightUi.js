@@ -31,6 +31,8 @@ export function mountFlight({ app, viewTabs, switchSubView, setTime }) {
   const btn = document.createElement('button');
   btn.type = 'button';
   btn.className = 'xp-viewtab';
+  btn.setAttribute('role', 'tab');
+  btn.setAttribute('aria-selected', 'false');
   btn.dataset.x = 'flight';
   btn.title = 'Plan and watch the flight from launch to touchdown';
   btn.innerHTML = `${icon('rocket', 14)} <span>Flight</span>`;
@@ -229,7 +231,7 @@ export function mountFlight({ app, viewTabs, switchSubView, setTime }) {
   window.addEventListener('lsp-view', (e) => {
     const on = e.detail === 'flight';
     btn.classList.toggle('is-on', on);
-    btn.setAttribute('aria-pressed', String(on));
+    btn.setAttribute('aria-selected', String(on));
     if (on) refresh().then(() => scene?.render());
     else stop();
   });

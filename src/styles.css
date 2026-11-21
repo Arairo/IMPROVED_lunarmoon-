@@ -194,3 +194,7 @@ html, body {
   pointer-events: none;
 }
 
+
+/* Text stays selectable so numbers and explanations can be copied; only the
+   surfaces you drag (3D views, maps, the timeline) and buttons opt out. */
+canvas, button, #globeViewport, #polarViewport, #flightViewport, .w-flybox { -webkit-user-select: none; user-select: none; }

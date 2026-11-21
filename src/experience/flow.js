@@ -118,7 +118,7 @@ export function mountFlow({ app, setTime, switchMode, getBestSpots, actions }) {
   });
 
   // 3 · Check: verdict at touchdown + the full assessment panel.
-  slot(2).innerHTML = '<div class="f-verdict" data-verdict></div><button type="button" class="f-flightlink" data-terrain>' + icon('mountain', 16) + '<span><b>See it up close</b><small>This site and date on 3D terrain with real shadows</small></span>' + icon('external', 13) + '</button><details class="f-more" open><summary>Full assessment</summary><div data-assess></div></details>';
+  slot(2).innerHTML = '<div class="f-verdict" data-verdict aria-live="polite"></div><button type="button" class="f-flightlink" data-terrain>' + icon('mountain', 16) + '<span><b>See it up close</b><small>This site and date on 3D terrain with real shadows</small></span>' + icon('external', 13) + '</button><details class="f-more" open><summary>Full assessment</summary><div data-assess></div></details>';
   const assess = document.getElementById('assessmentRoot');
   if (assess) slot(2).querySelector('[data-assess]').appendChild(assess);
   slot(2).querySelector('[data-terrain]').addEventListener('click', () => actions.terrain());

@@ -224,7 +224,14 @@ export function updateCurrentTime(recompute = false) {
     onOpenGlossary: (k) => openGlossary(k),
     onCollapseResults: () => toggleResultsPanel(true),
   });
-  drawTimeline(document.getElementById('timelineCanvas'), app.scan, app.timeMs, app.config);
+  const tl = document.getElementById('timelineCanvas');
+  drawTimeline(tl, app.scan, app.timeMs, app.config);
+  // Screen readers: where the scrubber is in the window, as a percentage and a date.
+  if (tl && app.scan) {
+    const f = (app.timeMs - app.scan.startMs) / Math.max(1, app.scan.endMs - app.scan.startMs);
+    tl.setAttribute('aria-valuenow', String(Math.round(Math.max(0, Math.min(1, f)) * 100)));
+    tl.setAttribute('aria-valuetext', `${new Date(app.timeMs).toISOString().slice(0, 16).replace('T', ' ')} UTC`);
+  }
   xp?.update();
 }
 
