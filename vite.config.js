@@ -1,5 +1,13 @@
 import { defineConfig } from 'vite';
 import cesium from 'vite-plugin-cesium';
+import { execSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
+
+// Build identity for reports: package version, git commit (GITHUB_SHA in CI), build time.
+const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8'));
+let commit = process.env.GITHUB_SHA || null;
+if (!commit) { try { commit = execSync('git rev-parse HEAD', { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim(); } catch { commit = null; } }
+const BUILD = { version: pkg.version, commit, builtAt: new Date().toISOString() };
 
 // vite-plugin-cesium adds the CesiumJS <script> and stylesheet to every page.
 // Only the expert planner uses CesiumJS, so keep the guided page light.
@@ -14,7 +22,10 @@ cesiumPlugin.transformIndexHtml = function (html, ctx) {
 export default defineConfig({
   base: process.env.BASE_PATH || '/',
   plugins: [cesiumPlugin],
-  server: { port: 5174, host: true },
+  define: { __LSP_BUILD__: JSON.stringify(BUILD) },
+  // Dev server listens on localhost only. To test on a phone over Wi-Fi, opt in
+  // with `npm run dev -- --host` (anyone on that network can then reach it).
+  server: { port: 5174 },
   preview: { port: 4174 },
   build: {
     chunkSizeWarningLimit: 800, // three.js on its own is ~750 kB (193 kB gzipped)

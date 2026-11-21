@@ -4,6 +4,7 @@
 // three routes and the lighting/radio checks at touchdown, and watch it fly.
 
 import { flightTimeline } from './flightPacing.js';
+import { hasWebGL, showNoWebGL, noScene } from '../ui/webgl.js';
 import { planFlight, compareRoutes, flightPath, phaseTimes, touchdownChecks, siteDirection, moonState, ROUTES, LAUNCH_SITES, LANDERS, R_E, R_M, FLOWN_FLIGHTS } from '../core/flight.js';
 import { evaluate } from '../core/analysis.js';
 import { icon } from './icons.js';
@@ -30,6 +31,8 @@ export function mountFlight({ app, viewTabs, switchSubView, setTime }) {
   const btn = document.createElement('button');
   btn.type = 'button';
   btn.className = 'xp-viewtab';
+  btn.setAttribute('role', 'tab');
+  btn.setAttribute('aria-selected', 'false');
   btn.dataset.x = 'flight';
   btn.title = 'Plan and watch the flight from launch to touchdown';
   btn.innerHTML = `${icon('rocket', 14)} <span>Flight</span>`;
@@ -86,8 +89,9 @@ export function mountFlight({ app, viewTabs, switchSubView, setTime }) {
     }
     if (tab === 'burns') {
       return `<table class="fl-table"><tr><th>Burn</th><th>Δv</th><th>Who</th></tr>
-        ${plan.burns.map((b) => `<tr><td>${esc(b.label)}<br><small>${when(b.t)} UTC</small></td><td>${kms(b.dv)}</td><td>${b.byLander ? 'Lander' : 'Rocket'}</td></tr>`).join('')}
+        ${plan.burns.map((b) => `<tr><td>${esc(b.label)}<br><small>${when(b.t)} UTC${b.basis && b.basis !== 'computed' ? ` · <span title="${esc(plan.model.burnBasis[b.basis] || '')}">${esc(b.basis)}</span>` : ''}</small></td><td>${kms(b.dv)}</td><td>${b.byLander ? 'Lander' : 'Rocket'}</td></tr>`).join('')}
         <tr class="fl-sum"><td>Lander total</td><td>${kms(plan.landerDv)}</td><td></td></tr></table>
+        <p class="fl-dim">Burns marked <i>assumed</i> are fixed allowances and <i>rule of thumb</i> is calibrated to Apollo 11; the rest come from orbital mechanics. All are preliminary planning estimates from a patched-conic model, not a navigation solution.</p>
         <p class="fl-dim">Fuel from the rocket equation: ${kg(plan.lander.dryKg)} dry, engine Isp ${plan.lander.isp} s, plus 5% reserve. Arrives at the Moon at ${kms(plan.vinf)} relative to it${plan.raKm ? `; the coast reaches ${Math.round(plan.raKm).toLocaleString('en-GB')} km from Earth at its farthest` : ''}.</p>
         <p class="fl-dim">Launch site: ${esc(plan.launchSite.short)} is at ${Math.abs(plan.launchGeom.latDeg).toFixed(1)}° ${plan.launchGeom.latDeg >= 0 ? 'N' : 'S'}; the Moon is at ${plan.launchGeom.moonDecDeg.toFixed(0)}° declination, so the parking orbit is tilted ${plan.launchGeom.inclDeg.toFixed(0)}° and Earth’s spin gives ${kms(plan.launchGeom.spinBoostKms)} for free. ${plan.route === 'phasing' ? '' : 'Lift-off is timed for when Earth’s rotation carries the pad under that orbit, which is why the launch time changes with the site (good to a few hours: Apollo 11’s comes out 2 h late).'}</p>`;
     }
@@ -191,6 +195,7 @@ export function mountFlight({ app, viewTabs, switchSubView, setTime }) {
   async function ensureScene() {
     if (scene) return;
     const { createFlightScene } = await import('../scene/flightScene.js');
+    if (!hasWebGL()) { showNoWebGL(pane, 'The flight view'); scene = noScene(); return; }
     scene = createFlightScene(pane.querySelector('.fl-canvas'), { onHint: () => pane.querySelector('[data-f="follow"]')?.classList.remove('is-on') });
   }
 
@@ -226,7 +231,7 @@ export function mountFlight({ app, viewTabs, switchSubView, setTime }) {
   window.addEventListener('lsp-view', (e) => {
     const on = e.detail === 'flight';
     btn.classList.toggle('is-on', on);
-    btn.setAttribute('aria-pressed', String(on));
+    btn.setAttribute('aria-selected', String(on));
     if (on) refresh().then(() => scene?.render());
     else stop();
   });

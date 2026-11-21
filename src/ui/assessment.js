@@ -1,6 +1,26 @@
 // Results / Assessment panel rendering site metrics, LOLA skyline, power, and DTE margin.
 import { clamp, deg, esc, fmtDuration, fmtHours, fmtLatLon, fmtUtc, pct } from './format.js';
 import { drawSkyPlot } from './skyplot.js';
+import { epochStatus } from '../core/ephemeris.js';
+
+/**
+ * A visible warning when the skyline under the result is approximate (5 km grid)
+ * or missing (smooth sphere), so such results are never shown with the same
+ * confidence as a LOLA terrain result. Empty for normal terrain.
+ */
+export function terrainWarning(horizon) {
+  const q = horizon?.quality;
+  if (!q || (q.tier !== 'coarse' && q.tier !== 'none')) return '';
+  const head = q.tier === 'none' ? 'No terrain here' : 'Approximate terrain';
+  return `<p class="lsp-terrain-warn mt-1 rounded border border-amber-300 bg-amber-50 px-2 py-1 text-[11px] text-amber-900" role="note"><b>⚠ ${head}.</b> ${esc(q.text)}</p>`;
+}
+
+/** A visible note when the date is outside the period the ephemeris has been checked over. */
+export function epochWarning(ms) {
+  const e = epochStatus(ms);
+  if (e.status !== 'unchecked') return '';
+  return `<p class="lsp-epoch-warn mt-1 rounded border border-amber-300 bg-amber-50 px-2 py-1 text-[11px] text-amber-900" role="note"><b>⚠ Unchecked date.</b> ${esc(e.note)}</p>`;
+}
 
 export function findNextTransition(arr, times, nowMs, scan) {
   if (!arr || !times || !scan) return null;
@@ -47,7 +67,9 @@ export function renderAssessmentPanel(container, app, callbacks = {}) {
       <div class="flex items-start justify-between gap-2">
         <div>
           <h2 class="text-base font-bold text-slate-900 leading-snug">${esc(app.site.name)}</h2>
-          <p class="mono text-[11px] text-slate-500">${fmtLatLon(app.site.lat, app.site.lon)} · ${esc(app.ctx.horizon.source)} (${app.ctx.groundHeight >= 0 ? '+' : '−'}${Math.abs(app.ctx.groundHeight)} m) ${glossBtn('lola')}</p>
+          <p class="mono text-[11px] text-slate-500">${fmtLatLon(app.site.lat, app.site.lon)} · <span title="${esc(app.ctx.horizon.quality?.text || '')}">${esc(app.ctx.horizon.source)}</span> (${app.ctx.groundHeight >= 0 ? '+' : '−'}${Math.abs(app.ctx.groundHeight)} m) ${glossBtn('lola')}</p>
+          ${terrainWarning(app.ctx.horizon)}
+          ${epochWarning(app.timeMs)}
         </div>
         <div class="flex items-center gap-1">
           <button type="button" id="toggleAllCardsBtn" class="px-2 py-0.5 rounded text-[10px] font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200" title="Fold or unfold all sections">
@@ -189,7 +211,7 @@ export function renderAssessmentPanel(container, app, callbacks = {}) {
           <div class="p-2 rounded-lg bg-slate-50 border border-slate-200">
             <span class="text-[11px] text-slate-500 block">Longest Night</span>
             <strong class="mono text-sm text-slate-900">${fmtHours(st.longestDarkH)}</strong>
-            <span class="text-[10px] text-slate-500 block">Battery: ${st.batteryKWh.toFixed(1)} kWh</span>
+            <span class="text-[10px] text-slate-500 block" title="Energy estimate to carry the load through the worst stretch, including charge and discharge losses. Not a battery design.">Battery (estimate): ${st.batteryKWh.toFixed(1)} kWh</span>
           </div>
           <div class="p-2 rounded-lg bg-slate-50 border border-slate-200">
             <span class="text-[11px] text-slate-500 block" title="Share of the window with Earth's centre above the terrain (needed for a direct link). Any part of Earth's disk: ${pct(st.earthVisibleFraction, 1)}">Earth in view</span>

@@ -111,7 +111,7 @@ function spinMoon(canvas, base) {
   earth.position.set(-1.45, -1.5, -1.2);
   earth.rotation.set(0.35, 0, 0.4);
   scene.add(earth);
-  new THREE.TextureLoader().load(`${base}data/earth_blue_marble_4k.jpg`, (et) => {
+  new THREE.TextureLoader().load(`${base}data/earth_blue_marble_2k.jpg`, (et) => {
     if ('colorSpace' in et) et.colorSpace = THREE.SRGBColorSpace;
     earthMat.map = et; earthMat.color.set(0xffffff); earthMat.needsUpdate = true;
   });

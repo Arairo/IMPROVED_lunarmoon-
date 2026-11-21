@@ -63,12 +63,14 @@ for (const s of sites) {
 }
 
 write('index.json', {
-  name: 'Lunar Site Planner public API', version: 1, base: BASE,
+  name: 'Lunar Site Planner public API', version: 1, schemaVersion: '1.1', base: BASE,
+  compatibility: 'Within v1 fields are only added, never renamed, removed or changed in meaning or units. null means not computed / not applicable. See docs/API.md.',
   about: 'Read-only, static, CORS-open. Same engine and NASA LOLA terrain as the app. Planning tool, not mission-certified.',
   endpoints: {
     sites: `${BASE}/sites.json`, sitesGeoJSON: `${BASE}/sites.geojson`, sitesKML: `${BASE}/sites.kml`,
     artemisRegionsGeoJSON: `${BASE}/artemis_regions.geojson`, artemisRegionsKML: `${BASE}/artemis_regions.kml`,
     daily: `${BASE}/daily/{siteId}-2027.json`, engine: `${BASE}/lsp-engine.js`, maps: `${BASE}/maps/index.json`,
+    datasets: `${BASE.replace(/api\/v1\/?$/, '')}data/manifest.json`,
   },
   docs: 'https://github.com/Arairo/IMPROVED_lunarmoon-/blob/main/docs/API.md',
   built: new Date().toISOString(),

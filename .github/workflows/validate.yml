@@ -14,15 +14,15 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
         with:
           node-version: 22
           cache: npm
       - run: npm ci
       - name: Compare with JPL Horizons
         run: node tools/validate-horizons.mjs --json validation.json | tee -a "$GITHUB_STEP_SUMMARY"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: horizons-validation
           path: validation.json
@@ -31,6 +31,7 @@ jobs:
           cp validation.json public/data/validation.json
           git config user.name "github-actions[bot]"
           git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
-          git add public/data/validation.json
+          node tools/build_manifest.mjs   # checksums of every data file (test/manifest.spec.js)
+          git add public/data/validation.json public/data/manifest.json
           git commit -m "Update JPL Horizons validation scoreboard" || echo "Nothing changed"
           git push

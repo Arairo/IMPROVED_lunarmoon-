@@ -1,5 +1,5 @@
 {
- "generated": "2026-11-19T12:34:36.085Z",
+ "generated": "2026-11-21T13:57:42.893Z",
  "product": "NAC_ROI_CABEUSPKLOB_P836S2912_20M",
  "url": "https://pds.lroc.im-ldi.com/data/LRO-L-LROC-5-RDR-V1.0/LROLRC_2001/DATA/BDR/NAC_ROI/CABEUSPKLOB/NAC_ROI_CABEUSPKLOB_P836S2912_20M.IMG",
  "images": [
@@ -20,28 +20,28 @@
  "areaKm": 16,
  "otsuThreshold": 9718.571968078613,
  "with20m": {
-  "n": 103569,
-  "agree": 96289,
-  "litLit": 46702,
-  "litDark": 7245,
+  "n": 103587,
+  "agree": 96544,
+  "litLit": 46701,
+  "litDark": 7008,
   "darkLit": 35,
-  "darkDark": 49587,
+  "darkDark": 49843,
   "skippedPhoto": 53149,
-  "skippedPred": 3282,
-  "agreement": 93,
-  "kappa": 0.86
+  "skippedPred": 3264,
+  "agreement": 93.2,
+  "kappa": 0.865
  },
  "with240m": {
-  "n": 103668,
-  "agree": 90889,
-  "litLit": 46748,
-  "litDark": 12779,
+  "n": 103596,
+  "agree": 91765,
+  "litLit": 46742,
+  "litDark": 11831,
   "darkLit": 0,
-  "darkDark": 44141,
+  "darkDark": 45023,
   "skippedPhoto": 53149,
-  "skippedPred": 3183,
-  "agreement": 87.7,
-  "kappa": 0.757
+  "skippedPred": 3255,
+  "agreement": 88.6,
+  "kappa": 0.774
  },
  "legend": {
   "yellow": "lit in both",

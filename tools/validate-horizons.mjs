@@ -12,7 +12,7 @@
 import fs from 'node:fs';
 import { prepareSite, evaluate, DEFAULT_CONFIG } from '../src/core/analysis.js';
 
-const SITES = [
+export const SITES = [
   { name: 'Shackleton connecting ridge', lat: -89.45, lon: -137.31 },
   { name: 'Ridge high point near Shackleton', lat: -88.81, lon: 123.6 },
   { name: 'IM-2 Athena (Mons Mouton)', lat: -84.8, lon: 29.2 },
@@ -21,8 +21,15 @@ const SITES = [
   { name: 'Apollo 17', lat: 20.18809, lon: 30.77475 },
   { name: 'Reiner Gamma', lat: 7.5, lon: -59.0 },
   { name: "Chang'e 4 (far side)", lat: -45.4446, lon: 177.5991 },
+  // Added 21 Nov 2026 to widen the check: north pole, far-side equator, western limb.
+  { name: 'Peary crater rim (north pole)', lat: 88.6, lon: 33.0 },
+  { name: 'Daedalus (far side)', lat: -5.9, lon: 179.4 },
+  { name: 'Mare Orientale (western limb)', lat: -19.4, lon: -92.8 },
 ];
-const TIMES = ['2026-11-16T22:00:00Z', '2027-06-01T06:00:00Z', '2028-03-15T12:00:00Z'];
+// The first three are the original scoreboard. Added 21 Nov 2026: Apollo 11's
+// touchdown time, a UTC year boundary, a leap day, and a date past the checked period.
+export const TIMES = ['2026-11-16T22:00:00Z', '2027-06-01T06:00:00Z', '2028-03-15T12:00:00Z',
+  '1969-07-20T20:17:40Z', '2026-12-31T23:59:30Z', '2028-02-29T12:00:00Z', '2030-01-01T00:00:00Z'];
 const BODIES = [{ key: 'sun', command: '10' }, { key: 'earth', command: '399' }];
 
 const jd = (ms) => ms / 86400000 + 2440587.5;

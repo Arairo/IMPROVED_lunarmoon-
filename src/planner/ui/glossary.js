@@ -1,3 +1,4 @@
+import { DEFAULT_COMMS_CONFIG } from '../../core/comms.js';
 // Short definitions for technical terms, shown in native popovers next to the
 // term ("?" buttons). One popover element per term is created on first use.
 
@@ -20,7 +21,7 @@ export const GLOSSARY = {
   },
   dsn: {
     title: 'Deep Space Network (DSN)',
-    text: 'NASA’s three large antenna complexes at Goldstone (USA), Madrid (Spain) and Canberra (Australia), about 120° apart in longitude. Here a complex counts as available when the Moon is at least 10° above its horizon.',
+    text: `NASA’s three large antenna complexes at Goldstone (USA), Madrid (Spain) and Canberra (Australia), about 120° apart in longitude. Here a complex counts as able to see the Moon when it is at least ${DEFAULT_COMMS_CONFIG.dsnMinElDeg}° above its horizon (a setting). That is geometry only: real DSN time has to be booked.`,
   },
   margin: {
     title: 'Link margin',

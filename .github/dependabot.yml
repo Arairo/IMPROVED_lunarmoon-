@@ -1,0 +1,29 @@
+# Weekly dependency checks. Dependabot opens pull requests; nothing is merged
+# automatically. Review each one (changelog, breaking changes), let CI run the
+# tests and build, and check the app in a browser before merging.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    groups:
+      # Patch/minor updates of dev tooling arrive as one PR.
+      dev-tooling:
+        dependency-type: development
+        update-types: [minor, patch]
+    # CesiumJS is pinned on purpose (with overrides in package.json); update it by hand.
+    ignore:
+      - dependency-name: cesium
+      - dependency-name: "@cesium/*"
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      actions:
+        patterns: ["*"]

@@ -11,6 +11,15 @@ import { MOON_RADIUS_M, RAD, destination, sphereHorizonDip, toSouthPolar } from 
 import { getGlobalDem } from './globalDem.js';
 
 export const AZ_STEP_DEG = 0.5;
+/** Ray step = max(half the local grid cell, this fraction of the distance). */
+export const RAY_GROWTH = 0.015;
+/**
+ * Re-sample finely around the highest point found along each ray. Without it the
+ * growing steps can step over the crest that forms the skyline: on the 19 south-polar
+ * sites the yearly sunlight share was up to 2.8 points too high (see docs/VALIDATION.md,
+ * "Horizon sampling convergence"). Costs about 10% more time.
+ */
+export const RAY_REFINE = true;
 export const AZ_COUNT = Math.round(360 / AZ_STEP_DEG);
 export const precomputedHorizons = precomputedData;
 
@@ -109,28 +118,58 @@ export async function loadTerrain(baseUrl, names = ['sp_fine', 'sp_coarse']) {
  * Highest terrain elevation angle (deg) seen from (lat, lon) looking along one
  * azimuth, and its distance (m). -90 when nothing is found.
  */
-export function rayHorizon(terrain, lat, lon, az, { ground = terrain.heightAt(lat, lon), mastHeight = 2, maxDistM = 300000 } = {}) {
+export function rayHorizon(terrain, lat, lon, az, { ground = terrain.heightAt(lat, lon), mastHeight = 2, maxDistM = 300000, growth = RAY_GROWTH, refine = RAY_REFINE, stats = null } = {}) {
   if (!ground) return { el: -90, dist: 0 };
   const r0 = MOON_RADIUS_M + ground.height + mastHeight;
   const minStep = ground.cell / 2;
   let best = -90;
   let bestDist = 0;
-  let s = Math.max(60, ground.cell * 0.75);
-  while (s < maxDistM) {
+  let bestCell = ground.cell;
+  let prevS = 0, bestPrevS = 0, bestNextS = 0;
+  const elAt = (s) => {
     const p = destination(lat, lon, az, s);
     const h = terrain.heightAt(p.lat, p.lon);
-    if (h) {
-      const theta = s / MOON_RADIUS_M;
-      const r1 = MOON_RADIUS_M + h.height;
-      const el = Math.atan2(r1 * Math.cos(theta) - r0, r1 * Math.sin(theta)) * RAD;
-      if (el > best) { best = el; bestDist = s; }
-    } else if (s > 20000) break; // walked off the grids
-    s += Math.max(minStep, s * 0.015);
+    if (!h) return null;
+    if (stats) { stats.samples++; if (h.cell > stats.coarsestCellM) stats.coarsestCellM = h.cell; if (h.cell < stats.finestCellM) stats.finestCellM = h.cell; }
+    const theta = s / MOON_RADIUS_M;
+    const r1 = MOON_RADIUS_M + h.height;
+    return { el: Math.atan2(r1 * Math.cos(theta) - r0, r1 * Math.sin(theta)) * RAD, cell: h.cell };
+  };
+  let s = Math.max(60, ground.cell * 0.75);
+  let gapStart = -1;
+  while (s < maxDistM) {
+    const r = elAt(s);
+    if (r) {
+      gapStart = -1;
+      if (bestNextS === 0 && bestDist > 0 && s > bestDist) bestNextS = s;
+      if (r.el > best) { best = r.el; bestDist = s; bestCell = r.cell; bestPrevS = prevS; bestNextS = 0; }
+    } else {
+      // No grid has data here. Skip short gaps; after 30 km of nothing we have
+      // walked off the grids, so stop.
+      if (gapStart < 0) gapStart = s;
+      else if (s - gapStart > 30000) break;
+    }
+    prevS = s;
+    const step = Math.max(minStep, s * growth);
+    if (stats && step > stats.maxStepM) stats.maxStepM = step;
+    s += step;
+  }
+  // The steps grow with distance (1.5% of it by default), so the true top of the
+  // ridge that forms the horizon can fall between two samples. Re-sample the
+  // stretch either side of the highest sample at half the local grid cell.
+  if (refine && bestDist > 0) {
+    // The crest lies between the samples either side of the best one.
+    const a = bestPrevS || Math.max(0, bestDist - 2 * bestCell), b = Math.min(bestNextS || bestDist + 2 * bestCell, maxDistM);
+    const d = Math.max(bestCell / 2, (b - a) / 200);
+    for (let x = a + d; x < b; x += d) {
+      const r = elAt(x);
+      if (r && r.el > best) { best = r.el; bestDist = x; }
+    }
   }
   return { el: best, dist: bestDist };
 }
 
-export function computeHorizon(terrain, lat, lon, { mastHeight = 2, maxDistM = 300000, azStepDeg = AZ_STEP_DEG } = {}) {
+export function computeHorizon(terrain, lat, lon, { mastHeight = 2, maxDistM = 300000, azStepDeg = AZ_STEP_DEG, growth = RAY_GROWTH, refine = RAY_REFINE } = {}) {
   const count = Math.round(360 / azStepDeg);
   const elevations = new Float32Array(count);
   const distances = new Float32Array(count);
@@ -139,10 +178,11 @@ export function computeHorizon(terrain, lat, lon, { mastHeight = 2, maxDistM = 3
   if (!ground) {
     elevations.fill(dip);
     distances.fill(Math.sqrt(2 * MOON_RADIUS_M * mastHeight));
-    return { elevations, distances, groundHeight: 0, mastHeight, source: 'smooth sphere (no terrain data)', terrain: false };
+    return { elevations, distances, groundHeight: 0, mastHeight, source: 'smooth sphere (no terrain data)', terrain: false, quality: horizonQuality({ method: 'sphere' }) };
   }
+  const stats = { samples: 0, maxStepM: 0, finestCellM: Infinity, coarsestCellM: 0 };
   for (let i = 0; i < count; i++) {
-    const r = rayHorizon(terrain, lat, lon, i * azStepDeg, { ground, mastHeight, maxDistM });
+    const r = rayHorizon(terrain, lat, lon, i * azStepDeg, { ground, mastHeight, maxDistM, growth, refine, stats });
     elevations[i] = r.el > -90 ? r.el : dip;
     distances[i] = r.dist;
   }
@@ -153,6 +193,39 @@ export function computeHorizon(terrain, lat, lon, { mastHeight = 2, maxDistM = 3
     mastHeight,
     source: terrain.coverageLabel(lat, lon),
     terrain: true,
+    quality: horizonQuality({ method: 'rays', siteCellM: ground.cell, azStepDeg, growth, refine, maxDistM, ...stats }),
+  };
+}
+
+/**
+ * What a horizon was computed from, so results can say how much to trust it.
+ * tier: 'fine' (≤ 20 m at the site), 'standard' (LOLA polar/global grid ray-cast),
+ * 'coarse' (5 km compact grid, used only before the full terrain has loaded),
+ * 'none' (smooth sphere: no terrain at all).
+ */
+export function horizonQuality({ method, siteCellM = null, azStepDeg = null, growth = null, refine = false, maxDistM = null, maxStepM = null, finestCellM = null, coarsestCellM = null, samples = null, note = null }) {
+  let tier, text;
+  if (method === 'sphere') {
+    tier = 'none';
+    text = 'No terrain data here: the horizon is a smooth sphere, so hills and craters that block the Sun or Earth are missing.';
+  } else if (method === 'compact') {
+    tier = 'coarse';
+    text = 'Approximate horizon from a 5 km grid, used until the detailed terrain has loaded. Shadows from smaller hills are missing.';
+  } else {
+    tier = siteCellM != null && siteCellM <= 20 ? 'fine' : 'standard';
+    const cell = (m) => (m == null ? '?' : m >= 1000 ? `${+(m / 1000).toFixed(1)} km` : `${Math.round(m)} m`);
+    text = `LOLA terrain, ${cell(siteCellM)} at the site; farther away the grid is ${cell(coarsestCellM)} and ray steps grow to ${cell(maxStepM)}. Skyline sampled every ${azStepDeg}° of azimuth.`;
+  }
+  return {
+    tier,
+    method,
+    text: note ? `${text} ${note}` : text,
+    siteCellM, azStepDeg, growth, refine, maxDistM,
+    maxStepM: maxStepM == null ? null : Math.round(maxStepM),
+    finestCellM: Number.isFinite(finestCellM) ? finestCellM : null,
+    coarsestCellM: coarsestCellM || null,
+    samples,
+    interpolation: method === 'sphere' ? null : 'bilinear heights; skyline linear between azimuth samples',
   };
 }
 
@@ -183,32 +256,37 @@ export function computeSiteHorizon(site, mastHeight = 2) {
   const mastDelta = (mastHeight - 2) * 0.012;
   if (pre) {
     const el180 = pre.el180.map((v) => v - mastDelta);
+    // Older entries don't record their sampling; recover the site cell from the label.
+    const m = /([\d.]+)\s*(km|m)\b/.exec(pre.source || '');
+    const siteCellM = pre.siteCellM ?? (m ? Number(m[1]) * (m[2] === 'km' ? 1000 : 1) : null);
     return {
       el180,
       groundHeight: pre.groundHeight,
       mastHeight,
       source: pre.source,
       terrain: pre.terrain,
+      quality: horizonQuality({ method: pre.terrain ? 'rays' : 'sphere', siteCellM, azStepDeg: 2, growth: pre.growth ?? RAY_GROWTH, refine: !!pre.refine, maxDistM: 300000, maxStepM: pre.maxStepM ?? null, coarsestCellM: pre.coarsestCellM ?? null, note: pre.refine ? null : 'Built before ridge-crest refinement: sunlight may read slightly high.' }),
     };
   }
   if (!pre && sharedTerrain && sharedTerrain.heightAt(site.lat, site.lon)) {
     const full = computeHorizon(sharedTerrain, site.lat, site.lon, { mastHeight, azStepDeg: 2 });
-    return { el180: Array.from(full.elevations), groundHeight: Math.round(full.groundHeight), mastHeight, source: full.source, terrain: true };
+    return { el180: Array.from(full.elevations), groundHeight: Math.round(full.groundHeight), mastHeight, source: full.source, terrain: true, quality: full.quality };
   }
   const h0 = sampleDemHeight(site.lat, site.lon);
   const dip = sphereHorizonDip(mastHeight);
   if (h0 == null && getGlobalDem()) {
     // Outside the polar grid: ray-cast over the whole-Moon LOLA grid.
     const full = computeHorizon(createTerrain([], getGlobalDem()), site.lat, site.lon, { mastHeight, maxDistM: 200000 });
-    return { el180: Array.from({ length: 180 }, (_, k) => full.elevations[k * 4]), groundHeight: Math.round(full.groundHeight), mastHeight, source: full.source, terrain: true };
+    return { el180: Array.from({ length: 180 }, (_, k) => full.elevations[k * 4]), groundHeight: Math.round(full.groundHeight), mastHeight, source: full.source, terrain: true, quality: { ...full.quality, azStepDeg: 2 } };
   }
   if (h0 == null) {
     return {
       el180: new Array(180).fill(dip),
       groundHeight: 0,
       mastHeight,
-      source: 'smooth sphere (outside polar DEM)',
+      source: 'smooth sphere (no terrain loaded here yet)',
       terrain: false,
+      quality: horizonQuality({ method: 'sphere' }),
     };
   }
   const r0 = MOON_RADIUS_M + h0 + mastHeight;
@@ -232,8 +310,9 @@ export function computeSiteHorizon(site, mastHeight = 2) {
     el180,
     groundHeight: Math.round(h0),
     mastHeight,
-    source: 'LOLA south-polar grid',
+    source: 'approximate: LOLA 5 km south-polar grid',
     terrain: true,
+    quality: horizonQuality({ method: 'compact', siteCellM: 5000, azStepDeg: 2, maxDistM: 180000, maxStepM: 4500, coarsestCellM: 5000 }),
   };
 }
 

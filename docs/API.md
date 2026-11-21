@@ -22,6 +22,26 @@ from a 2 m mast; "Earth up" means Earth's centre is. See the app's
 *Accuracy, data and sources* panel and [VALIDATION.md](VALIDATION.md) for how
 far the numbers can be trusted. It is a planning tool, not mission-certified.
 
+## Versions, units and missing values
+
+- **`api/v1`** is the major version. Within v1, fields are only ever **added**; nothing
+  is renamed, removed or changes meaning or units. A breaking change gets a new
+  `api/v2/` path, with v1 kept for at least six months and migration notes here.
+- `index.json` carries `schemaVersion` (`1.1` since 21 Nov 2026: adds `datasets`).
+- Units are in the field names or in each file's `units` field: shares are 0–1,
+  angles in degrees, energy in watt-hours, times in UTC (ISO 8601).
+- `null` means "not computed or not applicable" (for example no 20 m terrain at a
+  site); it never means zero.
+- Coordinates: planetocentric latitude, east-positive longitude, heights above the
+  1737.4 km sphere. See [FRAMES.md](FRAMES.md).
+- Every data file the site serves, with its SHA-256, source and generating script,
+  is listed in `../../data/manifest.json` (linked from `index.json` as `datasets`).
+  Check a download with `sha256sum`.
+- Numbers come from the engine of the release that built the site. The engine
+  changed on 21 Nov 2026 (skyline crest refinement): south-polar sunlight shares
+  can be up to ~3 points lower than before at crests. See
+  [VALIDATION.md](VALIDATION.md) section 3.
+
 ## Python
 
 ```python

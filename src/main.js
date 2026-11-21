@@ -7,6 +7,7 @@ import { prepareSite, scanWindow, evaluate } from './core/analysis.js';
 import { DEFAULT_COMMS_CONFIG } from './core/comms.js';
 import { esc, fmtLatLon, fmtUtc } from './ui/format.js';
 import { createGlobeRenderer } from './scene/globeRenderer.js';
+import { hasWebGL, showNoWebGL } from './ui/webgl.js';
 import { createPolarMapRenderer, ramp } from './ui/polarMap.js';
 import { drawTimeline } from './ui/timeline.js';
 import { loadGlobalDem, setGlobalDem } from './core/globalDem.js';
@@ -179,6 +180,9 @@ export function selectSite(site, fly = false) {
   if (!site) return;
   app.site = site;
   xp?.busy();
+  // A custom point needs the full terrain grids for its skyline; until they arrive it
+  // uses the 5 km grid, is flagged "approximate", and is recomputed when they land.
+  if (String(site.id || '').startsWith('custom')) ensureTerrain();
   app.ctx = prepareSite(site, null, app.config);
   app.scan = scanWindow(app.ctx, app.windowStartMs, app.windowDays, app.config);
   const heading = document.getElementById('timelineHeading');
@@ -220,7 +224,14 @@ export function updateCurrentTime(recompute = false) {
     onOpenGlossary: (k) => openGlossary(k),
     onCollapseResults: () => toggleResultsPanel(true),
   });
-  drawTimeline(document.getElementById('timelineCanvas'), app.scan, app.timeMs, app.config);
+  const tl = document.getElementById('timelineCanvas');
+  drawTimeline(tl, app.scan, app.timeMs, app.config);
+  // Screen readers: where the scrubber is in the window, as a percentage and a date.
+  if (tl && app.scan) {
+    const f = (app.timeMs - app.scan.startMs) / Math.max(1, app.scan.endMs - app.scan.startMs);
+    tl.setAttribute('aria-valuenow', String(Math.round(Math.max(0, Math.min(1, f)) * 100)));
+    tl.setAttribute('aria-valuetext', `${new Date(app.timeMs).toISOString().slice(0, 16).replace('T', ' ')} UTC`);
+  }
   xp?.update();
 }
 
@@ -357,6 +368,8 @@ function boot() {
     };
     selectSite(custom, false);
   }, { onHint: (t) => xpApi.setHint(t) });
+  // No WebGL: say so on the 3D view and open the 2D South-Pole Map instead.
+  if (!hasWebGL()) { showNoWebGL(document.getElementById('globeViewport'), 'The 3D Moon'); setTimeout(() => switchSubView('polar'), 0); }
 
   polar = createPolarMapRenderer(document.getElementById('polarCanvas'), (pick) => {
     if (pick.site) return selectSite(pick.site, true);
@@ -587,7 +600,9 @@ function boot() {
     app.config.mastHeightM = clamp(Number(f.mastHeightM.value) || 2, 0.5, 50);
     app.config.comms.preset = f.preset.value;
     app.config.comms.dataRateBps = Math.max(1, Number(f.dataRateKbps.value) || 256) * 1000;
-    app.config.comms.minClearanceDeg = clamp(Number(f.minClearanceDeg.value) || 2, 0, 15);
+    // 0 is a valid clearance, so don't fall back with `|| 2`.
+    const clr = Number(f.minClearanceDeg.value);
+    app.config.comms.minClearanceDeg = clamp(f.minClearanceDeg.value !== '' && Number.isFinite(clr) ? clr : 2, 0, 15);
     document.getElementById('settingsModal')?.classList.add('hidden');
     selectSite(app.site, false);
     showToast('Updated spacecraft assumptions');
@@ -698,18 +713,34 @@ function boot() {
   window.addEventListener('lsp-theme', () => updateCurrentTime(false));
   if (shared?.t) { app.timeMs = app.windowStartMs = shared.t; }
   selectSite(shared?.site || app.sites.find((s) => s.id === 'ridge') || app.sites[0], true);
-  // Whole-Moon LOLA terrain for points outside the polar grids (custom pins,
-  // nudges): loaded quietly after first paint; re-checks the current custom site.
-  setTimeout(async () => {
-    const base = `${import.meta.env.BASE_URL}data`;
-    const [polar, g] = await Promise.all([loadTerrain(base).catch(() => null), loadGlobalDem(base)]);
-    if (g) setGlobalDem(g);
-    if (polar) { polar.global = g; setSharedTerrain(polar); }
-    if (String(app.site?.id || '').startsWith('custom')) selectSite(app.site, false);
-    window.dispatchEvent(new Event('lsp-terrain'));
-    if (app.site) loadHiresFor(app.site);
-  }, 1200);
+  // Full terrain grids (240 m / 1 km south pole + whole-Moon LOLA, ~14.5 MB) are
+  // only needed for custom points, nudges and the slope / landing-area checks:
+  // listed sites use precomputed skylines. So they load in Professional mode
+  // shortly after first paint, or when a custom point is chosen anywhere,
+  // but not on the intro page or for Beginner's listed sites.
+  const startIfPro = () => { if (document.body.dataset.mode === 'pro') setTimeout(ensureTerrain, 1200); };
+  startIfPro();
+  new MutationObserver(startIfPro).observe(document.body, { attributes: true, attributeFilter: ['data-mode'] });
 }
+
+let terrainPromise = null;
+/** Load the full terrain grids once; resolves when they are in use. */
+function ensureTerrain() {
+  if (!terrainPromise) {
+    terrainPromise = (async () => {
+      const base = `${import.meta.env.BASE_URL}data`;
+      const [polar, g] = await Promise.all([loadTerrain(base).catch(() => null), loadGlobalDem(base).catch(() => null)]);
+      if (g) setGlobalDem(g);
+      if (polar) { polar.global = g; setSharedTerrain(polar); }
+      if (String(app.site?.id || '').startsWith('custom')) selectSite(app.site, false);
+      window.dispatchEvent(new Event('lsp-terrain'));
+      if (app.site) loadHiresFor(app.site);
+      return !!(polar || g);
+    })();
+  }
+  return terrainPromise;
+}
+app.ensureTerrain = ensureTerrain;
 
 if (document.readyState === 'loading') {
   window.addEventListener('DOMContentLoaded', boot);

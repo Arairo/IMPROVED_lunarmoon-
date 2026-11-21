@@ -15,6 +15,7 @@ import { createCalendar } from './calendar.js';
 import { icon } from './icons.js';
 import { planFlight, flightPath, phaseTimes, siteDirection, ROUTES } from '../core/flight.js';
 import { flightTimeline } from './flightPacing.js';
+import { hasWebGL, showNoWebGL, noScene } from '../ui/webgl.js';
 import { evaluate } from '../core/analysis.js';
 import { moonFixedState } from '../core/ephemeris.js';
 const moonThumbs = () => import('../scene/moonThumb.js');
@@ -246,6 +247,11 @@ export function createWalk({ app, sites, onOpenPro, onToggleTheme, onToggleSound
     st.site = site;
     st.scan = null; st.flight = null; st.landed = false;
     nextBtn.disabled = !st.site;
+    // A spot of your own needs the full terrain for its skyline: wait for it.
+    if (String(site?.id || '').startsWith('custom') && app.ensureTerrain) {
+      nextBtn.disabled = true;
+      app.ensureTerrain().finally(() => { if (st.site === site) nextBtn.disabled = false; });
+    }
   }
 
   // ------------------------------------------------------------------ chapters
@@ -657,9 +663,11 @@ export function createWalk({ app, sites, onOpenPro, onToggleTheme, onToggleSound
     const big = scene.querySelector('.w-count-big');
     const { createFlightScene } = await import('../scene/flightScene.js');
     if (!canvas.isConnected) return;
+    const gl = hasWebGL();
+    if (!gl) showNoWebGL(canvas.parentElement, 'The flight');
     flyScene?.dispose?.();
     const recentre = scene.querySelector('[data-a="recentre"]');
-    flyScene = createFlightScene(canvas, { onHint: (h) => { if (h === 'follow-off') recentre.hidden = false; } });
+    flyScene = !gl ? noScene() : createFlightScene(canvas, { onHint: (h) => { if (h === 'follow-off') recentre.hidden = false; } });
     recentre.addEventListener('click', () => { flyScene.setFollow(true); recentre.hidden = true; });
     const plan = planFlight(st.startMs, { route: st.route });
     plan.site = { lat: st.site.lat, lon: st.site.lon, name: st.site.short || st.site.name };
@@ -837,7 +845,13 @@ export function createWalk({ app, sites, onOpenPro, onToggleTheme, onToggleSound
   }
 
   return {
-    open() { if (!scene.childElementCount) go(restore()); },
+    open() {
+      if (scene.childElementCount) return;
+      const step = restore();
+      // A saved spot of your own: load the full terrain before computing its skyline.
+      if (step > 1 && String(st.site?.id || '').startsWith('custom') && app.ensureTerrain) app.ensureTerrain().finally(() => go(step));
+      else go(step);
+    },
     restart() { try { localStorage.removeItem(SAVE_KEY); } catch {} Object.assign(st, { visited: 0, site: null, guess: null, landed: false, flight: null, scan: null }); go(0); },
     root,
   };

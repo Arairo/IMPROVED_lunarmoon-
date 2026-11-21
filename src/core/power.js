@@ -29,13 +29,64 @@ export const PANEL_MODES = {
   },
 };
 
+// Example lander, not a specific spacecraft. Every value is an assumption the user
+// can change in the spacecraft settings, and every report includes them.
 export const DEFAULT_POWER_CONFIG = {
   mode: 'vertical_tracking',
   areaM2: 2.0,
-  efficiency: 0.29, // triple-junction GaAs at beginning of life
+  efficiency: 0.29, // triple-junction GaAs cells at beginning of life (~28-30%); no temperature or ageing loss
   fixedAzDeg: 0,
-  loadW: 120, // continuous survival + ops load used to size the battery
+  loadW: 120, // continuous survival + ops load used to size the battery (one load for every mission phase)
+  // Battery: energy in and out each lose this share (typical lithium-ion, ~90% round trip).
+  chargeEff: 0.95,
+  dischargeEff: 0.95,
+  // Optional: a battery of this usable size (Wh) is simulated (state of charge, empty spells).
+  batteryWh: null,
+  reserveFrac: 0.2, // keep this share of the battery in reserve when simulating one
 };
+
+/**
+ * Battery state of charge through a power series (W at a fixed step).
+ * Charging stores (P - load) x chargeEff; discharging draws (load - P) / dischargeEff.
+ * Capacity, charge/discharge power limits and a reserve are respected: the battery
+ * never goes below 0 or above its capacity. With capacityWh = Infinity it returns
+ * the battery size that would be needed (deepest drawdown, starting full).
+ * A planning estimate, not a battery design: no temperature, ageing or voltage limits.
+ */
+export function simulateBattery(watts, stepH, { loadW, capacityWh = Infinity, initialFrac = 1, reserveFrac = 0, chargeEff = 0.95, dischargeEff = 0.95, maxChargeW = Infinity, maxDischargeW = Infinity }) {
+  if (!(stepH > 0) || !(loadW >= 0)) throw new RangeError('simulateBattery: stepH must be > 0 and loadW >= 0');
+  if (!(chargeEff > 0 && chargeEff <= 1 && dischargeEff > 0 && dischargeEff <= 1)) throw new RangeError('simulateBattery: efficiencies must be in (0, 1]');
+  const finite = Number.isFinite(capacityWh);
+  let soc = finite ? capacityWh * initialFrac : 0; // infinite: track drawdown from a running peak
+  let peak = soc, needWh = 0, minSoc = soc, unmetWh = 0, spilledWh = 0, belowReserveH = 0, emptyH = 0;
+  const socWh = new Float32Array(watts.length);
+  const reserveWh = finite ? capacityWh * reserveFrac : 0;
+  for (let i = 0; i < watts.length; i++) {
+    const net = watts[i] - loadW;
+    if (net >= 0) {
+      const inW = Math.min(net, maxChargeW) * chargeEff;
+      const room = finite ? capacityWh - soc : Infinity;
+      const stored = Math.min(inW * stepH, room);
+      soc += stored;
+      spilledWh += net * stepH - stored / chargeEff;
+    } else {
+      const wantW = -net;
+      const fromBattW = Math.min(wantW, maxDischargeW);
+      const drawWh = (fromBattW / dischargeEff) * stepH;
+      const avail = finite ? soc : Infinity;
+      const drawn = Math.min(drawWh, avail);
+      soc -= drawn;
+      unmetWh += (wantW - fromBattW) * stepH + (drawWh - drawn) * dischargeEff;
+    }
+    if (!finite) { if (soc > peak) peak = soc; needWh = Math.max(needWh, peak - soc); }
+    else { if (soc < reserveWh - 1e-9) belowReserveH += stepH; if (soc <= 1e-9) emptyH += stepH; }
+    minSoc = Math.min(minSoc, soc);
+    socWh[i] = soc;
+  }
+  return finite
+    ? { capacityWh, socWh, minSocFrac: minSoc / capacityWh, unmetWh, spilledWh, hoursBelowReserve: belowReserveH, hoursEmpty: emptyH }
+    : { neededWh: needWh, spilledWh: 0 };
+}
 
 export function sunAngularRadiusDeg(distM) {
   return Math.asin(SUN_RADIUS_M / distM) * RAD;

@@ -9,12 +9,14 @@ const COLUMNS = [
   ['link_margin_db', 'margin', 2], ['direct_to_earth_link', 'dte', 0],
 ];
 
-export function scanToCsv(scan, { site, config } = {}) {
+export function scanToCsv(scan, { site, config, provenance = [] } = {}) {
   const s = scan.series;
   const head = [
     `# Lunar Site Planner time series${site ? ` for ${site.name} (${site.lat.toFixed(5)}, ${site.lon.toFixed(5)})` : ''}`,
     `# Step ${Math.round(scan.stepMs / 60000)} min. Angles in degrees from the local horizontal at a ${config?.mastHeightM ?? 2} m mast; azimuth clockwise from north.`,
     '# Terrain: NASA LRO LOLA. Ephemeris: astronomy-engine (IAU lunar rotation), checked against JPL Horizons. link_margin_db is -99 when Earth is hidden.',
+    '# Times are UTC. direct_to_earth_link = Earth in line of sight, a DSN complex sees the Moon, and the link budget closes on paper (not a DSN booking).',
+    ...provenance.map((l) => `# ${String(l).replace(/[\r\n]+/g, ' ')}`),
     COLUMNS.map((c) => c[0]).join(','),
   ];
   const rows = [];
