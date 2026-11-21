@@ -107,6 +107,8 @@ npm ci
 npm run dev      # http://localhost:5174 (this computer only; add -- --host to test on a phone)
 npm test         # unit, JPL Horizons and flown-mission tests
 npm run build    # production build into dist/
+npx vite preview --port 4174 & npm run test:smoke   # core journeys in a real browser (needs Playwright)
+node tools/build_manifest.mjs   # after changing any file in public/data (checksums)
 ```
 
 GitHub Actions (Actions tab):

@@ -17,6 +17,7 @@ import { epochStatus } from '../core/ephemeris.js';
 import { terrainWarning, epochWarning } from '../ui/assessment.js';
 import { planFlight, ROUTES } from '../core/flight.js';
 import { linkAssumptions } from '../core/comms.js';
+import { BUILD, loadManifest, datasetProvenance } from '../core/buildInfo.js';
 
 const DAY = 86400000;
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
@@ -173,7 +174,18 @@ export function mountFlow({ app, setTime, switchMode, getBestSpots, actions }) {
     play('go');
   };
   s5.querySelector('[data-r="json"]').addEventListener('click', () => saveFile(JSON.stringify(decisionSummary(), null, 2), 'application/json', 'json'));
-  s5.querySelector('[data-r="csv"]').addEventListener('click', () => { if (app.scan) saveFile(scanToCsv(app.scan, { site: app.site, config: app.config }), 'text/csv', 'csv'); });
+  loadManifest(import.meta.env?.BASE_URL ?? '/');
+  s5.querySelector('[data-r="csv"]').addEventListener('click', () => {
+    if (!app.scan) return;
+    const q = app.ctx?.horizon?.quality;
+    const provenance = [
+      `Generated ${new Date().toISOString()} by Lunar Site Planner ${BUILD.version}${BUILD.commit ? ` (commit ${BUILD.commit.slice(0, 12)})` : ''}.`,
+      `Skyline: ${app.ctx?.horizon?.source || 'unknown'}${q ? ` [${q.tier}] ${q.text}` : ''}`,
+      `Spacecraft settings: ${JSON.stringify(app.config)}`,
+      'Data files and SHA-256 checksums: data/manifest.json',
+    ];
+    saveFile(scanToCsv(app.scan, { site: app.site, config: app.config, provenance }), 'text/csv', 'csv');
+  });
   s5.querySelector('[data-r="terrain"]').addEventListener('click', () => actions.terrain());
   s5.querySelector('[data-r="lumi"]').addEventListener('click', () => actions.lumi());
 
@@ -307,6 +319,16 @@ export function mountFlow({ app, setTime, switchMode, getBestSpots, actions }) {
     const r2 = (x) => (x == null ? null : Math.round(x * 1000) / 1000);
     return {
       tool: 'Lunar Site Planner', generatedUtc: new Date().toISOString(), link: location.href,
+      reportVersion: 2,
+      build: BUILD,
+      method: {
+        timeScale: 'UTC (astronomy-engine converts to TT internally)',
+        frames: 'Moon body-fixed (IAU rotation model), planetocentric latitude, east-positive longitude, heights above the 1737.4 km sphere; see docs/FRAMES.md',
+        scanStepMinutes: app.scan ? Math.round(app.scan.stepMs / 60000) : null,
+        energySum: 'rectangle sums at the scan step',
+        mastHeightM: app.config.mastHeightM,
+      },
+      datasets: datasetProvenance(),
       site: { name: app.site.name, latDeg: r2(app.site.lat), lonDeg: r2(app.site.lon), terrain: app.ctx?.horizon?.source || null, terrainQuality: app.ctx?.horizon?.quality || null },
       touchdownUtc: new Date(app.windowStartMs).toISOString(), windowDays: app.windowDays, ephemerisCheck: epochStatus(app.windowStartMs),
       verdictAtTouchdown: v ? { overall: LIGHT[v.overall][0], power: LIGHT[v.power][0], earthContact: LIGHT[v.earth][0], rules: 'Lunar Site Planner rules of thumb, not a NASA standard' } : null,

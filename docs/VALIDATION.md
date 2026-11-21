@@ -15,7 +15,7 @@ is automated, so you can re-run it with the tests or a GitHub workflow.
 | Year-long Earth-in-view map | NASA PGDA Earth visibility, 120 m | **r = 0.975**, mean difference 4.7 points | same |
 | Sunlight at the Shackleton connecting ridge | NASA PGDA | Ours **64%** (63.6%) of 2027 with 20 m terrain vs PGDA **68%** (74% with our 240 m grid). Until 21 Nov 2026 this read 66% / 79%: the skyline ray-caster could step over the crest that hides the Sun (section 3). PGDA's figure is a multi-year average of the visible *fraction of the disk*; ours is the disk *centre* in 2027, which reads lower at a site where the Sun grazes the skyline | same; site rows recomputed with `tools/refresh_pgda_site_shares.mjs` |
 | 20 m terrain tiles | Our 240 m LOLA grid (1 km beyond it) | Mean height difference **2.0–3.6 m** at every tile | same |
-| Real shadows | LROC NAC controlled mosaic of the Peak Near Cabeus B Artemis III region, 8 images on 18 Sep 2017 | **93%** of 103,569 40 m cells agree (Cohen's κ **0.86**) with 20 m terrain; 88% (κ 0.76) with the 240 m grid. Almost every miss is a cell we call lit that is dark in the photo, along shadow edges: our shadows run slightly short. Split by kind (20 m): of the cells the photo shows **dark**, we call **12.7% lit** (7,245 of 56,832); of the cells it shows **lit**, we call **0.07% dark** (35 of 46,737). With 240 m: 22.5% and 0%. So the tool errs towards too much sunlight, never towards too little. *Measured before the ridge-crest refinement (21 Nov 2026); to be re-run* | *Check shadows against an LROC photo* workflow |
+| Real shadows | LROC NAC controlled mosaic of the Peak Near Cabeus B Artemis III region, 8 images on 18 Sep 2017 | **93.2%** of 103,587 40 m cells agree (Cohen's κ **0.865**) with 20 m terrain; 88.6% (κ 0.774) with the 240 m grid (re-run 21 Nov 2026 after the ridge-crest refinement; before it: 93.0% / κ 0.86 and 87.7% / κ 0.76). Almost every miss is a cell we call lit that is dark in the photo, along shadow edges: our shadows run slightly short. Split by kind (20 m): of the cells the photo shows **dark**, we call **12.3% lit** (7,008 of 56,851); of the cells it shows **lit**, we call **0.07% dark** (35 of 46,736). With 240 m: 20.8% and 0%. So the tool errs towards too much sunlight, never towards too little. | *Check shadows against an LROC photo* workflow |
 | Flight burns | Apollo 11 | Leaving Earth orbit 3.16 vs 3.18 km/s; lunar orbit insertion 0.93 vs 0.94; descent 2.01 vs 2.06 | `npm test` (test/flight.spec.js) |
 | Flight timelines | Apollo 11, IM-1, Chandrayaan-3, Blue Ghost M1, SLIM | Launch-to-landing time within a factor 0.55–1.6 of flown for the matching route | `npm test` |
 | Launch time from the pad | Apollo 11 from Kennedy | Ours 15:40 UTC vs flown 13:32 UTC (2.1 h late; tested to under 3 h) | `npm test` |
@@ -68,9 +68,11 @@ terrain), Best-lit #3 (51.0% → 49.8%) and, on the 240 m grid, Peak Near Cabeus
 (43.8% → 35.5%): part of what looked like a 240 m-vs-20 m difference there was
 the ray steps. Craters and flat ground did not change.
 
-Not yet rebuilt with refinement (they need data only CI has, or a long run):
-the skylines of sites north of 80° S (built from the full-resolution LOLA map by
-*Build global terrain*), the year-long map layers, and the LROC shadow check.
+The LROC shadow check was re-run with refinement: agreement rose at both
+resolutions and false "lit" cells fell (section 1). Not yet rebuilt with
+refinement (they need data only CI has, or a long run): the skylines of sites
+north of 80° S (built from the full-resolution LOLA map by *Build global
+terrain*), the year-long map layers and the 1 km south-pole map.
 
 Each horizon result now carries a `quality` record (grid size at the site and
 farther out, largest ray step, azimuth spacing, refinement, method) and a tier:

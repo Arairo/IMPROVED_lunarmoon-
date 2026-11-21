@@ -42,15 +42,15 @@ with 240 m terrain to 64% with 20 m terrain, against 68% from [2] (which counts 
 partly visible Sun): terrain resolution, not ephemeris, dominates the error budget. Against an LROC NAC
 controlled mosaic of the Peak Near Cabeus B region (eight images, 18 September
 2017) [5], predicted lit and shadowed terrain agrees with the photo in
-93% of 103,569 comparable 40 m cells (Cohen's κ = 0.86) with 20 m terrain,
-versus 88% (κ = 0.76) with 240 m terrain. Nearly all disagreements are cells we
+93% of 103,587 comparable 40 m cells (Cohen's κ = 0.87) with 20 m terrain,
+versus 89% (κ = 0.77) with 240 m terrain. Nearly all disagreements are cells we
 predict lit that the photo shows dark, along shadow edges: our shadows are
 slightly too short, as expected from terrain that is partly interpolated.
 <!-- TO CHECK BEFORE SUBMITTING (21 Nov 2026): the horizon engine now refines ray
 samples around skyline crests, which changed the ridge numbers above (was 79% / 66%).
-The LROC numbers (93%, κ 0.86; 88%, κ 0.76) and the map correlations were measured
-before that change: re-run the "Check shadows against an LROC photo" and PGDA
-workflows and update them here. See docs/VALIDATION.md section 3. --> For flight, Apollo 11's trans-lunar injection, lunar orbit
+The LROC numbers above were re-run with it (93.2%, κ 0.865; 88.6%, κ 0.774). The
+PGDA map correlations (r = 0.92 / 0.975) were measured before it: re-run the
+PGDA workflow and update them here. See docs/VALIDATION.md section 3. --> For flight, Apollo 11's trans-lunar injection, lunar orbit
 insertion and descent are reproduced to within 0.05 km/s.
 
 **Results:** [Table: for each of the nine Artemis III region centres over 2027,

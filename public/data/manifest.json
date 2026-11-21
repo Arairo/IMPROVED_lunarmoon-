@@ -1,0 +1,535 @@
+{
+ "manifestVersion": 1,
+ "description": "Every data file the app and API serve, with SHA-256 checksums. Verify a download with: sha256sum <file>.",
+ "datasets": [
+  {
+   "id": "lola-sp-240m",
+   "title": "LOLA south-polar terrain, 240 m",
+   "files": [
+    {
+     "path": "data/sp_fine.json",
+     "bytes": 461,
+     "sha256": "3147f2220daa18367000876e7d0829962443b8683c450ade51d2344015566926"
+    },
+    {
+     "path": "data/sp_fine.bin",
+     "bytes": 4500000,
+     "sha256": "a4a643f3e26340c87cc11fc57b548fecc338299517dc897f46ca73c1b7f21504"
+    }
+   ],
+   "provider": "NASA LRO LOLA",
+   "source": "LRO LOLA RDR via USGS Astrogeology ARD (s3://astrogeo-ard/moon/lro/lola/)",
+   "resolutionM": 240,
+   "coverage": "±180 km around the south pole",
+   "frame": "south-polar stereographic on the 1737.4 km sphere, metres",
+   "units": "int16 little-endian, heights in metres above the 1737.4 km LOLA reference sphere",
+   "noData": -32768,
+   "generator": "tools/build_polar_dem.py (Build global terrain workflow)",
+   "licence": "NASA data: no US copyright (public domain); credit the source",
+   "limitations": "Interpolated between LOLA tracks; crests smoothed by tens of metres."
+  },
+  {
+   "id": "lola-sp-1km",
+   "title": "LOLA south-polar terrain, 1 km",
+   "files": [
+    {
+     "path": "data/sp_coarse.json",
+     "bytes": 463,
+     "sha256": "2a5ce18bf375785e738144913fbdebd6785c292183c123f9eec86d27da7436f2"
+    },
+    {
+     "path": "data/sp_coarse.bin",
+     "bytes": 1692800,
+     "sha256": "e7c72c131e694725a8d952c65166ef8da7d5d2c72af87bc01f96d759ed4f481d"
+    }
+   ],
+   "provider": "NASA LRO LOLA",
+   "source": "LRO LOLA RDR via USGS Astrogeology ARD (s3://astrogeo-ard/moon/lro/lola/)",
+   "resolutionM": 1000,
+   "coverage": "±460 km around the south pole (to about 75° S)",
+   "frame": "south-polar stereographic on the 1737.4 km sphere, metres",
+   "units": "int16 little-endian, heights in metres above the 1737.4 km LOLA reference sphere",
+   "noData": -32768,
+   "generator": "tools/build_polar_dem.py",
+   "licence": "NASA data: no US copyright (public domain); credit the source",
+   "limitations": "Used beyond the 240 m grid only."
+  },
+  {
+   "id": "lola-global-ldem16",
+   "title": "LOLA whole-Moon terrain",
+   "files": [
+    {
+     "path": "data/global_dem.json",
+     "bytes": 475,
+     "sha256": "e3094d62ae913e405aea8ebddf213a14d67a8fbb9e9120f46e6ca42d5fb76105"
+    },
+    {
+     "path": "data/global_dem.bin",
+     "bytes": 8294400,
+     "sha256": "931aef9e37d542db76304242d74f91f29921c9607af961a85eab1ef6ab77d5a3"
+    }
+   ],
+   "provider": "NASA LRO LOLA",
+   "source": "NASA LRO LOLA global elevation map LDEM_16 (PDS Geosciences Node), block-averaged to 8 px/deg",
+   "resolutionM": 3790,
+   "coverage": "whole Moon",
+   "frame": "equirectangular, 8 pixels per degree, east-positive longitude",
+   "units": "int16 little-endian, heights in metres above the 1737.4 km LOLA reference sphere",
+   "generator": "tools/build_global_dem.mjs",
+   "licence": "NASA data: no US copyright (public domain); credit the source",
+   "limitations": "Block-averaged; site skylines north of 80° S are built from the full LDEM_16 (1.9 km) in CI instead."
+  },
+  {
+   "id": "lola-pgda-20m-tiles",
+   "title": "LOLA 20 m tiles around south-polar sites",
+   "files": [
+    {
+     "path": "data/hires/index.json",
+     "bytes": 3326,
+     "sha256": "163ef15f29e601130cb7e3e722445495e9cb9438549bc4a893b82722ecdd211f"
+    },
+    {
+     "path": "data/hires/a3-cb.json",
+     "bytes": 629,
+     "sha256": "274f8c0274584a1ec33bb7597263619c13fb30ce20bd091713e6b1a78a285db7"
+    },
+    {
+     "path": "data/hires/a3-cb.bin",
+     "bytes": 1280000,
+     "sha256": "1613b1a2225043db5550d81f1f97fcc69842adfdaf82f4f10f5deb8e131f742d"
+    },
+    {
+     "path": "data/hires/a3-hw.json",
+     "bytes": 630,
+     "sha256": "42363cddeb4f49e9734df0e0d4af2ade20801cebd921e1a2080ce79a6f21f4a2"
+    },
+    {
+     "path": "data/hires/a3-hw.bin",
+     "bytes": 1280000,
+     "sha256": "8f665f5a0f713d87013bf753041bd8a7f3eb3fa49b35358f2a250053fd99d9ba"
+    },
+    {
+     "path": "data/hires/a3-ma.json",
+     "bytes": 629,
+     "sha256": "6b112fc602345000403959398a29b3625ed07eaa7b44c7553addcc4ca122e57d"
+    },
+    {
+     "path": "data/hires/a3-ma.bin",
+     "bytes": 1280000,
+     "sha256": "801c9330cd5fcadeedfddd702f6f3ad7fb0f0ff519e6fa96b80cf59f4a8e4e3b"
+    },
+    {
+     "path": "data/hires/a3-mp.json",
+     "bytes": 631,
+     "sha256": "8b3657d644894a66850e93bd4e2e7584b32acbb86dad9691597cc2f05d4bec86"
+    },
+    {
+     "path": "data/hires/a3-mp.bin",
+     "bytes": 1280000,
+     "sha256": "4ea5b1d47d60beae499a75d3026501423d21c3d5e68e2646fe5851c5133d83db"
+    },
+    {
+     "path": "data/hires/a3-mm.json",
+     "bytes": 630,
+     "sha256": "ac8b961f013587e7093b00fc69f1a5cc7d91b5b9dc1986506ec093789206cf78"
+    },
+    {
+     "path": "data/hires/a3-mm.bin",
+     "bytes": 1280000,
+     "sha256": "0e0cf98592e31ab075c5962186dcbc6a0974a779abe1ed0009f886e5dc043b70"
+    },
+    {
+     "path": "data/hires/a3-n1.json",
+     "bytes": 630,
+     "sha256": "8b58252398df89b235468104093b051b1b816f3cb87f7bc52e84eb74a292e6f6"
+    },
+    {
+     "path": "data/hires/a3-n1.bin",
+     "bytes": 1280000,
+     "sha256": "0c6dfe556c63be8fd0bd342cb6733358283b64827de4640ef93940b1854aad90"
+    },
+    {
+     "path": "data/hires/a3-n2.json",
+     "bytes": 630,
+     "sha256": "0bc9d42b56007b0bd348c694232b87a0fb1eb41b52eed3767af18d5dbf097338"
+    },
+    {
+     "path": "data/hires/a3-n2.bin",
+     "bytes": 1280000,
+     "sha256": "4d1d2b1af56a6700995c33c7084a20ee708131d82466bfea1693ee816366eea4"
+    },
+    {
+     "path": "data/hires/a3-g2.json",
+     "bytes": 630,
+     "sha256": "a121aa37cb6c3cc71a90c19084352c2f12c21e5473271d76a2e57d02c8eec0d6"
+    },
+    {
+     "path": "data/hires/a3-g2.bin",
+     "bytes": 1280000,
+     "sha256": "32a7955bec9b75942130307b4ae1c84da058d2139a180c2a9df866527d6214cf"
+    },
+    {
+     "path": "data/hires/ridge.json",
+     "bytes": 631,
+     "sha256": "21b1dfd65acfea61580af2e43a58715e86ce1bc66f74b5af1ebead34d45c9806"
+    },
+    {
+     "path": "data/hires/ridge.bin",
+     "bytes": 1280000,
+     "sha256": "4b48c788cb9f255fb07270040544f6862845fa84b1adc0588dc0f45ae3183c14"
+    },
+    {
+     "path": "data/hires/peak-shackleton.json",
+     "bytes": 640,
+     "sha256": "b5b84bdef34ba709ba50980e347b0448d816d165cfb778b9f930d00a5f1b96af"
+    },
+    {
+     "path": "data/hires/peak-shackleton.bin",
+     "bytes": 1280000,
+     "sha256": "2c8a6711f13cfd9bd749884b04f0de593537a78a78606b08599550df0a1b1e5c"
+    },
+    {
+     "path": "data/hires/shackleton.json",
+     "bytes": 634,
+     "sha256": "9c1b5c5fbf69d19193afb39f7d1e537f0893c0ce1aa76470a952c71a9f81727a"
+    },
+    {
+     "path": "data/hires/shackleton.bin",
+     "bytes": 1280000,
+     "sha256": "e3a6879f43902dd2206c85db0d0c7a4884ed6dbd2b17dcb4762c5b489c42b4a5"
+    },
+    {
+     "path": "data/hires/best-1.json",
+     "bytes": 629,
+     "sha256": "8afffcea4323c1613c41fd494103de6b7268c2305d66de314ef48f2a8a128dc2"
+    },
+    {
+     "path": "data/hires/best-1.bin",
+     "bytes": 1280000,
+     "sha256": "01db4a2842c541b94510989fe705564e9ea4bdbe29fd26c6047a34a24acb0899"
+    },
+    {
+     "path": "data/hires/best-2.json",
+     "bytes": 630,
+     "sha256": "b48b42c9ae653b8929bbf19a1eb4da68a2fbf9dfa1c7a17cfee9630b860859a3"
+    },
+    {
+     "path": "data/hires/best-2.bin",
+     "bytes": 1280000,
+     "sha256": "1131cb9f8789b1ceb1dcee6968f686e4595198e487aa08bf9c360bf79894efa2"
+    },
+    {
+     "path": "data/hires/degerlache.json",
+     "bytes": 635,
+     "sha256": "8481a8a5a39303999d8cc872c4fb3091e4bc9b086922598ea2e3a25d87a078cb"
+    },
+    {
+     "path": "data/hires/degerlache.bin",
+     "bytes": 1280000,
+     "sha256": "108c47415b4c1192d9be5635f11dc48d8ac6e2fccaf60a76bdec60ca6233accf"
+    },
+    {
+     "path": "data/hires/shoemaker.json",
+     "bytes": 631,
+     "sha256": "803fab3fc1dd0b95779a3096e9a3b9debd134803d46784c84d605873dcd34343"
+    },
+    {
+     "path": "data/hires/shoemaker.bin",
+     "bytes": 1280000,
+     "sha256": "c35028fab81f516a81b634ab5b7013a59f8239b2a4b2801fa001a78230d51e80"
+    },
+    {
+     "path": "data/hires/haworth.json",
+     "bytes": 632,
+     "sha256": "5571b677ab9e268a97a524ad6a5a0210b7f5c01eab3de0580a46a43517cbdcd9"
+    },
+    {
+     "path": "data/hires/haworth.bin",
+     "bytes": 1280000,
+     "sha256": "7edd2819aca33315a61cf0aaac4fc0ab05d62677c6488a205bfc17445f50db8d"
+    },
+    {
+     "path": "data/hires/faustini.json",
+     "bytes": 632,
+     "sha256": "8ba167ce908b8a87e0ad20a1e7bad46bbc9dc971d031592c99daa7b1694ad795"
+    },
+    {
+     "path": "data/hires/faustini.bin",
+     "bytes": 1280000,
+     "sha256": "a1da33b6ff20a1e079770f0f33fe8d5709f1020c7fb82825cd11fb1f57ecacf9"
+    },
+    {
+     "path": "data/hires/nobile.json",
+     "bytes": 631,
+     "sha256": "0d7d0a1e979a4780c9bdab747509b6e046cb451b03083f1f212962431626e14d"
+    },
+    {
+     "path": "data/hires/nobile.bin",
+     "bytes": 1280000,
+     "sha256": "c3d037fd1e9a81d9a0aa6637f7d726101dc573a7926a5228b3571ba30b2da737"
+    },
+    {
+     "path": "data/hires/lcross.json",
+     "bytes": 632,
+     "sha256": "7a09fdc6e0b11de243c5de2bd46dc7372ee668b4b8b650d5f93126f929ca7380"
+    },
+    {
+     "path": "data/hires/lcross.bin",
+     "bytes": 1280000,
+     "sha256": "11377ca21813794ab58c3ed4ec5a3d7a363f774bde4d46ebb47e8468605ebac8"
+    },
+    {
+     "path": "data/hires/im1.json",
+     "bytes": 631,
+     "sha256": "7826f181dacbafa06ee2277077d434a20ed3290316568f0e6c2e43fa62cfbc85"
+    },
+    {
+     "path": "data/hires/im1.bin",
+     "bytes": 1280000,
+     "sha256": "40af33751488bde861a9444b4b0c2c2aa77adab54d0a37914b1d1c8c2aaebe03"
+    },
+    {
+     "path": "data/hires/im2.json",
+     "bytes": 629,
+     "sha256": "0a5d9ef856cb9f8438edd30ed40153d6158719ac25eff99c3d94d89e416feed0"
+    },
+    {
+     "path": "data/hires/im2.bin",
+     "bytes": 1280000,
+     "sha256": "c57537b9049322c4e37c0dce78cbadc3235b5786cbb7202c70f53cc2da63de79"
+    }
+   ],
+   "provider": "NASA GSFC PGDA",
+   "source": "NASA GSFC PGDA LDEM_80S_20MPP_ADJ (Barker et al. 2023) (https://pgda.gsfc.nasa.gov/products/90)",
+   "resolutionM": 20,
+   "coverage": "21 tiles of 16 × 16 km",
+   "frame": "south-polar stereographic on the 1737.4 km sphere, metres",
+   "units": "int16 little-endian, heights in metres above the 1737.4 km LOLA reference sphere",
+   "noData": -32768,
+   "generator": "tools/build_hires_terrain.mjs (Add 20 m terrain and check against NASA PGDA workflow)",
+   "licence": "NASA data: no US copyright (public domain); credit the source",
+   "limitations": "Each tile checked against the 240 m grid: mean height difference 2–19.6 m; tiles failing a 60 m check are rejected (Slater Plain has none)."
+  },
+  {
+   "id": "compact-south-pole",
+   "title": "Compact south-polar terrain and lighting (5 km / 2 km)",
+   "files": [
+    {
+     "path": "data/compactDem.json",
+     "bytes": 80011,
+     "sha256": "746ec030fa1cf5300273f88f842aee8d711fa42b59284c70369fd90a8c7917b5"
+    },
+    {
+     "path": "data/compactIllum.json",
+     "bytes": 37312,
+     "sha256": "c5fb89ea01255eb1334353ade11b947b6656364711adc6bbcf6cac7e6fbd9a1b"
+    }
+   ],
+   "provider": "this project",
+   "source": "derived from the LOLA south-polar grids",
+   "resolutionM": 5000,
+   "coverage": "south pole",
+   "frame": "south-polar stereographic on the 1737.4 km sphere, metres",
+   "units": "heights in metres; lighting shares × 1000",
+   "generator": "build scripts in tools/",
+   "licence": "MIT (this project), derived from NASA data",
+   "limitations": "Used only before the detailed terrain loads; results from it are labelled \"approximate\"."
+  },
+  {
+   "id": "site-skylines",
+   "title": "Precomputed site skylines",
+   "files": [
+    {
+     "path": "data/precomputedHorizons.json",
+     "bytes": 40593,
+     "sha256": "8da271ebfd6a470a44dddd11e1345d9ca2bb31b556142c98686ffdf9fdd6ebad"
+    }
+   ],
+   "provider": "this project",
+   "source": "ray-cast over the LOLA grids above (2 m mast, skyline every 2°)",
+   "resolutionM": null,
+   "coverage": "every listed site",
+   "frame": "azimuth clockwise from north, elevation in degrees",
+   "units": "degrees",
+   "generator": "tools/build_site_horizons.mjs",
+   "licence": "MIT (this project), derived from NASA data",
+   "limitations": "See docs/VALIDATION.md section 3 for sampling convergence."
+  },
+  {
+   "id": "map-layers-2027",
+   "title": "Sunlight and Earth-visibility map layers, 2027",
+   "files": [
+    {
+     "path": "data/layers.json",
+     "bytes": 1069,
+     "sha256": "d05718483bf8d8f4edb03af24c14cf270274df4894f827f51880ad568df52691"
+    },
+    {
+     "path": "data/layers.bin",
+     "bytes": 397536,
+     "sha256": "895a6328ac0e9042a57b7aa3a989ffb113be3cf762ababbfdd56b4064c0e1f58"
+    },
+    {
+     "path": "data/layer_skylines.json",
+     "bytes": 404,
+     "sha256": "9f1612ebf87f7bf279089db4057b820a950bda78470b8bb69931d97ce40f6553"
+    },
+    {
+     "path": "data/layer_skylines.bin",
+     "bytes": 4770432,
+     "sha256": "30d1d98b6c0060f2857be0172352f15c1227a26cf8dfcba9efab694caffac89e"
+    }
+   ],
+   "provider": "this project",
+   "source": "NASA LRO LOLA: 240 m / 1 km south-polar grids and the LDEM_16-based global grid (8 px/deg)",
+   "resolutionM": 5000,
+   "coverage": "whole Moon (1°) and both polar caps (5 km)",
+   "frame": "see layers.json",
+   "units": "uint8 = percent × 2; skylines int8 × 0.25°",
+   "generator": "tools/build_map_layers.mjs",
+   "licence": "MIT (this project), derived from NASA data",
+   "limitations": "Skyline in 72 directions; built before ridge-crest refinement (21 Nov 2026)."
+  },
+  {
+   "id": "sunlight-map-1km-2027",
+   "title": "South-pole sunlight and Earth-visibility map, 1 km, 2027",
+   "files": [
+    {
+     "path": "data/sp_illum_2027.json",
+     "bytes": 251362,
+     "sha256": "a31c5da738228c079c7d36ed90cc2dd36ad774026bdb366c36f04595a8248ca7"
+    }
+   ],
+   "provider": "this project",
+   "source": "Average solar-disk visibility and Earth visibility from LOLA terrain, 2027, 3-hour sampling, 2 m mast",
+   "resolutionM": 1000,
+   "coverage": "±75 km around the south pole",
+   "frame": "south-polar stereographic on the 1737.4 km sphere, metres",
+   "units": "shares × 1000",
+   "generator": "tools/illumination_map.mjs",
+   "licence": "MIT (this project), derived from NASA data",
+   "limitations": "Built before ridge-crest refinement (21 Nov 2026); drives the best-spot search and the Beginner sunlight map."
+  },
+  {
+   "id": "artemis-iii-regions",
+   "title": "Artemis III candidate landing regions",
+   "files": [
+    {
+     "path": "data/artemis_regions.geojson",
+     "bytes": 3417,
+     "sha256": "967b111e9f1f551c78c69bc205e01ea4ce618d1276b5faf553c070b9ab295e4e"
+    }
+   ],
+   "provider": "USGS",
+   "source": "McClernan 2024, USGS data release doi:10.5066/P1MEQ6UK (from LROC QuickMap)",
+   "resolutionM": null,
+   "coverage": "9 regions",
+   "frame": "GeoJSON longitude/latitude, degrees",
+   "units": "degrees",
+   "generator": "Artemis III regions workflow",
+   "licence": "USGS data: public domain",
+   "limitations": "Outlines as released in Oct 2024."
+  },
+  {
+   "id": "validation-results",
+   "title": "Validation results",
+   "files": [
+    {
+     "path": "data/validation.json",
+     "bytes": 41131,
+     "sha256": "ea4d7e4715e447804414d76cb08b8cf37f2c2f179cabc3125e16be0fe8a4c302"
+    },
+    {
+     "path": "data/pgda_check.json",
+     "bytes": 6579,
+     "sha256": "e0dbda326b8fb108d57819639b783049a4861428cbee89229f90b665342167e3"
+    },
+    {
+     "path": "data/lroc_check.json",
+     "bytes": 1815,
+     "sha256": "cb558700f8c0eb336450be5fa882ca9dc11793ab5b6dd4e797a79903eba8b45b"
+    },
+    {
+     "path": "data/lroc_check.png",
+     "bytes": 171893,
+     "sha256": "3669d72dc31b4e68180a7092a89092d69229d896135abd3d91ffd598f853b57e"
+    }
+   ],
+   "provider": "this project",
+   "source": "NASA JPL Horizons; NASA GSFC PGDA illumination maps; LROC NAC controlled mosaic",
+   "resolutionM": null,
+   "coverage": "see docs/VALIDATION.md",
+   "frame": "—",
+   "units": "—",
+   "generator": "tools/validate-horizons.mjs, tools/build_hires_terrain.mjs, tools/refresh_pgda_site_shares.mjs, tools/lroc_shadow_check.mjs",
+   "licence": "MIT (this project), derived from NASA data",
+   "limitations": "Each file records when it was generated."
+  },
+  {
+   "id": "imagery",
+   "title": "Moon and Earth imagery (display only)",
+   "files": [
+    {
+     "path": "data/moonGlobal.jpg",
+     "bytes": 136400,
+     "sha256": "df514eccdb5fad6fc0ec81c0e37c40cafc410d7d2065568fea23fa76d672880e"
+    },
+    {
+     "path": "data/moon_wac_global_4k.jpg",
+     "bytes": 2595770,
+     "sha256": "5ff47cd44f2922486127fb8944dd1e3aececec9150a33a08779813fee1c84923"
+    },
+    {
+     "path": "data/spPolar.jpg",
+     "bytes": 165293,
+     "sha256": "f4acb71f754380815c54490999500dfa7715654e231b9597be0fb46aa4a2ef20"
+    },
+    {
+     "path": "data/sp_wac_450m.jpg",
+     "bytes": 1121163,
+     "sha256": "8c1717c0033ed65aa7f65d5c39b95faf70c60fbc9a0ff55e551e7963994075fd"
+    },
+    {
+     "path": "data/sp_wac_geo.jpg",
+     "bytes": 995127,
+     "sha256": "dcce3298060e6def7b7e2b65731f2287efac6ba63fbc58f1ac8b25d398255644"
+    },
+    {
+     "path": "data/earth_blue_marble_4k.jpg",
+     "bytes": 1461877,
+     "sha256": "228deba2e4b600146bdcb6cfa359b8ead6aacc2b1c13550a29cd82824cfa1c01"
+    }
+   ],
+   "provider": "NASA",
+   "source": "LRO LROC WAC mosaics (NASA/GSFC/Arizona State University); NASA Blue Marble",
+   "resolutionM": null,
+   "coverage": "—",
+   "frame": "—",
+   "units": "JPEG",
+   "generator": "tools/build_imagery.py",
+   "licence": "NASA data: no US copyright (public domain); credit the source",
+   "limitations": "Pictures only; no numbers are read from them."
+  },
+  {
+   "id": "site-list",
+   "title": "Site list",
+   "files": [
+    {
+     "path": "data/sites.json",
+     "bytes": 5857,
+     "sha256": "f43eecce00b03f3ee171ba16e64deabe491c0d681411b722d5cc9ec7f5503a53"
+    }
+   ],
+   "provider": "this project",
+   "source": "mission reports, NASA and USGS (see each site)",
+   "resolutionM": null,
+   "coverage": "—",
+   "frame": "planetocentric latitude, east-positive longitude",
+   "units": "degrees",
+   "generator": "hand-edited (src/data/sites.json)",
+   "licence": "MIT (this project), derived from NASA data",
+   "limitations": "Region centres are single points."
+  }
+ ],
+ "unlistedFiles": []
+}

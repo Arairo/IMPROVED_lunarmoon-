@@ -39,7 +39,8 @@ export function parseCoordinates(text) {
   let lon = Number(m[3]);
   if (m[2] && m[2].toUpperCase() === 'S') lat = -Math.abs(lat);
   if (m[4] && m[4].toUpperCase() === 'W') lon = -Math.abs(lon);
+  // Accept -180..180 or 0..360 longitudes; anything else is a typo, not a place.
+  if (Math.abs(lat) > 90 || lon < -180 || lon > 360) return null;
   if (lon > 180) lon -= 360;
-  if (Math.abs(lat) > 90 || Math.abs(lon) > 180) return null;
   return { lat, lon };
 }

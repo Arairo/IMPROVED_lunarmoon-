@@ -7,6 +7,7 @@ import { prepareSite, scanWindow, evaluate } from './core/analysis.js';
 import { DEFAULT_COMMS_CONFIG } from './core/comms.js';
 import { esc, fmtLatLon, fmtUtc } from './ui/format.js';
 import { createGlobeRenderer } from './scene/globeRenderer.js';
+import { hasWebGL, showNoWebGL } from './ui/webgl.js';
 import { createPolarMapRenderer, ramp } from './ui/polarMap.js';
 import { drawTimeline } from './ui/timeline.js';
 import { loadGlobalDem, setGlobalDem } from './core/globalDem.js';
@@ -357,6 +358,8 @@ function boot() {
     };
     selectSite(custom, false);
   }, { onHint: (t) => xpApi.setHint(t) });
+  // No WebGL: say so on the 3D view and open the 2D South-Pole Map instead.
+  if (!hasWebGL()) { showNoWebGL(document.getElementById('globeViewport'), 'The 3D Moon'); setTimeout(() => switchSubView('polar'), 0); }
 
   polar = createPolarMapRenderer(document.getElementById('polarCanvas'), (pick) => {
     if (pick.site) return selectSite(pick.site, true);
@@ -587,7 +590,9 @@ function boot() {
     app.config.mastHeightM = clamp(Number(f.mastHeightM.value) || 2, 0.5, 50);
     app.config.comms.preset = f.preset.value;
     app.config.comms.dataRateBps = Math.max(1, Number(f.dataRateKbps.value) || 256) * 1000;
-    app.config.comms.minClearanceDeg = clamp(Number(f.minClearanceDeg.value) || 2, 0, 15);
+    // 0 is a valid clearance, so don't fall back with `|| 2`.
+    const clr = Number(f.minClearanceDeg.value);
+    app.config.comms.minClearanceDeg = clamp(f.minClearanceDeg.value !== '' && Number.isFinite(clr) ? clr : 2, 0, 15);
     document.getElementById('settingsModal')?.classList.add('hidden');
     selectSite(app.site, false);
     showToast('Updated spacecraft assumptions');

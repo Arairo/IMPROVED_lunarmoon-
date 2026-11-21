@@ -10,6 +10,7 @@
     "build": "vite build && vite build -c vite.api.config.js && node tools/build_api.mjs dist/api/v1 && node tools/fix-cesium-path.mjs",
     "preview": "vite preview",
     "test": "node --test test/*.spec.js",
+    "test:smoke": "node test/smoke-e2e.cjs http://localhost:4174/",
     "test:e2e": "node test/browser-e2e.cjs http://localhost:5174/planner.html",
     "tutorial:shots": "node tools/tutorial/capture-shots.cjs http://localhost:4174/planner.html",
     "tutorial:video": "node tools/tutorial/render-video.cjs http://localhost:4174/planner.html",

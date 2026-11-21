@@ -4,6 +4,7 @@
 // three routes and the lighting/radio checks at touchdown, and watch it fly.
 
 import { flightTimeline } from './flightPacing.js';
+import { hasWebGL, showNoWebGL, noScene } from '../ui/webgl.js';
 import { planFlight, compareRoutes, flightPath, phaseTimes, touchdownChecks, siteDirection, moonState, ROUTES, LAUNCH_SITES, LANDERS, R_E, R_M, FLOWN_FLIGHTS } from '../core/flight.js';
 import { evaluate } from '../core/analysis.js';
 import { icon } from './icons.js';
@@ -192,6 +193,7 @@ export function mountFlight({ app, viewTabs, switchSubView, setTime }) {
   async function ensureScene() {
     if (scene) return;
     const { createFlightScene } = await import('../scene/flightScene.js');
+    if (!hasWebGL()) { showNoWebGL(pane, 'The flight view'); scene = noScene(); return; }
     scene = createFlightScene(pane.querySelector('.fl-canvas'), { onHint: () => pane.querySelector('[data-f="follow"]')?.classList.remove('is-on') });
   }
 
