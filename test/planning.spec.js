@@ -87,3 +87,20 @@ test('landing dispersion and robust aim are consistent', async () => {
   const centre = landingDispersion(RIDGE, T0, DEFAULT_CONFIG, { radiusM: 500, n: 7 });
   assert.ok(r.dispersion.p10 >= centre.p10 - 1e-9, 'the robust aim is never worse than aiming at the centre');
 });
+
+// The sliced (non-blocking) versions run the same code in pieces: same answers.
+import { landingDispersion as ldSync, robustAim as raSync, landingDispersionAsync, robustAimAsync } from '../src/core/planning.js';
+test('Landing dispersion and safer aim: sliced versions give identical results and can be cancelled', async () => {
+  const site = { id: 'ridge', lat: -89.45, lon: -137.31 };
+  const t0 = Date.UTC(2027, 0, 1);
+  const cfg = (await import('../src/core/analysis.js')).DEFAULT_CONFIG;
+  const a = ldSync(site, t0, cfg, { radiusM: 400, n: 7, days: 10 });
+  const b = await landingDispersionAsync(site, t0, cfg, { radiusM: 400, n: 7, days: 10 }, { sliceMs: 1 });
+  assert.deepEqual(b, a);
+  const c = raSync(site, t0, cfg, { radiusM: 400, n: 5, days: 10 });
+  const d = await robustAimAsync(site, t0, cfg, { radiusM: 400, n: 5, days: 10 }, { sliceMs: 1 });
+  assert.deepEqual(d, c);
+  let calls = 0;
+  const cancelled = await robustAimAsync(site, t0, cfg, { radiusM: 400, n: 5, days: 10 }, { sliceMs: 0, isCancelled: () => ++calls > 3 });
+  assert.equal(cancelled, null);
+});

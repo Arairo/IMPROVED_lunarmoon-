@@ -498,6 +498,11 @@
      "path": "data/earth_blue_marble_4k.jpg",
      "bytes": 1461877,
      "sha256": "228deba2e4b600146bdcb6cfa359b8ead6aacc2b1c13550a29cd82824cfa1c01"
+    },
+    {
+     "path": "data/earth_blue_marble_2k.jpg",
+     "bytes": 320769,
+     "sha256": "0c34a26960a9fea39a7b864e10f01b5261d13b24029c05d769f13aa6b67c4eb4"
     }
    ],
    "provider": "NASA",
@@ -506,7 +511,7 @@
    "coverage": "—",
    "frame": "—",
    "units": "JPEG",
-   "generator": "tools/build_imagery.py",
+   "generator": "tools/build_imagery.py (Moon), tools/make_earth_2k.py (2k Earth)",
    "licence": "NASA data: no US copyright (public domain); credit the source",
    "limitations": "Pictures only; no numbers are read from them."
   },

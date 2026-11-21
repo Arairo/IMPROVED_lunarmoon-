@@ -247,6 +247,11 @@ export function createWalk({ app, sites, onOpenPro, onToggleTheme, onToggleSound
     st.site = site;
     st.scan = null; st.flight = null; st.landed = false;
     nextBtn.disabled = !st.site;
+    // A spot of your own needs the full terrain for its skyline: wait for it.
+    if (String(site?.id || '').startsWith('custom') && app.ensureTerrain) {
+      nextBtn.disabled = true;
+      app.ensureTerrain().finally(() => { if (st.site === site) nextBtn.disabled = false; });
+    }
   }
 
   // ------------------------------------------------------------------ chapters
@@ -840,7 +845,13 @@ export function createWalk({ app, sites, onOpenPro, onToggleTheme, onToggleSound
   }
 
   return {
-    open() { if (!scene.childElementCount) go(restore()); },
+    open() {
+      if (scene.childElementCount) return;
+      const step = restore();
+      // A saved spot of your own: load the full terrain before computing its skyline.
+      if (step > 1 && String(st.site?.id || '').startsWith('custom') && app.ensureTerrain) app.ensureTerrain().finally(() => go(step));
+      else go(step);
+    },
     restart() { try { localStorage.removeItem(SAVE_KEY); } catch {} Object.assign(st, { visited: 0, site: null, guess: null, landed: false, flight: null, scan: null }); go(0); },
     root,
   };

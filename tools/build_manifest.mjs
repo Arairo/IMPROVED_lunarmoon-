@@ -89,9 +89,9 @@ const DATASETS = [
     limitations: 'Each file records when it was generated.',
   },
   {
-    id: 'imagery', title: 'Moon and Earth imagery (display only)', files: ['moonGlobal.jpg', 'moon_wac_global_4k.jpg', 'spPolar.jpg', 'sp_wac_450m.jpg', 'sp_wac_geo.jpg', 'earth_blue_marble_4k.jpg'],
+    id: 'imagery', title: 'Moon and Earth imagery (display only)', files: ['moonGlobal.jpg', 'moon_wac_global_4k.jpg', 'spPolar.jpg', 'sp_wac_450m.jpg', 'sp_wac_geo.jpg', 'earth_blue_marble_4k.jpg', 'earth_blue_marble_2k.jpg'],
     provider: 'NASA', source: 'LRO LROC WAC mosaics (NASA/GSFC/Arizona State University); NASA Blue Marble', resolutionM: null, coverage: '—',
-    frame: '—', units: 'JPEG', generator: 'tools/build_imagery.py', licence: NASA, limitations: 'Pictures only; no numbers are read from them.',
+    frame: '—', units: 'JPEG', generator: 'tools/build_imagery.py (Moon), tools/make_earth_2k.py (2k Earth)', licence: NASA, limitations: 'Pictures only; no numbers are read from them.',
   },
   {
     id: 'site-list', title: 'Site list', files: ['sites.json'], provider: 'this project', source: 'mission reports, NASA and USGS (see each site)', resolutionM: null,

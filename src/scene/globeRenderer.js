@@ -108,7 +108,7 @@ export function createGlobeRenderer(canvas, onPickSite, options = {}) {
       // Earth: NASA Blue Marble, lit by the same Sun so its phase is right.
       const earthMesh = new T.Mesh(
         new T.SphereGeometry(EARTH_R, 96, 64),
-        new T.MeshStandardMaterial({ map: loadTex(options.earthUrl || `${import.meta.env.BASE_URL}data/earth_blue_marble_4k.jpg`), roughness: 0.75, metalness: 0 })
+        new T.MeshStandardMaterial({ map: loadTex(options.earthUrl || `${import.meta.env.BASE_URL}data/earth_blue_marble_2k.jpg`), roughness: 0.75, metalness: 0 })
       );
       const earthGlow = new T.Mesh(
         new T.SphereGeometry(EARTH_R * 1.08, 48, 32),

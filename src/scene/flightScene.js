@@ -45,7 +45,7 @@ export function createFlightScene(canvas, { onHint } = {}) {
     scene.add(g);
     return g;
   };
-  const earth = bodyMesh((R_E * KE) / U, `${base}data/earth_blue_marble_4k.jpg`);
+  const earth = bodyMesh((R_E * KE) / U, `${base}data/earth_blue_marble_2k.jpg`);
   const moon = bodyMesh((R_M * KM) / U, `${base}data/moonGlobal.jpg`);
   const glow = new THREE.Mesh(new THREE.SphereGeometry((R_E * KE * 1.06) / U, 48, 32), new THREE.MeshBasicMaterial({ color: 0x4aa8ff, transparent: true, opacity: 0.16, side: THREE.BackSide, blending: THREE.AdditiveBlending, depthWrite: false }));
   scene.add(glow);
@@ -176,7 +176,9 @@ export function createFlightScene(canvas, { onHint } = {}) {
     render();
   }
 
+  let disposed = false;
   function render() {
+    if (disposed) return;
     const w = canvas.clientWidth, h = canvas.clientHeight;
     if (w < 20 || h < 20) return;
     renderer.setSize(w, h, false);
@@ -221,7 +223,8 @@ export function createFlightScene(canvas, { onHint } = {}) {
     dist = goalDist;
     render();
   }, { passive: false });
-  if (typeof ResizeObserver !== 'undefined') new ResizeObserver(() => render()).observe(canvas);
+  const resizeObs = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(() => render()) : null;
+  resizeObs?.observe(canvas);
 
   return {
     setPlan,
@@ -233,7 +236,17 @@ export function createFlightScene(canvas, { onHint } = {}) {
     resetView() { follow = true; if (path) setIndex(0); },
     /** Fast-forwarding through many orbits: hide the craft (the orbit is still drawn) so it doesn't seem to jump about. */
     setFastForward(on) { craft.visible = craftHalo.visible = !on; },
-    dispose() { renderer.dispose(); },
+    /** Free GPU memory and the WebGL context now, instead of waiting for garbage collection. */
+    dispose() {
+      disposed = true;
+      resizeObs?.disconnect();
+      scene.traverse((o) => {
+        o.geometry?.dispose();
+        for (const m of [].concat(o.material || [])) { m.map?.dispose(); m.dispose(); }
+      });
+      renderer.dispose();
+      renderer.forceContextLoss?.();
+    },
   };
 }
 

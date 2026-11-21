@@ -48,6 +48,34 @@ const sub = (page, k) => page.$eval(`[data-sub="${k}"]`, (e) => e.textContent);
     return t.replace(/\s+/g, ' ');
   });
 
+  await check('Beginner with a saved spot of your own: full terrain loads first (not the 5 km fallback)', async () => {
+    const ctx = await browser.newContext({ viewport: { width: 1366, height: 820 } });
+    await ctx.addInitScript(() => { try { localStorage.setItem('lsp.walk', JSON.stringify({ step: 2, visited: 2, startMs: Date.UTC(2026, 10, 16, 22), site: { id: 'custom-x', name: 'Your spot', short: 'Your spot', lat: -89.3, lon: -140, group: 'custom' } })); } catch {} });
+    const page = await ctx.newPage();
+    const errors = []; page.on('pageerror', (e) => errors.push(e.message));
+    const got = [];
+    page.on('requestfinished', (r) => { if (/sp_fine\.bin|global_dem\.bin/.test(r.url())) got.push(r.url().split('/').pop()); });
+    await page.goto(BASE + '#beginner', { waitUntil: 'load', timeout: 90000 });
+    await page.waitForSelector('.w-say', { timeout: 60000 });
+    await page.waitForTimeout(1500);
+    assert(got.includes('sp_fine.bin'), `terrain requests: ${got.join(', ') || 'none'}`);
+    assert(!errors.length, errors.join(' | '));
+    await ctx.close();
+    return `loaded ${got.join(', ')} before the chapter`;
+  });
+
+  await check('Landing page does not download the terrain grids', async () => {
+    const ctx = await browser.newContext({ viewport: { width: 1366, height: 820 } });
+    const page = await ctx.newPage();
+    const got = [];
+    page.on('requestfinished', (r) => { if (/\.bin$/.test(r.url())) got.push(r.url().split('/').pop()); });
+    await page.goto(BASE, { waitUntil: 'load', timeout: 90000 });
+    await page.waitForTimeout(4000);
+    assert(!got.length, `downloaded ${got.join(', ')}`);
+    await ctx.close();
+    return 'no .bin files';
+  });
+
   await check('Pro mode: site, date, Check verdict, power and radio settings, compare, flight, exports', async () => {
     const { ctx, page, errors } = await open(browser, '#pro&id=ridge&t=2027-03-01T00:00Z');
     await page.waitForFunction(() => /GO|CARE/.test(document.querySelector('[data-sub="check"]')?.textContent || ''), null, { timeout: 60000 });

@@ -2,7 +2,7 @@
 // shift the date a day, or find the next good landing window, with a plain
 // sentence saying what changed, an Undo, and an honest ±250 m range.
 
-import { nudgeSite, windowStats, describeChange, findNextWindow, positionRange, landingDispersion, robustAim } from '../core/planning.js';
+import { nudgeSite, windowStats, describeChange, findNextWindow, positionRange, landingDispersionAsync, robustAimAsync } from '../core/planning.js';
 import { destination } from '../core/geo.js';
 import { showToast } from '../ui/modals.js';
 
@@ -122,16 +122,18 @@ export function mountPlanCard({ app, selectSite, setTime, getGlobe }) {
     const myKey = dispKey;
     dispOut.hidden = false;
     dispOut.innerHTML = `<span class="w-spinner" style="width:12px;height:12px;border-width:2px"></span> Checking 25 touchdown points within ${distWord(radiusM)}…`;
-    setTimeout(() => {
-      const d = landingDispersion(site, start, app.config, { radiusM, n: 25 });
-      if (myKey !== dispKey) return;
+    const stale = () => myKey !== dispKey;
+    // Sliced so the page stays responsive; a newer request cancels this one.
+    (async () => {
+      const d = await landingDispersionAsync(site, start, app.config, { radiusM, n: 25 }, { isCancelled: stale });
+      if (!d || stale()) return;
       app.lastDispersion = { ...d, siteId: site.id, start };
       const range = Math.round(d.min * 100) === Math.round(d.max * 100) ? pct(d.min) : `${pct(d.min)}–${pct(d.max)}`;
       const worstTxt = d.worst.dist > 0 ? ` The weakest spot is ${distWord(d.worst.dist)} ${dirWord(d.worst.az)} of the aim.` : '';
       dispOut.innerHTML = `<b>If the lander touches down anywhere within ${distWord(radiusM)}:</b> power and radio together ${range} of the next 30 days (worst case ${pct(d.min)}, typical ${pct(d.p50)}).${worstTxt}<span data-aim> <span class="w-spinner" style="width:10px;height:10px;border-width:2px"></span> Looking for a safer place to aim…</span>`;
-      setTimeout(() => {
-        const r = robustAim(site, start, app.config, { radiusM, n: 13 });
-        if (myKey !== dispKey) return;
+      {
+        const r = await robustAimAsync(site, start, app.config, { radiusM, n: 13 }, { isCancelled: stale });
+        if (!r || stale()) return;
         const aimEl = dispOut.querySelector('[data-aim]');
         const gain = Math.round(r.dispersion.p10 * 100) - Math.round(d.p10 * 100);
         if (r.aim.dist === 0 || gain < 2) { aimEl.textContent = ' Aiming here is already the safest choice nearby.'; return; }
@@ -147,8 +149,8 @@ export function mountPlanCard({ app, selectSite, setTime, getGlobe }) {
           markMine();
           dispOut.hidden = true;
         });
-      }, 30);
-    }, 30);
+      }
+    })();
   });
 
   undoBtn.addEventListener('click', () => {

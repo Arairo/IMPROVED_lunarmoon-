@@ -188,11 +188,50 @@ const quantile = (sorted, q) => {
  * time with the Sun and Earth up together: worst (min), P10, median, best, and
  * the worst spot. Each point gets its own terrain horizon.
  */
-export function landingDispersion(site, startMs, config, { radiusM = 500, n = 25, days = 30 } = {}) {
-  const pts = discPoints(site, radiusM, n).map((p, i) => ({ ...p, ...windowStats({ ...site, id: `${site.id}-d${i}`, lat: p.lat, lon: p.lon }, startMs, config, days, 2 * HOUR) }));
+export function landingDispersion(site, startMs, config, opts = {}) {
+  return runSync(dispersionSteps(site, startMs, config, opts));
+}
+
+// The work as a generator that yields after each touchdown point, so the same
+// code runs either straight through (runSync) or in slices that let the page
+// stay responsive (runSliced). Both give identical results.
+function* dispersionSteps(site, startMs, config, { radiusM = 500, n = 25, days = 30 } = {}) {
+  const pts = [];
+  for (const [i, p] of discPoints(site, radiusM, n).entries()) {
+    pts.push({ ...p, ...windowStats({ ...site, id: `${site.id}-d${i}`, lat: p.lat, lon: p.lon }, startMs, config, days, 2 * HOUR) });
+    yield;
+  }
   const both = pts.map((p) => p.both).sort((a, b) => a - b);
   const worst = pts.reduce((w, p) => (p.both < w.both ? p : w), pts[0]);
   return { radiusM, points: pts, centre: pts[0], min: both[0], p10: quantile(both, 0.1), p50: quantile(both, 0.5), max: both[both.length - 1], worst };
+}
+
+function runSync(gen) {
+  for (;;) { const r = gen.next(); if (r.done) return r.value; }
+}
+
+/**
+ * Run a step generator in ~25 ms slices, yielding to the browser between them.
+ * Resolves with the result, or null if `isCancelled()` turns true (a newer
+ * request replaced this one).
+ */
+async function runSliced(gen, { isCancelled = () => false, sliceMs = 25 } = {}) {
+  let t0 = performance.now();
+  for (;;) {
+    if (isCancelled()) return null;
+    const r = gen.next();
+    if (r.done) return r.value;
+    if (performance.now() - t0 > sliceMs) { await new Promise((res) => setTimeout(res, 0)); t0 = performance.now(); }
+  }
+}
+
+/** landingDispersion without blocking the page; null if cancelled. */
+export function landingDispersionAsync(site, startMs, config, opts = {}, control = {}) {
+  return runSliced(dispersionSteps(site, startMs, config, opts), control);
+}
+/** robustAim without blocking the page (about 1.7 s of work on a fast laptop); null if cancelled. */
+export function robustAimAsync(site, startMs, config, opts = {}, control = {}) {
+  return runSliced(aimSteps(site, startMs, config, opts), control);
 }
 
 /**
@@ -201,7 +240,11 @@ export function landingDispersion(site, startMs, config, { radiusM = 500, n = 25
  * and Earth together. Returns { aim: {lat, lon, dist, az}, dispersion } for
  * the best candidate (the centre if nothing beats it).
  */
-export function robustAim(site, startMs, config, { radiusM = 500, n = 13, days = 30 } = {}) {
+export function robustAim(site, startMs, config, opts = {}) {
+  return runSync(aimSteps(site, startMs, config, opts));
+}
+
+function* aimSteps(site, startMs, config, { radiusM = 500, n = 13, days = 30 } = {}) {
   const cands = [{ lat: site.lat, lon: site.lon, dist: 0, az: 0 }];
   for (let k = 0; k < 6; k++) {
     const az = k * 60;
@@ -209,9 +252,9 @@ export function robustAim(site, startMs, config, { radiusM = 500, n = 13, days =
     cands.push({ lat: p.lat, lon: p.lon, dist: radiusM / 2, az });
   }
   let best = null;
-  cands.forEach((c, i) => {
-    const d = landingDispersion({ ...site, id: `${site.id}-a${i}`, lat: c.lat, lon: c.lon }, startMs, config, { radiusM, n, days });
+  for (const [i, c] of cands.entries()) {
+    const d = yield* dispersionSteps({ ...site, id: `${site.id}-a${i}`, lat: c.lat, lon: c.lon }, startMs, config, { radiusM, n, days });
     if (!best || d.p10 > best.dispersion.p10 + 1e-9) best = { aim: c, dispersion: d };
-  });
+  }
   return best;
 }
