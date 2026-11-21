@@ -13,7 +13,8 @@ import { play, syncSoundLabels } from './sound.js';
 import { findNextWindow } from '../core/planning.js';
 import { createCalendar } from './calendar.js';
 import { icon } from './icons.js';
-import { planFlight, flightPath, phaseTimes, siteDirection, moonState, ROUTES } from '../core/flight.js';
+import { planFlight, flightPath, phaseTimes, siteDirection, ROUTES } from '../core/flight.js';
+import { flightTimeline } from './flightPacing.js';
 import { evaluate } from '../core/analysis.js';
 import { moonFixedState } from '../core/ephemeris.js';
 const moonThumbs = () => import('../scene/moonThumb.js');
@@ -391,12 +392,10 @@ export function createWalk({ app, sites, onOpenPro, onToggleTheme, onToggleSound
         return `${say(st.landed ? 'Touchdown!' : 'How do we get there?', st.landed ? `The lander is down at <b>${esc(st.site.short || st.site.name)}</b>. Now the real test: can it survive a month?` : 'Pick a route. Faster isn’t always better: stopping at the Moon takes fuel, and fast arrivals need the most.')}
           <div class="w-content">
             <div class="w-routes">${Object.keys(ROUTE_KID).map((r) => { const p = planFlight(st.startMs, { route: r }); return `<button type="button" class="w-opt ${st.route === r ? 'is-picked' : ''}" data-route="${r}"><b>${ROUTE_KID[r].name}</b><span>${ROUTE_KID[r].line}</span><em>${p.doorToDoorDays < 20 ? p.doorToDoorDays.toFixed(1) : Math.round(p.doorToDoorDays)} days · ${Math.round(p.propKg).toLocaleString('en-GB')} kg of fuel</em></button>`; }).join('')}</div>
-            <div class="w-flywrap"><div class="w-flybox"><canvas class="w-fly" aria-label="Following the rocket from Earth to the Moon"></canvas>
+            <div class="w-flybox"><canvas class="w-fly" aria-label="The flight from Earth to the Moon"></canvas>
               <div class="w-fly-cap" aria-live="polite">${f ? '' : 'Pick a route, then press Launch'}</div>
-              <button type="button" class="w-recentre" data-a="recentre" hidden>${icon('rocket', 14)} Follow the rocket</button>
+              <button type="button" class="w-recentre" data-a="recentre" hidden>${icon('rocket', 14)} Follow the spacecraft</button>
               <div class="w-count-big" aria-hidden="true"></div></div>
-              <div class="w-inset"><b>The whole route, from above</b><canvas class="w-inset-map" aria-label="Map of the whole route with the rocket's position"></canvas>
-                <div class="w-inset-key"><span><i class="e"></i>Earth</span><span><i class="m"></i>Moon</span><span><i class="r"></i>Rocket</span></div></div></div>
             <div class="w-row"><button type="button" class="xp-btn xp-btn-primary" data-a="launch">${icon('rocket', 16)} ${st.landed ? 'Fly it again' : 'Launch!'}</button>
               ${f ? `<span class="w-note">Launch ${fmtDate(f.launchMs)} from Kennedy · touchdown ${fmtDate(f.touchdownMs)}</span>` : ''}</div>
             ${why('Why do some missions take months?', 'Leaving Earth is the same for everyone, but stopping at the Moon is not. Arrive fast and you must brake hard, which burns lots of fuel. Take a long, curvy route and the Sun’s pull slows you down for free, so you arrive gently. Japan’s SLIM took 4 months; Apollo 11 took 4 days.')}
@@ -660,7 +659,7 @@ export function createWalk({ app, sites, onOpenPro, onToggleTheme, onToggleSound
     if (!canvas.isConnected) return;
     flyScene?.dispose?.();
     const recentre = scene.querySelector('[data-a="recentre"]');
-    flyScene = createFlightScene(canvas, { chase: true, onHint: (h) => { if (h === 'follow-off') recentre.hidden = false; } });
+    flyScene = createFlightScene(canvas, { onHint: (h) => { if (h === 'follow-off') recentre.hidden = false; } });
     recentre.addEventListener('click', () => { flyScene.setFollow(true); recentre.hidden = true; });
     const plan = planFlight(st.startMs, { route: st.route });
     plan.site = { lat: st.site.lat, lon: st.site.lon, name: st.site.short || st.site.name };
@@ -668,16 +667,16 @@ export function createWalk({ app, sites, onOpenPro, onToggleTheme, onToggleSound
     const path = flightPath(plan, 0, phaseTimes(plan, 120));
     st.flight = plan;
     flyScene.setPlan(plan, path);
-    const inset = routeInset(scene.querySelector('.w-inset-map'), plan, path);
-    const n = plan.phases.length;
-    const tAt = (u) => { const k = Math.min(n - 1, Math.floor(u * n)), f = u * n - k, ph = plan.phases[k]; return ph.start + Math.min(1, f) * (ph.end - ph.start); };
+    const timeline = flightTimeline(plan);
     const idxAt = (t) => { let lo = 0, hi = path.length - 1; while (lo < hi) { const m = (lo + hi) >> 1; if (path[m].t < t) lo = m + 1; else hi = m; } return lo; };
     const show = (u) => {
-      const i = u >= 1 ? path.length - 1 : idxAt(tAt(u));
+      const i = u >= 1 ? path.length - 1 : idxAt(timeline.timeAt(u));
+      const fast = timeline.isFastForward(u);
+      flyScene.setFastForward(fast);
       flyScene.setIndex(i);
-      inset(i);
       const ph = plan.phases.find((p) => path[i].t >= p.start && path[i].t <= p.end) || plan.phases.at(-1);
-      cap.textContent = u >= 1 ? `Touchdown at ${plan.site.name}!` : `${ph.label} · day ${((path[i].t - plan.launchMs) / DAY).toFixed(1)}`;
+      const day = `day ${((path[i].t - plan.launchMs) / DAY).toFixed(1)}`;
+      cap.textContent = u >= 1 ? `Touchdown at ${plan.site.name}!` : fast ? `Fast-forward: ${Math.round((ph.end - ph.start) / DAY)} days circling the Moon · ${day}` : `${ph.label} · ${day}`;
     };
     show(st.landed ? 1 : 0);
     if (!st.landed) cap.textContent = 'Ready on the launch pad';
@@ -696,7 +695,7 @@ export function createWalk({ app, sites, onOpenPro, onToggleTheme, onToggleSound
       const step = (ts) => {
         if (!canvas.isConnected) return;
         const dt = last ? Math.min(0.1, (ts - last) / 1000) : 0; last = ts;
-        u = Math.min(1, u + dt / (2.4 * n));
+        u = Math.min(1, u + dt / timeline.duration);
         show(u);
         if (u < 1) requestAnimationFrame(step);
         else { st.landed = true; play('go'); setTimeout(() => { if (st.step === 3) render(3); }, 900); }
@@ -841,39 +840,6 @@ export function createWalk({ app, sites, onOpenPro, onToggleTheme, onToggleSound
     open() { if (!scene.childElementCount) go(restore()); },
     restart() { try { localStorage.removeItem(SAVE_KEY); } catch {} Object.assign(st, { visited: 0, site: null, guess: null, landed: false, flight: null, scan: null }); go(0); },
     root,
-  };
-}
-
-// Top-down map of the whole route: Earth, the Moon where it is now, the path
-// (bright where flown) and the rocket. Same plane as the 3D view (the Moon's orbit).
-function routeInset(canvas, plan, path) {
-  const ctx = canvas.getContext('2d');
-  const m = moonState(plan.loiMs);
-  const nrm = (v) => { const k = Math.hypot(v[0], v[1], v[2]); return [v[0] / k, v[1] / k, v[2] / k]; };
-  const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
-  const e1 = nrm(m.r), nn = nrm(cross(m.r, m.v)), e2 = cross(nn, e1);
-  const P = (v) => [v[0] * e1[0] + v[1] * e1[1] + v[2] * e1[2], v[0] * e2[0] + v[1] * e2[1] + v[2] * e2[2]];
-  const pts = path.map((s) => P(s.pos));
-  let ext = 420000;
-  for (const [x, y] of pts) ext = Math.max(ext, Math.abs(x) * 1.08, Math.abs(y) * 1.08);
-  return (i) => {
-    const w = canvas.clientWidth || 200, h = canvas.clientHeight || 200, dpr = Math.min(2, window.devicePixelRatio || 1);
-    if (canvas.width !== Math.round(w * dpr)) { canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr); }
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.clearRect(0, 0, w, h);
-    const s = (Math.min(w, h) / 2 - 10) / ext, cx = w / 2, cy = h / 2;
-    const xy = ([x, y]) => [cx + x * s, cy - y * s];
-    // Moon's orbit
-    ctx.strokeStyle = 'rgba(148,163,184,.35)'; ctx.setLineDash([3, 4]); ctx.beginPath(); ctx.arc(cx, cy, 384400 * s, 0, 7); ctx.stroke(); ctx.setLineDash([]);
-    // Route: faint, then the flown part bright
-    ctx.lineWidth = 1.5; ctx.strokeStyle = 'rgba(251,191,36,.28)'; ctx.beginPath(); pts.forEach((p, k) => { const [x, y] = xy(p); k ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }); ctx.stroke();
-    ctx.lineWidth = 2.2; ctx.strokeStyle = '#fbbf24'; ctx.beginPath(); pts.slice(0, i + 1).forEach((p, k) => { const [x, y] = xy(p); k ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }); ctx.stroke();
-    const dotAt = ([x, y], r, col) => { ctx.fillStyle = col; ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill(); };
-    dotAt([cx, cy], 6, '#3b82f6');
-    dotAt(xy(P(moonState(path[i].t).r)), 4.5, '#d1d5db');
-    const [rx, ry] = xy(pts[i]);
-    ctx.fillStyle = 'rgba(239,68,68,.25)'; ctx.beginPath(); ctx.arc(rx, ry, 9, 0, 7); ctx.fill();
-    dotAt([rx, ry], 4, '#ef4444');
   };
 }
 

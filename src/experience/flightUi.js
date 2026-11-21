@@ -3,6 +3,7 @@
 // lander; see the dated timeline, every burn, the fuel, a side-by-side of the
 // three routes and the lighting/radio checks at touchdown, and watch it fly.
 
+import { flightTimeline } from './flightPacing.js';
 import { planFlight, compareRoutes, flightPath, phaseTimes, touchdownChecks, siteDirection, moonState, ROUTES, LAUNCH_SITES, LANDERS, R_E, R_M, FLOWN_FLIGHTS } from '../core/flight.js';
 import { evaluate } from '../core/analysis.js';
 import { icon } from './icons.js';
@@ -24,7 +25,7 @@ export function mountFlight({ app, viewTabs, switchSubView, setTime }) {
   try { saved = JSON.parse(localStorage.getItem(KEY) || '{}'); } catch {}
   const opts = { route: 'direct', launchSite: 'ksc', lander: 'small', ...saved };
   let plan = null, path = null, scene = null, planKey = '', tab = 'timeline';
-  let playing = false, speed = 1, u = 0, idx = 0, last = 0;
+  let playing = false, speed = 1, u = 0, idx = 0, last = 0, timeline = null, fast = false;
 
   const btn = document.createElement('button');
   btn.type = 'button';
@@ -64,6 +65,7 @@ export function mountFlight({ app, viewTabs, switchSubView, setTime }) {
     plan.site = { lat: app.site.lat, lon: app.site.lon, name: app.site.short || app.site.name };
     plan.siteDir = siteDirection(app.site.lat, app.site.lon, plan.touchdownMs);
     path = flightPath(plan, 0, phaseTimes(plan, 160));
+    timeline = flightTimeline(plan, { scale: 1.5 });
     app.flight = { plan, opts: { ...opts } };
     try { localStorage.setItem(KEY, JSON.stringify(opts)); } catch {}
   }
@@ -141,8 +143,7 @@ export function mountFlight({ app, viewTabs, switchSubView, setTime }) {
   }
 
   function renderPhases() {
-    const n = plan.phases.length;
-    pane.querySelector('.fl-phases').innerHTML = plan.phases.map((p) => `<span style="--c:${PHASE_CSS[p.id] || '#fff'};width:${100 / n}%" title="${esc(p.label)}: ${dur(p.end - p.start)}"><i></i><em>${esc(p.label.split(',')[0].split(':')[0])}</em></span>`).join('');
+    pane.querySelector('.fl-phases').innerHTML = plan.phases.map((p, k) => `<span style="--c:${PHASE_CSS[p.id] || '#fff'};width:${((timeline.slots[k].end - timeline.slots[k].start) * 100).toFixed(2)}%" title="${esc(p.label)}: ${dur(p.end - p.start)}"><i></i><em>${esc(p.label.split(',')[0].split(':')[0])}</em></span>`).join('');
   }
 
   function caption() {
@@ -161,7 +162,7 @@ export function mountFlight({ app, viewTabs, switchSubView, setTime }) {
     const done = idx >= path.length - 1;
     cap.innerHTML = done
       ? `<b>Touchdown at ${esc(plan.site.name)}</b><span>${when(plan.touchdownMs)} UTC · ${dur(plan.touchdownMs - plan.launchMs)} after launch</span><button type="button" data-f="site">${icon('globe', 14)} See the landing site</button>`
-      : `<b>${esc(ph.label)}</b><span>Day ${elapsed.toFixed(elapsed < 2 ? 2 : 1)} · ${when(s.t)} UTC · ${where}</span>`;
+      : `<b>${esc(ph.label)}${fast ? ' · fast-forward' : ''}</b><span>Day ${elapsed.toFixed(elapsed < 2 ? 2 : 1)} · ${when(s.t)} UTC · ${where}</span>`;
     cap.querySelector('[data-f="site"]')?.addEventListener('click', () => {
       setTime(plan.touchdownMs, false);
       switchSubView('globe');
@@ -169,13 +170,9 @@ export function mountFlight({ app, viewTabs, switchSubView, setTime }) {
     });
   }
 
-  // The scrubber gives every phase the same width (a 1-hour descent would vanish
-  // on a time-true bar); u in [0, 1] maps to a time inside the current phase.
-  function timeAt(x) {
-    const n = plan.phases.length, k = Math.min(n - 1, Math.floor(x * n)), f = x * n - k;
-    const ph = plan.phases[k];
-    return ph.start + Math.min(1, f) * (ph.end - ph.start);
-  }
+  // The scrubber is not time-true (a 1-hour descent would vanish): each phase gets
+  // its own screen time and the playback rate eases between them (flightPacing.js).
+  const timeAt = (x) => timeline.timeAt(x);
   function indexAt(t) {
     let lo = 0, hi = path.length - 1;
     while (lo < hi) { const mid = (lo + hi) >> 1; if (path[mid].t < t) lo = mid + 1; else hi = mid; }
@@ -184,6 +181,8 @@ export function mountFlight({ app, viewTabs, switchSubView, setTime }) {
   function goto(x) {
     u = Math.max(0, Math.min(1, x));
     idx = u >= 1 ? path.length - 1 : indexAt(timeAt(u));
+    fast = playing && timeline.isFastForward(u); // only while playing; a paused or scrubbed frame shows the craft
+    scene?.setFastForward(fast);
     scene?.setIndex(idx);
     scrub.value = String(Math.round(u * 1000));
     caption();
@@ -212,14 +211,13 @@ export function mountFlight({ app, viewTabs, switchSubView, setTime }) {
     if (!playing) return;
     const dt = last ? Math.min(0.1, (ts - last) / 1000) : 0;
     last = ts;
-    // Each phase takes about 5 s at 1x.
-    goto(u + (dt * speed) / (5 * plan.phases.length));
+    goto(u + (dt * speed) / timeline.duration);
     if (u >= 1) { stop(); return; }
     requestAnimationFrame(loop);
   }
   const playBtn = pane.querySelector('[data-f="play"]');
   function start() { if (u >= 1) goto(0); playing = true; last = 0; playBtn.innerHTML = icon('pause', 18); playBtn.setAttribute('aria-label', 'Pause'); requestAnimationFrame(loop); }
-  function stop() { playing = false; playBtn.innerHTML = icon('play', 18); playBtn.setAttribute('aria-label', 'Play'); }
+  function stop() { playing = false; if (path) goto(u); playBtn.innerHTML = icon('play', 18); playBtn.setAttribute('aria-label', 'Play'); }
   playBtn.addEventListener('click', () => (playing ? stop() : start()));
   scrub.addEventListener('input', () => { stop(); goto(Number(scrub.value) / 1000); });
   pane.querySelector('[data-f="speed"]').addEventListener('click', (e) => { speed = speed === 1 ? 3 : speed === 3 ? 0.4 : 1; e.currentTarget.textContent = `${speed}×`; });

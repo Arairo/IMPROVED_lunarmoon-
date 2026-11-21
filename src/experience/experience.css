@@ -1470,14 +1470,6 @@ html[data-theme='dark'] .cc-badge.amber { color: var(--xp-warn); }
 .w-daymoon .xp-btn { color: #fff; }
 
 /* ---- Beginner: Fly with a route map ---- */
-.w-flywrap { display: grid; grid-template-columns: minmax(0, 1fr) 210px; gap: 12px; margin-bottom: 12px; }
-.w-flywrap .w-flybox { margin-bottom: 0; }
-.w-inset { display: grid; grid-template-rows: auto 1fr auto; gap: 6px; padding: 12px; border-radius: 22px; background: #05070c; border: 1px solid var(--xp-line); color: #fff; }
-.w-inset b { font: 700 13px var(--xp-font); }
-.w-inset-map { width: 100%; aspect-ratio: 1; display: block; }
-.w-inset-key { display: flex; flex-wrap: wrap; gap: 4px 10px; font: 500 12px var(--xp-font); color: rgba(255,255,255,.75); }
-.w-inset-key i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 4px; vertical-align: -1px; }
-.w-inset-key i.e { background: #3b82f6; } .w-inset-key i.m { background: #d1d5db; } .w-inset-key i.r { background: #ef4444; }
 .w-recentre { position: absolute; right: 12px; bottom: 12px; display: inline-flex; gap: 6px; align-items: center; padding: 8px 14px; border-radius: 999px; border: 0; background: #fbbf24; color: #111; font: 700 13px var(--xp-font); cursor: pointer; box-shadow: 0 6px 18px rgba(0,0,0,.4); }
 .w-recentre[hidden] { display: none; }
 
@@ -1498,10 +1490,6 @@ html[data-theme='dark'] .cc-badge.amber { color: var(--xp-warn); }
   .w-scene > div:last-child > .w-say, .w-scene > div:last-child > .w-hero > .w-say { margin-left: 66px; padding: 14px 16px; }
   .w-say h2 { font-size: 24px; }
   .w-say p { font-size: 14.5px; }
-  .w-flywrap { grid-template-columns: 1fr; }
-  .w-inset { grid-template-columns: 120px 1fr; grid-template-rows: auto auto; align-items: center; }
-  .w-inset b { grid-column: span 2; }
-  .w-inset-key { flex-direction: column; }
   .w-path ol li button.is-on { font-size: 11px; }
   .w-path ol li button.is-on::first-letter { font-size: inherit; }
 }

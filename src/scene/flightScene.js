@@ -12,7 +12,7 @@ const U = 10000;
 const KE = 3, KM = 4;
 const PHASE_COLOR = { parking: 0x93c5fd, loops: 0x93c5fd, ascent: 0x93c5fd, coast: 0xfbbf24, orbit: 0x22d3ee, descent: 0x4ade80 };
 
-export function createFlightScene(canvas, { onHint, chase = false } = {}) {
+export function createFlightScene(canvas, { onHint } = {}) {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
   renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
   const scene = new THREE.Scene();
@@ -55,30 +55,6 @@ export function createFlightScene(canvas, { onHint, chase = false } = {}) {
   const craftHalo = new THREE.Mesh(new THREE.SphereGeometry(0.16, 16, 12), new THREE.MeshBasicMaterial({ color: 0xfbbf24, transparent: true, opacity: 0.35, depthWrite: false }));
   scene.add(craftHalo);
   const siteDot = dot(0x4ade80, 0.035);
-  // A small rocket (built along +Y) for the chase camera in Beginner mode.
-  const rocket = new THREE.Group();
-  {
-    const white = new THREE.MeshStandardMaterial({ color: 0xf1f5f9, roughness: 0.5, metalness: 0.2 });
-    const red = new THREE.MeshStandardMaterial({ color: 0xef4444, roughness: 0.5 });
-    const body = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.62, 20), white);
-    const nose = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.26, 20), red); nose.position.y = 0.44;
-    const band = new THREE.Mesh(new THREE.CylinderGeometry(0.102, 0.102, 0.05, 20), red); band.position.y = 0.12;
-    const win = new THREE.Mesh(new THREE.SphereGeometry(0.035, 12, 10), new THREE.MeshBasicMaterial({ color: 0x38bdf8 })); win.position.set(0, 0.2, 0.095);
-    rocket.add(body, nose, band, win);
-    for (let i = 0; i < 3; i++) {
-      const fin = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.18, 0.13), red);
-      const a = (i / 3) * Math.PI * 2;
-      fin.position.set(Math.sin(a) * 0.13, -0.24, Math.cos(a) * 0.13); fin.rotation.y = a;
-      rocket.add(fin);
-    }
-    const flame = new THREE.Mesh(new THREE.ConeGeometry(0.075, 0.3, 16), new THREE.MeshBasicMaterial({ color: 0xffa31a, transparent: true, opacity: 0.9 }));
-    flame.position.y = -0.46; flame.rotation.x = Math.PI; flame.name = 'flame';
-    rocket.add(flame);
-  }
-  rocket.visible = chase;
-  scene.add(rocket);
-  if (chase) { craft.visible = false; craftHalo.visible = false; }
-  let heading = new THREE.Vector3(0, 1, 0);
   const padDot = dot(0xfbbf24, 0.06);
 
   let plan = null, path = null, basis = null;
@@ -158,14 +134,6 @@ export function createFlightScene(canvas, { onHint, chase = false } = {}) {
     const pos = drawPos(s);
     craft.position.copy(pos);
     craftHalo.position.copy(pos);
-    if (chase) {
-      // Point the rocket along its path.
-      const a = drawPos(path[Math.max(0, cur - 1)]), b = drawPos(path[Math.min(path.length - 1, cur + 1)]);
-      const d = b.sub(a);
-      if (d.lengthSq() > 1e-12) heading = d.normalize();
-      rocket.position.copy(pos);
-      rocket.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), heading);
-    }
     doneLine.geometry.setDrawRange(0, cur + 1);
     // Earth spin and the Moon, tidally locked.
     const g = Astronomy.SiderealTime(new Date(t)) * 15 * (Math.PI / 180);
@@ -194,14 +162,7 @@ export function createFlightScene(canvas, { onHint, chase = false } = {}) {
     padDot.position.copy(toScene(earthWarp([R_E * Math.cos(plat) * Math.cos(plon), R_E * Math.cos(plat) * Math.sin(plon), R_E * Math.sin(plat)])));
     // Where to look.
     goalYaw = goalPitch = null;
-    if (follow && chase) {
-      // Ride just behind and above the rocket, looking where it is going.
-      goalTarget = pos.clone(); target.copy(pos);
-      goalDist = s.phase === 'descent' ? 0.8 : 1.2;
-      const back = heading.clone().negate();
-      goalYaw = Math.atan2(back.x, back.z);
-      goalPitch = Math.max(-1.2, Math.min(1.2, Math.asin(Math.max(-1, Math.min(1, back.y))) + 0.3));
-    } else if (follow) {
+    if (follow) {
       if (s.phase === 'orbit' || s.phase === 'descent') {
         goalTarget = mcs.clone(); goalDist = s.phase === 'descent' ? 2.2 : 4.5;
         // Look down on the landing site, a little from the side.
@@ -233,10 +194,6 @@ export function createFlightScene(canvas, { onHint, chase = false } = {}) {
     camera.lookAt(target);
     const k = Math.max(0.03, dist / 36);
     craft.scale.setScalar(k); craftHalo.scale.setScalar(k * (1 + 0.15 * Math.sin(performance.now() / 180)));
-    if (chase) {
-      rocket.scale.setScalar(Math.max(0.2, dist / 2.6));
-      const f = rocket.getObjectByName('flame'); f.scale.set(1, 0.8 + 0.4 * Math.random(), 1);
-    }
     padDot.scale.setScalar(Math.min(1, k));
     siteDot.scale.setScalar(Math.min(1.2, Math.max(0.25, dist / 12)));
     renderer.render(scene, camera);
@@ -273,7 +230,9 @@ export function createFlightScene(canvas, { onHint, chase = false } = {}) {
     get index() { return cur; },
     setFollow(on) { follow = on; if (on && path) setIndex(cur); },
     /** Back to following the craft from the start of the path (e.g. "Fly it again"). */
-    resetView() { follow = true; if (path) { if (chase) { const p = drawPos(path[0]); target.copy(p); goalTarget = p.clone(); dist = goalDist = 1.2; } setIndex(0); } },
+    resetView() { follow = true; if (path) setIndex(0); },
+    /** Fast-forwarding through many orbits: hide the craft (the orbit is still drawn) so it doesn't seem to jump about. */
+    setFastForward(on) { craft.visible = craftHalo.visible = !on; },
     dispose() { renderer.dispose(); },
   };
 }
