@@ -104,13 +104,13 @@ Needs Node 22. All data is committed, so a fresh clone works offline.
 
 ```bash
 npm ci
-npm run dev      # http://localhost:5173
+npm run dev      # http://localhost:5174 (this computer only; add -- --host to test on a phone)
 npm test         # unit, JPL Horizons and flown-mission tests
 npm run build    # production build into dist/
 ```
 
 GitHub Actions (Actions tab):
-- **Test and deploy to GitHub Pages**: on every push.
+- **Test and deploy to GitHub Pages**: tests every push and pull request; publishes only from `main`, and after a data workflow only if that run succeeded. See [SECURITY.md](SECURITY.md).
 - **Validate against JPL Horizons**: compares 48 positions and publishes the scoreboard into the app.
 - **Build global terrain**: downloads LOLA LDEM_16, packs it and rebuilds every site's skyline.
 - **Add 20 m terrain and check against NASA PGDA**: reads the 20 m tiles and NASA's lighting maps, checks them and publishes the comparison into the app.

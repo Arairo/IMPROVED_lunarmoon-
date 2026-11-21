@@ -14,7 +14,9 @@ cesiumPlugin.transformIndexHtml = function (html, ctx) {
 export default defineConfig({
   base: process.env.BASE_PATH || '/',
   plugins: [cesiumPlugin],
-  server: { port: 5174, host: true },
+  // Dev server listens on localhost only. To test on a phone over Wi-Fi, opt in
+  // with `npm run dev -- --host` (anyone on that network can then reach it).
+  server: { port: 5174 },
   preview: { port: 4174 },
   build: {
     chunkSizeWarningLimit: 800, // three.js on its own is ~750 kB (193 kB gzipped)
