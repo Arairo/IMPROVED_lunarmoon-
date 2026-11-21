@@ -16,6 +16,7 @@ import { groundSlope } from '../core/horizon.js';
 import { epochStatus } from '../core/ephemeris.js';
 import { terrainWarning, epochWarning } from '../ui/assessment.js';
 import { planFlight, ROUTES } from '../core/flight.js';
+import { linkAssumptions } from '../core/comms.js';
 
 const DAY = 86400000;
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
@@ -249,7 +250,7 @@ export function mountFlow({ app, setTime, switchMode, getBestSpots, actions }) {
     const earthTxt = v.earth === 'red' ? (s.earthCentreFraction === 0 ? 'Earth never rises here: a relay satellite would be needed.' : `Earth is hidden at touchdown${v.nextEarthrise ? `; it returns ${day(v.nextEarthrise)}` : ''}.`) : v.earthSet ? `Earthset ${day(v.earthSet)}.` : 'Earth stays in view for this whole window.';
     el.innerHTML = `<div class="f-overall ${v.overall}">${LIGHT[v.overall][0]}<small>at touchdown, ${when(app.windowStartMs)}</small></div>
       ${line('power', 'Power', `${sunTxt} Sunlight ${pct(s.litFraction)} of the window, longest night ${fmtHours(s.longestDarkH)}.`)}
-      ${line('earth', 'Earth contact', `${earthTxt} Earth in view ${pct(s.earthCentreFraction)}, direct link ${pct(s.dteFraction)}.`)}
+      ${line('earth', 'Earth contact', `${earthTxt} Earth in view ${pct(s.earthCentreFraction)}; a direct link closes on paper ${pct(s.dteFraction)} of the time (DSN antenna time still has to be booked).`)}
       ${slopeLine()}
       ${terrainWarning(app.ctx?.horizon)}
       ${epochWarning(app.windowStartMs)}
@@ -278,7 +279,7 @@ export function mountFlow({ app, setTime, switchMode, getBestSpots, actions }) {
         <tr><td>Direct-to-Earth link</td><td>${pct(s.dteFraction)}</td></tr>
         <tr><td>Longest night</td><td>${fmtHours(s.longestDarkH)}${s.longestDarkOpenEnded ? '+' : ''}</td></tr>
         <tr><td>Average solar power</td><td>${Math.round(s.avgPowerW)} W</td></tr>
-        <tr><td>Battery needed</td><td>${s.batteryKWh.toFixed(1)} kWh${s.batteryOpenEnded ? '+' : ''}</td></tr>
+        <tr><td>Battery needed (estimate, with charge losses)</td><td>${s.batteryKWh.toFixed(1)} kWh${s.batteryOpenEnded ? '+' : ''}</td></tr>
         ${(() => { const sl = groundSlope(app.site.lat, app.site.lon); return sl && sl.cell <= 1000 ? `<tr><td>Ground slope (over ~${Math.round(sl.baselineM)} m)</td><td>${sl.slopeDeg.toFixed(1)}°</td></tr>` : ''; })()}
         ${(() => { const d = app.lastDispersion; return d && d.siteId === app.site.id && d.start === app.windowStartMs ? `<tr><td>Landing anywhere within ${d.radiusM >= 1000 ? `${d.radiusM / 1000} km` : `${d.radiusM} m`}: worst / typical</td><td>${pct(d.min)} / ${pct(d.p50)}</td></tr>` : ''; })()}
       </table>
@@ -316,8 +317,14 @@ export function mountFlow({ app, setTime, switchMode, getBestSpots, actions }) {
       },
       groundSlope: sl && sl.cell <= 1000 ? { degrees: r2(sl.slopeDeg), baselineM: Math.round(sl.baselineM) } : null,
       landingDispersion: d ? { radiusM: d.radiusM, samples: d.points.length, sunAndEarthTogether: { worst: r2(d.min), p10: r2(d.p10), median: r2(d.p50), best: r2(d.max) } } : null,
-      flight: (() => { const f = flightNow(); return { route: f.route, model: 'patched conics planning model', launchSite: f.launchSite.name, launchUtc: new Date(f.launchMs).toISOString(), leaveEarthOrbitUtc: new Date(f.tliMs).toISOString(), lunarOrbitArrivalUtc: new Date(f.loiMs).toISOString(), doorToDoorDays: r2(f.doorToDoorDays), landerDeltaVKmS: r2(f.landerDv), landerDryKg: f.lander.dryKg, propellantKg: Math.round(f.propKg), burns: f.burns.map((b) => ({ burn: b.label, utc: new Date(b.t).toISOString(), deltaVKmS: r2(b.dv), by: b.byLander ? 'lander' : 'rocket' })) }; })(),
+      flight: (() => { const f = flightNow(); return { route: f.route, model: 'patched conics planning model', launchSite: f.launchSite.name, launchUtc: new Date(f.launchMs).toISOString(), leaveEarthOrbitUtc: new Date(f.tliMs).toISOString(), lunarOrbitArrivalUtc: new Date(f.loiMs).toISOString(), doorToDoorDays: r2(f.doorToDoorDays), landerDeltaVKmS: r2(f.landerDv), landerDryKg: f.lander.dryKg, propellantKg: Math.round(f.propKg), burns: f.burns.map((b) => ({ burn: b.label, utc: new Date(b.t).toISOString(), deltaVKmS: r2(b.dv), by: b.byLander ? 'lander' : 'rocket', basis: b.basis })), modelInfo: f.model }; })(),
       spacecraft: app.config,
+      assumptions: {
+        battery: 'Battery needed = deepest energy shortfall against the constant load, with charge and discharge efficiency from spacecraft.power. An energy estimate, not a battery design (no temperature, ageing or voltage limits).',
+        communications: linkAssumptions(app.config.comms),
+        directToEarth: 'directToEarthFraction counts times when Earth is in line of sight, a DSN complex sees the Moon above its mask, and the link budget closes on paper. It is not a DSN schedule.',
+        verdict: 'GO / GO WITH CARE / NO GO are this tool\u2019s rules of thumb, not a NASA standard or a mission approval.',
+      },
       provenance: { terrain: 'NASA LRO LOLA (20 m PGDA tiles near the main south-polar sites, 240 m / 1 km south-polar grids, LDEM_16 elsewhere)', ephemeris: 'astronomy-engine with the IAU lunar rotation model, checked against NASA JPL Horizons' },
     };
   }

@@ -101,6 +101,39 @@ export function linkBudget(distM, clearanceDeg, config = DEFAULT_COMMS_CONFIG) {
   return { eirpDbw, fspl, grazing, cn0, ebn0, margin, maxRateBps, budgetRateBps, rateLimitedBy, radio };
 }
 
+/**
+ * Everything the link budget assumes, and what it leaves out, for reports.
+ * The result says whether a link could close on paper; it is not a DSN booking
+ * and not an operational guarantee.
+ */
+export function linkAssumptions(config = DEFAULT_COMMS_CONFIG) {
+  const radio = RADIO_PRESETS[config.preset] ?? RADIO_PRESETS.s_mga;
+  return {
+    kind: 'theoretical link budget (free-space path, first-order)',
+    radio: radio.label,
+    frequencyHz: radio.freqHz,
+    transmitPowerW: radio.txPowerW,
+    landerAntennaGainDbi: radio.txGainDbi,
+    groundStation: `DSN 34 m dish: gain ${radio.ground.gainDbi} dBi, system noise ${radio.ground.tsysK} K`,
+    miscLossesDb: config.miscLossDb,
+    dataRateBps: config.dataRateBps,
+    requiredEbN0Db: config.requiredEbN0Db,
+    requiredMarginDb: config.targetMarginDb,
+    earthClearanceDeg: config.minClearanceDeg,
+    grazingLoss: `0 dB above ${config.minClearanceDeg}° clearance, up to 6 dB at grazing`,
+    dsnElevationMaskDeg: config.dsnMinElDeg,
+    stationVisibility: 'geometry only: the Moon above the mask at Goldstone, Madrid or Canberra',
+    notModelled: [
+      'DSN scheduling and availability (antenna time is booked separately)',
+      'antenna pointing error beyond the fixed miscellaneous loss',
+      'Earth atmosphere and rain attenuation at the ground station',
+      'Doppler and frequency acquisition',
+      'hardware temperature and ageing',
+      'relay satellites',
+    ],
+  };
+}
+
 const dsnCache = new Map();
 /** Moon elevation at each DSN complex. Cached per millisecond timestamp. */
 export function dsnVisibility(ms, minElDeg = DEFAULT_COMMS_CONFIG.dsnMinElDeg) {

@@ -5,7 +5,7 @@
 import { enuBasis } from './geo.js';
 import { moonFixedState, topocentric } from './ephemeris.js';
 import { computeHorizon, computeSiteHorizon, horizonAt } from './horizon.js';
-import { DEFAULT_POWER_CONFIG, solarPower } from './power.js';
+import { DEFAULT_POWER_CONFIG, simulateBattery, solarPower } from './power.js';
 import {
   DEFAULT_COMMS_CONFIG,
   dsnVisibility,
@@ -97,7 +97,7 @@ export function evaluate(ms, ctx, config = DEFAULT_CONFIG, { withDsn = true } = 
     }
     if (!dsnAny) {
       commsStatus = 'no-go';
-      commsReasons.push('No DSN complex has the Moon above 10°');
+      commsReasons.push(`No DSN complex has the Moon above ${config.comms.dsnMinElDeg}°`);
     }
     if (link.margin < 0) {
       commsStatus = 'no-go';
@@ -125,6 +125,18 @@ export function evaluate(ms, ctx, config = DEFAULT_CONFIG, { withDsn = true } = 
     link,
     dsn,
     dsnAny,
+    // Three different questions, kept apart (see linkBudget):
+    //  lineOfSight:  Earth's centre is above the local terrain (geometry only);
+    //  stationSees:  a DSN complex has the Moon above its elevation mask (geometry only,
+    //                not a booking: DSN time is scheduled separately and is not modelled);
+    //  linkCloses:   the link budget closes at the chosen data rate under the stated
+    //                assumptions (a paper calculation, not a guarantee).
+    comms: {
+      lineOfSight: los,
+      stationSees: withDsn ? dsnAny : null,
+      linkCloses: los && link.margin >= 0,
+      scheduled: null,
+    },
     commsStatus,
     commsReasons,
     powerStatus,
@@ -215,6 +227,12 @@ export function scan(ctx, { startMs, endMs, stepMs = 20 * 60000 }, config = DEFA
     maxDrawdownWh = Math.max(maxDrawdownWh, peak - cumulative);
   }
   const mean = (arr) => arr.reduce((a, b) => a + b, 0) / arr.length;
+  const pc = { ...DEFAULT_POWER_CONFIG, ...config.power };
+  const battery = simulateBattery(watts, stepH, { loadW: pc.loadW, chargeEff: pc.chargeEff, dischargeEff: pc.dischargeEff });
+  // A battery of a chosen size: state of charge, time below reserve, time empty.
+  const sim = pc.batteryWh > 0
+    ? (({ socWh, ...rest }) => rest)(simulateBattery(watts, stepH, { loadW: pc.loadW, capacityWh: pc.batteryWh, reserveFrac: pc.reserveFrac, chargeEff: pc.chargeEff, dischargeEff: pc.dischargeEff }))
+    : null;
   const dark = longestGap(times, lit, stepMs);
   const blackout = longestGap(times, dte, stepMs);
   const hidden = longestGap(times, los, stepMs);
@@ -228,7 +246,12 @@ export function scan(ctx, { startMs, endMs, stepMs = 20 * 60000 }, config = DEFA
     minSunEl: Math.min(...sunEl),
     longestDarkH: dark.hours,
     longestDarkOpenEnded: dark.openEnded,
-    batteryKWh: maxDrawdownWh / 1000,
+    // Battery to carry the load through the worst stretch, counting charge and
+    // discharge losses (config.power.chargeEff / dischargeEff). An energy estimate,
+    // not a battery design. batteryKWhNoLosses is the bare energy deficit.
+    batteryKWh: battery.neededWh / 1000,
+    batteryKWhNoLosses: maxDrawdownWh / 1000,
+    batterySim: sim,
     // The deficit is cut off by the window edge: the true battery need may be larger.
     batteryOpenEnded: maxDrawdownWh > 0 && (watts[0] < config.power.loadW || watts[n - 1] < config.power.loadW),
     earthVisibleFraction: mean(visible),

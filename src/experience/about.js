@@ -33,7 +33,7 @@ export function openAbout({ onVideo } = {}) {
           <li><b>NASA Deep Space Network</b> station locations for the radio-link check.</li>
           <li>Sun and Earth positions from the astronomy-engine library with the IAU lunar rotation model, <b>checked against NASA JPL Horizons</b>.</li>
         </ul></section>
-        <section><h3>How we know it’s right</h3><p>48 checks against NASA JPL Horizons (worst difference about 0.005°), the Sun’s height at five Apollo landings within 0.35° of the mission reports, and sunsets at Blue Ghost, Chandrayaan-3 and SLIM on the days their teams reported. Every site’s skyline comes from NASA LOLA terrain.</p>
+        <section><h3>How we know it’s right</h3><p>154 checks against NASA JPL Horizons (worst difference about 0.007°), the Sun’s height at five Apollo landings within 0.35° of the mission reports, and sunsets at Blue Ghost, Chandrayaan-3 and SLIM on the days their teams reported. Every site’s skyline comes from NASA LOLA terrain.</p>
           <button type="button" class="xp-chip" data-v="trust">See the full checks, data and sources</button></section>
         <section><h3>Honest limits</h3><p>Real NASA LOLA terrain covers every site: 20 m around the main south-polar sites, 240 m elsewhere near the south pole and about 1.9 km for the rest of the Moon. A ridge-top value can still shift by several percentage points within a few hundred metres, so use the landing-area check. The GO / GO WITH CARE / NO GO lights use our own rules of thumb, not a NASA standard. In the 3D view, Earth is drawn closer and smaller than it really is.</p></section>
         ${team}

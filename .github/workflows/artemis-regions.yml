@@ -64,4 +64,4 @@ jobs:
           git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
           git add public/data/artemis_regions.geojson
           git commit -m "Add Artemis III candidate region outlines (USGS, from LROC QuickMap)" || echo "Nothing changed"
-          git pull --rebase -q origin main && git push
+          git pull --rebase -q origin "$GITHUB_REF_NAME" && git push

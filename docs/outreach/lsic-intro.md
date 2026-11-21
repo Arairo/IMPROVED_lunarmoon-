@@ -11,7 +11,7 @@ site and date window, it shows when the Sun and Earth are above the real LOLA
 skyline (20 m terrain near the Artemis III regions), the solar power,
 battery need and DSN link that follow, and how to fly there.
 
-We have checked it against independent references: JPL Horizons (0.005°),
+We have checked it against independent references: JPL Horizons (0.007°),
 NASA Goddard's illumination maps (r = 0.92), five Apollo landings, flown CLPS
 and international missions, and a real LROC NAC mosaic of the Peak Near Cabeus
 B region. Everything is open: https://arairo.github.io/IMPROVED_lunarmoon-/,

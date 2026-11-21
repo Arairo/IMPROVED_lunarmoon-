@@ -8,7 +8,7 @@ is automated, so you can re-run it with the tests or a GitHub workflow.
 
 | What | Against | Result | Re-run |
 |---|---|---|---|
-| Sun and Earth positions seen from the surface | NASA JPL Horizons, 48 site/time pairs (8 sites × 3 dates × Sun and Earth) | Worst elevation difference **0.005°**, median 0.001°, worst azimuth 0.02° (the Sun's disk is 0.53° wide) | *Validate against JPL Horizons* workflow; `public/data/validation.json` |
+| Sun and Earth positions seen from the surface | NASA JPL Horizons, 154 site/time pairs (11 sites × 7 dates from 1969 to 2030 × Sun and Earth; widened from 48 on 21 Nov 2026) | Worst elevation difference **0.007°** (0.0067°, Sun at Apollo 11 in 1969), median 0.001°, worst azimuth 0.02° (the Sun's disk is 0.53° wide) | *Validate against JPL Horizons* workflow; `public/data/validation.json` |
 | Sun height at landing | Five Apollo landings (mission reports) | All within **0.35°**: Apollo 11 −0.10°, 12 +0.04°, 14 +0.04°, 15 −0.18°, 17 +0.35° | `npm test` (test/flown.spec.js) |
 | Local sunset | Blue Ghost M1, Chandrayaan-3, SLIM (dates the teams reported) | Within **0.4 days** for all three | `npm test` |
 | Year-long sunlight map, south pole | NASA Goddard PGDA average visibility, 120 m (Mazarico et al. method) | Correlation **r = 0.92**, mean difference 4.2 percentage points over 24,344 cells. Ours averages 34.4% vs PGDA 31.5%: about 3 points sunnier. The map comes from `tools/build_map_layers.mjs` (skyline in 72 directions); it has not been rebuilt with the ridge-crest refinement below, which is expected to lower it | *Add 20 m terrain and check against NASA PGDA* workflow; `public/data/pgda_check.json` |
@@ -26,15 +26,19 @@ How big each source of error is, and what it does to the answers.
 
 | Source | Size | Effect on the answer |
 |---|---|---|
-| Ephemeris (astronomy-engine, IAU lunar rotation) | ≤ 0.005° | None you can see: 1/100 of the Sun's width. |
+| Ephemeris (astronomy-engine, IAU lunar rotation) | ≤ 0.007° | None you can see: 1/100 of the Sun's width. |
 | Skyline sampling (ray steps, 2° azimuth storage) | Up to 0.9° on one skyline; typically under 0.2° | Yearly sunlight share within **0.2 points**, Earth within **0.1 points** of a 4× finer computation on the same terrain (section 3). Before 21 Nov 2026 (no crest refinement) up to 2.8 points too sunny. |
 | Terrain resolution: 240 m / 1 km grids | Ridges and crests are smoothed by tens of metres | At crests, sunlight shares can be **10–20 points too high** (ridge: 74% at 240 m vs 64% at 20 m). Craters and flat ground change by under 1 point. This is the dominant error, which is why we use 20 m tiles near the main south-polar sites and the Artemis III regions. |
 | Terrain resolution: 20 m tiles | LOLA tracks are interpolated between shots; NASA's 5 m products quote 0.3–0.5 m RMS height error | Matters only within a few hundred metres of where the Sun or Earth grazes the skyline. |
 | Sun as a disk vs a point | The Sun is 0.53° wide | We count "Sun up" when any part of the disk is up (window summaries) or its centre (year maps). The two differ by a few points at grazing sites. NASA PGDA reports the visible fraction of the disk. |
 | Mast height | 2 m by default (settings) | Matters only at grazing sites, where a taller mast sees over nearby rises; change it in the spacecraft settings to test. |
 | Time sampling | 20 min to 4 h steps by window length; 6 h for the year maps | Event times (sunrise, Earthset) are good to about half a step; the Lumi "when is sunset" search refines to ~30 s. |
+| Energy and battery sums | Rectangle sums at the window's time step | Against 5-minute sampling: energy within 0.1% at 30-minute steps and 0.5% at 4-hour steps; battery within 1% (`test/models.spec.js`). |
+| Battery model | Constant load (120 W default), 95% charge and 95% discharge efficiency (assumed, settable) | "Battery needed" is the deepest energy shortfall including those losses, about 5% more than the bare deficit. No temperature, ageing, voltage or depth-of-discharge limits: an energy estimate, not a battery design. A battery of a chosen size can be simulated (`batteryWh`): state of charge, hours below reserve, hours empty. |
+| Solar array | 2 m², 29% cells, mast-mounted and turning to face the Sun (defaults, settable) | Beginning-of-life efficiency; no temperature, dust or ageing losses, so power reads high for an old or hot array. |
+| Radio link | First-order budget: free-space loss, fixed 2 dB other losses, up to 6 dB at grazing | Says whether a link *could* close on paper. Pointing error, Earth weather at the station, Doppler and DSN scheduling are not modelled; "direct link" time is not a booking. |
 | Region centres | Artemis III regions are 20 × 20 km (Mons Mouton Plateau ~66 km) | A centre is one point. Lighting changes a lot within a region; test spots inside the outline. Example: the Malapert Massif centre sits on a ~4° slope, so with 20 m terrain it sees the Sun 22% of 2027, against 38% in NASA's 120 m map and 43% with our coarser grid, which both smooth the slope away. |
-| Flight model (patched conics) | Δv within ~0.05–0.1 km/s of Apollo 11; launch time within a few hours | Good for comparing routes and dates; not for navigation. The low-energy route is a typical transfer, not an optimised trajectory. |
+| Flight model (patched conics) | Δv within ~0.05–0.1 km/s of Apollo 11; launch time within a few hours | Good for comparing routes and dates; not for navigation. The low-energy route is a typical transfer, not an optimised trajectory. Each burn is labelled *computed* (orbital mechanics), *assumed* (a fixed allowance: course corrections; low-energy launch energy and arrival speed) or *rule of thumb* (powered descent = perilune speed × 1.12 + 0.1 km/s, calibrated to Apollo 11). |
 
 ## 3. Horizon sampling convergence
 

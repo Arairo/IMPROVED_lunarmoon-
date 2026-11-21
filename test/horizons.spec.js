@@ -31,7 +31,7 @@ for (const c of CASES) {
 // Re-checked offline here so an engine change that moves any of them fails the tests.
 test('JPL Horizons scoreboard: all stored comparisons still agree (el 0.01°, az 0.05°)', () => {
   const v = JSON.parse(readFileSync(new URL('../public/data/validation.json', import.meta.url), 'utf8'));
-  assert.ok(v.rows.length >= 48, `${v.rows.length} stored comparisons`);
+  assert.ok(v.rows.length >= 154, `${v.rows.length} stored comparisons`);
   let worstEl = 0, worstAz = 0;
   for (const r of v.rows) {
     const site = SITES.find((s) => s.name === r.site);
@@ -45,7 +45,7 @@ test('JPL Horizons scoreboard: all stored comparisons still agree (el 0.01°, az
     assert.ok(dEl < 0.01, `${r.site} ${r.utc} ${r.body}: el ${ours.el.toFixed(4)} vs ${r.refEl}`);
     assert.ok(dAz < 0.05, `${r.site} ${r.utc} ${r.body}: az ${ours.az.toFixed(4)} vs ${r.refAz}`);
   }
-  assert.ok(worstEl < 0.006, `worst elevation difference ${worstEl.toFixed(4)}° (published: 0.005°)`);
+  assert.ok(worstEl < 0.0075, `worst elevation difference ${worstEl.toFixed(4)}° (published: 0.007°)`);
 });
 
 test('Time handling: UTC milliseconds in, smooth across year ends and leap days, invalid times refused', () => {

@@ -31,7 +31,7 @@ the Moon's declination, trans-lunar injection, lunar orbit insertion to
 equation. *Artemis III regions.* The nine candidate regions announced in
 October 2024 are included with outlines from the USGS release [4].
 
-**Validation:** Sun and Earth directions agree with JPL Horizons to 0.005° (48
+**Validation:** Sun and Earth directions agree with JPL Horizons to 0.007° (154
 cases). The Sun's elevation at five Apollo landings is within 0.35° of the
 mission reports, and local sunset at Blue Ghost M1, Chandrayaan-3 and SLIM is
 within 0.4 days of the dates the teams reported. Our 2027 sunlight map of the

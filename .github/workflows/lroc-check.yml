@@ -44,4 +44,4 @@ jobs:
           git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
           git add public/data/lroc_check.json public/data/lroc_check.png
           git commit -m "Update LROC shadow check" || echo "Nothing changed"
-          git pull --rebase -q origin main && git push
+          git pull --rebase -q origin "$GITHUB_REF_NAME" && git push

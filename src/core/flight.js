@@ -17,6 +17,9 @@ const AU_KM = 149597870.7;
 const DAY = 86400000;
 const G0 = 9.80665;
 const LUNAR_ORBIT_ALT = 100;
+// Powered-descent rule of thumb (see descentBudget).
+export const DESCENT_LOSS_FACTOR = 1.12;
+export const DESCENT_HOVER_KMS = 0.1;
 const PERILUNE_ALT = 15;
 
 export const LAUNCH_SITES = [
@@ -108,7 +111,11 @@ export function descentBudget() {
   const rLo = R_M + LUNAR_ORBIT_ALT, rPe = R_M + PERILUNE_ALT, a = (rLo + rPe) / 2;
   const doi = circ(MU_M, rLo) - visViva(MU_M, rLo, a);
   const vPeri = visViva(MU_M, rPe, a);
-  const powered = vPeri * 1.12 + 0.1; // ~12% gravity/steering loss, ~60 s hover
+  // Rule of thumb, not physics: the perilune speed plus ~12% for gravity and steering
+  // losses and 0.1 km/s (~60 s) of hover. Calibrated so Apollo 11's descent comes out
+  // at 2.01 km/s vs 2.06 flown (test/flight.spec.js). A real descent needs a guidance
+  // simulation with the lander's thrust and mass.
+  const powered = vPeri * DESCENT_LOSS_FACTOR + DESCENT_HOVER_KMS;
   const halfOrbitMs = (period(MU_M, a) / 2) * 1000;
   return { doi, powered, halfOrbitMs };
 }
@@ -186,8 +193,8 @@ export function planFlight(touchdownMs, opts = {}) {
     const c3 = -0.7; // km^2/s^2, typical for low-energy transfers
     tliDv = Math.sqrt(c3 + (2 * MU_E) / rp) - circ(MU_E, rp);
     vinf = 0.3; // arrives slowly: the Sun has already done the work
-    burns.push({ id: 'tli', label: 'Leave Earth (rocket upper stage)', dv: tliDv, byLander: false, t: tTli });
-    burns.push({ id: 'tcm', label: 'Course corrections on the way', dv: 0.05, byLander: true, t: tTli + 0.5 * coastDays * DAY });
+    burns.push({ id: 'tli', label: 'Leave Earth (rocket upper stage)', dv: tliDv, byLander: false, t: tTli, basis: 'assumed' });
+    burns.push({ id: 'tcm', label: 'Course corrections on the way', dv: 0.05, byLander: true, t: tTli + 0.5 * coastDays * DAY, basis: 'assumed' });
   } else {
     coastDays = Math.max(3, Math.min(4.95, d.coastDays));
     ra = apogeeForCoast(rp, rM, coastDays);
@@ -226,14 +233,15 @@ export function planFlight(touchdownMs, opts = {}) {
       burns.push({ id: 'raise', label: `Raise the orbit in ${loops.length} perigee burns`, dv: visViva(MU_E, rp, (rp + steps[steps.length - 1]) / 2) - visViva(MU_E, rp, (rp + ra0) / 2), byLander: true, t: tLaunch + 0.03 * DAY });
       burns.push({ id: 'tli', label: 'Final push towards the Moon', dv: vPeri - visViva(MU_E, rp, (rp + steps[steps.length - 1]) / 2), byLander: true, t: tTli });
     }
-    burns.push({ id: 'tcm', label: 'Course corrections on the way', dv: 0.03, byLander: true, t: tTli + 0.5 * coastDays * DAY });
+    burns.push({ id: 'tcm', label: 'Course corrections on the way', dv: 0.03, byLander: true, t: tTli + 0.5 * coastDays * DAY, basis: 'assumed' });
   }
   const geo = launchGeometry(site, tTli, moonAtLoi.r, (tTli - tLaunch) / 3600000, false);
-  burns.unshift({ id: 'ascent', label: `Launch into a ${geo.inclDeg.toFixed(0)}° parking orbit (Earth’s spin gives ${geo.spinBoostKms.toFixed(2)} km/s free)`, dv: geo.ascentDv, byLander: false, t: tLaunch });
+  burns.unshift({ id: 'ascent', label: `Launch into a ${geo.inclDeg.toFixed(0)}° parking orbit (Earth’s spin gives ${geo.spinBoostKms.toFixed(2)} km/s free)`, dv: geo.ascentDv, byLander: false, t: tLaunch, basis: 'assumed' });
   const loi = captureToCircular(vinf, rLo);
-  burns.push({ id: 'loi', label: route === 'phasing' ? 'Capture at the Moon and lower the orbit to 100 km' : 'Brake into a 100 km lunar orbit', dv: loi, byLander: true, t: tLoi });
+  burns.push({ id: 'loi', label: route === 'phasing' ? 'Capture at the Moon and lower the orbit to 100 km' : 'Brake into a 100 km lunar orbit', dv: loi, byLander: true, t: tLoi, basis: route === 'lowenergy' ? 'assumed' : 'computed' });
   burns.push({ id: 'doi', label: 'Lower the orbit’s low point to 15 km', dv: desc.doi, byLander: true, t: tDoi });
-  burns.push({ id: 'pdi', label: 'Powered descent and landing', dv: desc.powered, byLander: true, t: tPdi });
+  burns.push({ id: 'pdi', label: 'Powered descent and landing', dv: desc.powered, byLander: true, t: tPdi, basis: 'rule of thumb' });
+  for (const b of burns) b.basis ??= 'computed';
 
   const landerDv = burns.filter((b) => b.byLander).reduce((s, b) => s + b.dv, 0);
   const ve = (G0 * lander.isp) / 1000;
@@ -265,6 +273,27 @@ export function planFlight(touchdownMs, opts = {}) {
     burns, landerDv, totalDv, propKg, wetKg: lander.dryKg + propKg,
     doorToDoorDays: (touchdownMs - tLaunch) / DAY,
     phases, events,
+    model: flightModelInfo(route),
+  };
+}
+
+/** What the flight numbers are, and are not, for reports and the Flight tab. */
+export function flightModelInfo(route) {
+  return {
+    class: 'patched conics: two-body legs around Earth and the Moon joined at the Moon\u2019s sphere of influence',
+    status: 'preliminary planning estimate; not a navigation solution and not an optimised trajectory',
+    burnBasis: { computed: 'from orbital mechanics (vis-viva, capture from arrival speed)', assumed: 'a fixed allowance typical of flown missions', 'rule of thumb': 'calibrated to Apollo 11, not derived' },
+    assumptions: [
+      'impulsive burns (no finite-burn or changing-mass losses except in the descent rule of thumb)',
+      '100 km circular lunar orbit, descent from 15 km perilune',
+      `descent \u0394v = perilune speed \u00d7 ${DESCENT_LOSS_FACTOR} + ${DESCENT_HOVER_KMS} km/s`,
+      'propellant from the rocket equation with a 5% reserve',
+      `launch to a 200 km parking orbit: ${ASCENT_NO_SPIN} km/s including gravity and drag losses, minus the boost from Earth\u2019s spin at the pad`,
+      ...(route === 'lowenergy' ? ['low-energy route: launch energy C3 = \u22120.7 km\u00b2/s\u00b2 and 0.3 km/s arrival speed assumed; the drawn path is a sketch'] : []),
+      ...(route === 'phasing' ? ['phasing route: a fixed ladder of five apogees, as flown by Chandrayaan-3'] : []),
+    ],
+    notModelled: ['Sun and Earth pull during lunar orbit (third-body perturbations)', 'navigation errors and real correction burns', 'finite thrust and gravity turn during launch', 'launch vehicle performance limits'],
+    checkedAgainst: 'Apollo 11 burns (within ~0.05 km/s) and flown timelines of Apollo 11, IM-1, Chandrayaan-3, Blue Ghost M1 and SLIM (test/flight.spec.js, test/flown.spec.js)',
   };
 }
 

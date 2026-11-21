@@ -75,7 +75,7 @@ Type what you want: "best date at the ridge in 2027", "compare ridge and IM-2", 
 
 Everything below is in the app under **Help → Accuracy, data and sources**, written up with an error budget in [docs/VALIDATION.md](docs/VALIDATION.md), and the checks run as automated tests on every update.
 
-- **Checked against NASA JPL Horizons**: 48 Sun and Earth positions (8 sites × 3 dates): worst elevation difference **0.005°**, median 0.001° (the Sun's disk is 0.53° wide). Re-run any time with the *Validate against JPL Horizons* workflow; the scoreboard is published in the app.
+- **Checked against NASA JPL Horizons**: 154 Sun and Earth positions (11 sites including both poles' surroundings, the far side and the western limb × 7 dates from 1969 to 2030): worst elevation difference **0.007°**, median 0.001° (the Sun's disk is 0.53° wide). Re-run any time with the *Validate against JPL Horizons* workflow; the scoreboard is published in the app.
 - **Checked against what flew**: the Sun's height at the Apollo 11, 12, 14, 15 and 17 touchdowns is within **0.35°** of the mission reports, and our sunsets at Blue Ghost Mission 1, Chandrayaan-3 and SLIM fall on the days their teams reported.
 - **Checked against NASA Goddard's lighting maps**: our south-pole sunlight map matches NASA PGDA's average-illumination map with a correlation of **0.92** (Earth in view: **0.975**), average difference about 4 points, across 24,000 cells. At the Shackleton connecting ridge, 20 m terrain gives 64 % sunlight for 2027 (Sun's centre up); NASA's map, which counts a partly visible Sun over many years, says 68 %.
 - **Real terrain at every site**: NASA LOLA **20 m** terrain (PGDA, Barker et al. 2023) around the main south-polar sites, 240 m and 1 km grids around the pole, and the global LDEM_16 map (~1.9 km) everywhere else, ray-cast 300 km out in every direction. Each 20 m tile is checked against our 240 m grid before use (2–4 m average difference). A test checks the horizon over a synthetic mountain against the exact geometric answer.
@@ -111,7 +111,7 @@ npm run build    # production build into dist/
 
 GitHub Actions (Actions tab):
 - **Test and deploy to GitHub Pages**: tests every push and pull request; publishes only from `main`, and after a data workflow only if that run succeeded. See [SECURITY.md](SECURITY.md).
-- **Validate against JPL Horizons**: compares 48 positions and publishes the scoreboard into the app.
+- **Validate against JPL Horizons**: compares 154 positions and publishes the scoreboard into the app.
 - **Build global terrain**: downloads LOLA LDEM_16, packs it and rebuilds every site's skyline.
 - **Add 20 m terrain and check against NASA PGDA**: reads the 20 m tiles and NASA's lighting maps, checks them and publishes the comparison into the app.
 

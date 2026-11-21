@@ -28,8 +28,8 @@ must come with a source and a regression test.
   rotation model (pole right ascension and declination, prime meridian angle W, with the
   E1–E13 libration terms): `M = Rz(W) · Rx(90° − dec) · Rz(90° + ra)` (`eqjToMoonFixed`).
   This approximates the Mean Earth / polar axis frame that LOLA terrain uses. The combined
-  effect of the ephemeris and this frame is measured against JPL Horizons: worst 0.005° in
-  elevation over the stored comparisons (`test/horizons.spec.js`).
+  effect of the ephemeris and this frame is measured against JPL Horizons: worst 0.007° in
+  elevation over the 154 stored comparisons (`test/horizons.spec.js`).
 - **Axes:** x towards 0° N 0° E, z towards the north pole, y completing a right-handed set
   (towards 0° N 90° E).
 - **Topocentric:** east-north-up at the site (`enuBasis`). Elevation is measured from the
