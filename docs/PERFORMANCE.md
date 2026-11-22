@@ -64,6 +64,55 @@ for work that slicing already keeps off the critical path.
   by itself.
 - Without WebGL the 3D views show a notice and the app opens the 2D South-Pole Map.
 
+## Baseline and fixes, 22 November 2026 (second audit)
+
+`node test/perf-baseline.cjs http://localhost:4302/ out.json` on the production
+build (`vite preview`), cold cache, headless Chromium with software WebGL, on a
+shared 4-core cloud machine. Two profiles: **desktop** (1366 × 820, no throttling)
+and **phone** (390 × 844, CPU 4× slower, 9 Mbit/s down, 40 ms latency). Raw numbers:
+`docs/perf-baseline-2026-11-22.json`. "Usable" = the page's first real content (the
+Check verdict in Professional mode), timed inside the page from navigation start.
+
+| Page | Download | Usable (desktop / phone) | Layout shift (CLS) before → after |
+|---|---|---|---|
+| Landing | 4.8 MB, 20 requests | 1.3 s / 3.0 s | 0.39 → **0** |
+| Beginner | 4.8 MB | 0.4 s / 1.8 s | 0.25 → **0** |
+| Professional | 19.8 MB (incl. 2 20 m tiles, 0.45 MB) | 1.4–3.1 s / 3.1 s | 0.03 → 0.02 |
+| Terrain 3D from Professional | 23.4 MB | 1.3 → **0.7 s** / 18.2 → **3.9 s** | 0.45 → **0.03** |
+
+All pages are now within the "good" CLS limit (0.1). No third-party requests.
+
+What was fixed, and why:
+
+- **Layout shift.** The Professional app was laid out behind the landing intro and
+  the Beginner walk, and its start-up movement counted as shift. `public/early.js`
+  (a tiny plain script at the top of `<body>`, run before the first layout) now hides
+  the app until Professional mode is opened. Terrain 3D opened from Professional mode
+  first drew its full header (three rows) and then hid the duplicate buttons; the same
+  script hides them before the first layout, and the header now fits one row.
+- **Terrain 3D start.** The two terrain grids (14.5 MB) were downloaded one after the
+  other and every number waited for them: about 18 s on the phone profile. They now
+  download together in the background; listed sites show their numbers at once from
+  precomputed skylines, and the 3D terrain (and any custom point's skyline) follows.
+- **Measurement fix.** A first version of the script timed "usable" after the
+  browser's load event, which waits for every image (the 2.6 MB Moon texture): it
+  reported 11–12 s for Professional on the phone profile. Timed inside the page, the
+  verdict shows at about 3 s.
+
+Still to check on real hardware: the first hover after Start on the landing page
+takes 650–900 ms to redraw here (target under 200 ms). The click itself responds in
+under 60 ms; the cost is the next frame, which software WebGL plus the frosted-glass
+cards make slow. A real GPU is expected to be far faster, but this needs a phone.
+
+### Hosting decision
+
+**Stay on GitHub Pages.** The measured costs are downloads (terrain grids, imagery,
+CesiumJS) and drawing in the browser; a different static host serves the same bytes
+and would not change either. A fair Cloudflare Pages comparison needs the same build
+measured from Malaysia, Europe and North America, which this setup cannot do. If real
+users report slow loads, run `test/perf-baseline.cjs` against both hosts from those
+regions first (procedure in the second audit, section 9.3). See also `docs/HOSTING.md`.
+
 ## Not done yet
 
 - Real-device measurements (a mid-range Android phone, an iPhone, integrated

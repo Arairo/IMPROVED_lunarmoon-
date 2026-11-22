@@ -80,4 +80,22 @@ the 120 m map only, worst 16.5. Mixing resolutions exaggerated the differences.
 | 8.4 Two levels | Beginner and Professional use the same engine and the same rules (`verdicts` in `src/experience/walk.js`) |
 | 8.5–8.6 Design and accessibility | Report opens as a column beside the Moon (the view shrinks, nothing is covered); axe: 0 violations on eight views (`docs/ACCESSIBILITY.md`) |
 
-Phase 4 (performance) follows.
+## Phase 4: performance and hosting (22 Nov 2026)
+
+| Roadmap item | What was done | Evidence |
+|---|---|---|
+| 9.1 Repeatable baseline | `test/perf-baseline.cjs`: desktop and throttled-phone profiles, cold cache; transfer, FCP, LCP, CLS, time until usable, slowest click response, 20 m tile downloads, heap; conditions recorded | `docs/perf-baseline-2026-11-22.json`, `docs/PERFORMANCE.md` |
+| 9.2 Justified optimisations only | Layout shift (all pages now ≤ 0.04, landing and Beginner 0); Terrain 3D first numbers on the phone profile 18.2 s → 3.9 s (grids in parallel, precomputed skylines first) | same; Terrain 3D browser test 42/42 after the change |
+| 9.3 Hosting | Stay on GitHub Pages: the costs are downloads and in-browser drawing, which another static host would not change; a fair multi-region comparison is not possible from this setup | `docs/PERFORMANCE.md` "Hosting decision", `docs/HOSTING.md` |
+
+Open: real-device checks (the first hover after Start redraws slowly under software
+WebGL), and Core Web Vitals from real users in several regions.
+
+## Final checks (22 Nov 2026)
+
+| Command | Result |
+|---|---|
+| `npm test` | 117 passed |
+| `node test/smoke-e2e.cjs` (production build) | 13 of 13 |
+| `node test/browser-e2e.cjs …/planner.html` | 42 of 42 |
+| axe, WCAG 2.1 AA, eight views | 0 violations |
