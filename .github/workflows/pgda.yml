@@ -54,4 +54,5 @@ jobs:
           git add public/data/hires public/data/pgda_check.json src/data/precomputedHorizons.js src/data/precomputedHorizons.json public/data/precomputedHorizons.json public/data/manifest.json
           git commit -m "Add LOLA 20 m south-pole terrain and the NASA PGDA illumination check" || echo "Nothing changed"
           git pull --rebase
+          git pull --rebase -q origin "$GITHUB_REF_NAME"   # someone may have pushed meanwhile
           git push
