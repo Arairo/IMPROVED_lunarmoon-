@@ -76,6 +76,39 @@ const sub = (page, k) => page.$eval(`[data-sub="${k}"]`, (e) => e.textContent);
     return 'no .bin files';
   });
 
+  await check('Terrain 3D and back: site, date, step, settings and compare list are kept', async () => {
+    const { ctx, page, errors } = await open(browser, '#pro&id=a3-mp&t=2027-03-01T00:00Z');
+    await page.waitForFunction(() => /GO|CARE/.test(document.querySelector('[data-sub="check"]')?.textContent || ''), null, { timeout: 60000 });
+    await goStep(page, 1);
+    await page.$eval('[data-dt]', (i) => { i.value = '2027-06-15T12:00'; i.dispatchEvent(new Event('change', { bubbles: true })); });
+    await page.waitForFunction(() => /15 Jun 2027/.test(document.querySelector('[data-sub="date"]')?.textContent || ''), null, { timeout: 30000 });
+    await page.$eval('#settingsOpenBtn', (b) => b.click());
+    await page.$eval('#settingsForm', (f) => { f.loadW.value = '250'; f.requestSubmit(); });
+    await page.waitForTimeout(800);
+    await goStep(page, 2);
+    await page.getByRole('button', { name: /Add this plan to compare/ }).first().click();
+    await page.waitForTimeout(600);
+    const before = { site: await sub(page, 'site'), date: await sub(page, 'date'), compare: await page.$eval('#modeCompareBtn', (b) => b.textContent.replace(/\D+/g, '')) };
+    await goStep(page, 2);
+    // "See it up close" -> Terrain 3D, then its "Back to Professional" link.
+    await Promise.all([page.waitForURL(/planner\.html/, { timeout: 60000 }), page.$eval('[data-terrain]', (b) => b.click())]);
+    await page.waitForSelector('a.mode-link', { timeout: 60000 });
+    await Promise.all([page.waitForURL(/#pro/, { timeout: 60000 }), page.$eval('a.mode-link', (a) => a.click())]);
+    await page.waitForFunction(() => /15 Jun 2027/.test(document.querySelector('[data-sub="date"]')?.textContent || ''), null, { timeout: 60000 });
+    const after = { site: await sub(page, 'site'), date: await sub(page, 'date'), compare: await page.$eval('#modeCompareBtn', (b) => b.textContent.replace(/\D+/g, '')) };
+    const step = await page.$eval('[data-go][aria-current="step"]', (b) => b.dataset.go);
+    await page.$eval('#settingsOpenBtn', (b) => b.click());
+    const load = await page.$eval('#settingsForm', (f) => f.loadW.value);
+    assert(after.site === before.site, `site ${before.site} -> ${after.site}`);
+    assert(after.date === before.date, `date ${before.date} -> ${after.date}`);
+    assert(after.compare === before.compare && before.compare === '1', `compare ${before.compare} -> ${after.compare}`);
+    assert(step === '2', `step ${step}`);
+    assert(load === '250', `load ${load}`);
+    assert(!errors.length, errors.join(' | '));
+    await ctx.close();
+    return `${after.site} · ${after.date} · step ${Number(step) + 1} · compare ${after.compare} · load ${load} W`;
+  });
+
   await check('Pro mode: site, date, Check verdict, power and radio settings, compare, flight, exports', async () => {
     const { ctx, page, errors } = await open(browser, '#pro&id=ridge&t=2027-03-01T00:00Z');
     await page.waitForFunction(() => /GO|CARE/.test(document.querySelector('[data-sub="check"]')?.textContent || ''), null, { timeout: 60000 });

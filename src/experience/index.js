@@ -436,7 +436,15 @@ export function initExperience(api) {
     slipCompare: () => { app.cmpView = 'dates'; app.cmpDatesSite = null; switchMode('compare'); },
     compareBest: () => api.compareSites?.([app.site, ...best.spots.map((sp) => sp.r.site)]),
     copyLink: () => api.copyLink?.(),
-    terrain: () => { const a = document.querySelector('[data-x="terrain"]'); if (a) location.href = a.href; },
+    terrain: () => {
+      const a = document.querySelector('[data-x="terrain"]');
+      if (!a) return;
+      // Keep this tab's progress so "Back to Professional" (or the browser's Back
+      // button) returns to the same site, date, step and compare list.
+      api.saveSession?.();
+      history.replaceState(null, '', '#pro&resume=1');
+      location.href = a.href;
+    },
     flight: (route) => { api.switchSubView?.('flight'); return flight?.setRoute(route); },
     lumi: () => assistant.open(),
     look: (body) => getGlobe()?.lookAlong?.(body),
@@ -507,5 +515,7 @@ export function initExperience(api) {
       }
     },
     proTour, controlsCoach, setMode,
+    flowStep: () => flow.step(),
+    goStep: (i) => flow.go(i, { quiet: true }),
   };
 }

@@ -402,5 +402,5 @@ export function mountFlow({ app, setTime, switchMode, getBestSpots, actions }) {
   window.addEventListener('lsp-terrain', () => { keys.verdict = null; if (current === 2) renderVerdict(); });
 
   go(0, { quiet: true });
-  return { refresh, go, print: () => printReport(), renderBest: () => { if (current === 0) renderBest(); } };
+  return { refresh, go, step: () => current, print: () => printReport(), renderBest: () => { if (current === 0) renderBest(); } };
 }
