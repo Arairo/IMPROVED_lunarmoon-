@@ -87,7 +87,7 @@ async function main() {
   ].join('\n');
   console.log(out);
   const jsonAt = process.argv.indexOf('--json');
-  if (jsonAt > 0) fs.writeFileSync(process.argv[jsonAt + 1], JSON.stringify({ generated: new Date().toISOString(), worstEl, worstAz, medianEl, rows }, null, 1));
+  if (jsonAt > 0) fs.writeFileSync(process.argv[jsonAt + 1], JSON.stringify({ generated: new Date().toISOString(), commit: process.env.GITHUB_SHA || 'not recorded', worstEl, worstAz, medianEl, rows }, null, 1));
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) main().catch((e) => { console.error(e); process.exit(1); });

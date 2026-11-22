@@ -19,7 +19,7 @@ import { createGrid, createTerrain, computeHorizon } from '../src/core/horizon.j
 import { createGlobalGrid } from '../src/core/globalDem.js';
 import { moonFixedState } from '../src/core/ephemeris.js';
 import { visibleDiskFraction } from '../src/core/power.js';
-import { readGrid, readHiresTiles } from './lib/grids.mjs';
+import { readGrid, readHiresTiles, sourceCommit } from './lib/grids.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const dataDir = path.join(root, 'public/data');
@@ -114,6 +114,7 @@ for (const row of check.sites) {
 
 check.likeForLike = {
   generated: new Date().toISOString(),
+  commit: sourceCommit(),
   method: 'Same quantities as PGDA AVGVISIB: visible fraction of the solar disk; Earth counted when any part of its disk is above the terrain; averaged over an 18.6-year nutation cycle from 2009 (12-hour steps for the 5 km map, 3-hour steps at sites); 2 m mast. PGDA uses hourly steps and its own LOLA terrain at 60-240 m.',
   maps, sites: siteRows,
 };

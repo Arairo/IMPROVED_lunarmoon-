@@ -17,7 +17,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { createGrid, createTerrain, computeHorizon } from '../src/core/horizon.js';
 import { toSouthPolar } from '../src/core/geo.js';
-import { readGrid, writeTile } from './lib/grids.mjs';
+import { readGrid, writeTile, sourceCommit } from './lib/grids.mjs';
 import { createGlobalGrid } from '../src/core/globalDem.js';
 import { moonFixedState } from '../src/core/ephemeris.js';
 
@@ -202,6 +202,7 @@ for (const name of ['sun', 'earth']) {
 
 fs.writeFileSync(path.join(dataDir, 'pgda_check.json'), JSON.stringify({
   generated: new Date().toISOString(),
+  commit: sourceCommit(),
   note: `PGDA "average visibility" (Mazarico et al. 2011 method; product 201608) is a multi-year average of the visible fraction of the Sun's / Earth's disk at the surface. Ours is the share of ${layersMeta.year} with the disk centre above the skyline from a 2 m mast. Expect differences of several points; the comparison is about the pattern.`,
   products: illumMeta?.products ? Object.fromEntries(Object.entries(illumMeta.products).map(([k, v]) => [k, v.url])) : {},
   maps, sites: siteRows,

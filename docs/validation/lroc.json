@@ -1,0 +1,46 @@
+{
+ "schemaVersion": 1,
+ "kind": "terrain shadows vs photographs",
+ "applicationCommit": "not recorded",
+ "datasetVersion": "public/data/manifest.json sha256 0107d3c1922e6659be7d540faf555720073e02c5e0abee88f5f28ef7b799004f",
+ "validationDateUtc": "2026-11-21T13:57:42.893Z",
+ "reference": "LROC images M1260376212, M1260383231, M1260390268, M1260397299 (NAC_ROI_CABEUSPKLOB_P836S2912_20M), https://pds.lroc.im-ldi.com/data/LRO-L-LROC-5-RDR-V1.0/LROLRC_2001/DATA/BDR/NAC_ROI/CABEUSPKLOB/NAC_ROI_CABEUSPKLOB_P836S2912_20M.IMG",
+ "caseCount": 103587,
+ "sites": [
+  "a3-cb"
+ ],
+ "dates": [
+  "2017-09-18T12:15:45.682000Z",
+  "2017-09-18T14:12:44.682000Z",
+  "2017-09-18T16:10:01.682000Z",
+  "2017-09-18T18:07:12.682000Z"
+ ],
+ "configuration": {
+  "gridM": 40,
+  "areaKm": 16,
+  "threshold": "Otsu 9718.571968078613",
+  "method": "Photo: Otsu threshold on the 20 m mosaic, 40 m cells kept only when all four 20 m pixels agree. Prediction: Sun centre above the LOLA skyline 0.5 m above the ground at all four image times, skipped within the Sun radius of the skyline. Same comparison with and without the 20 m terrain tile.",
+  "note": "Run before the 20 m region tiles (22 Nov 2026) replaced the site tile here; re-run the \"Check shadows against an LROC photo\" workflow to refresh."
+ },
+ "metrics": {
+  "with20m": {
+   "agreementPct": 93.2,
+   "kappa": 0.865,
+   "pixels": 103587,
+   "litPredictedLitPhoto": 46701,
+   "falseLit": 7008,
+   "falseShadow": 35,
+   "darkDark": 49843
+  },
+  "with240m": {
+   "agreementPct": 88.6,
+   "kappa": 0.774,
+   "pixels": 103596,
+   "litPredictedLitPhoto": 46742,
+   "falseLit": 11831,
+   "falseShadow": 0,
+   "darkDark": 45023
+  }
+ },
+ "failedCases": []
+}

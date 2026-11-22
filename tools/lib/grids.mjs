@@ -3,6 +3,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import zlib from 'node:zlib';
+import { execSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { createGrid } from '../../src/core/horizon.js';
 import { deltaEncode, deltaDecode, TILE_EXT, TILE_ENCODING } from '../../src/core/tileCodec.js';
@@ -39,4 +40,10 @@ export function writeTile(dir, id, meta, heights) {
   fs.writeFileSync(path.join(dir, `${id}.json`), JSON.stringify(m, null, 1));
   fs.rmSync(path.join(dir, `${id}.bin`), { force: true });
   return { meta: m, bytes: packed.length };
+}
+
+/** Commit the data was made from: GITHUB_SHA in Actions, else the local checkout. */
+export function sourceCommit() {
+  if (process.env.GITHUB_SHA) return process.env.GITHUB_SHA;
+  try { return execSync('git rev-parse HEAD', { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim(); } catch { return 'not recorded'; }
 }

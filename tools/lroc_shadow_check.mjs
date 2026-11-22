@@ -15,7 +15,7 @@ import path from 'node:path';
 import { createGrid, createTerrain, rayHorizon } from '../src/core/horizon.js';
 import { createGlobalGrid } from '../src/core/globalDem.js';
 import { moonFixedState, topocentric } from '../src/core/ephemeris.js';
-import { readHiresTiles } from './lib/grids.mjs';
+import { readHiresTiles, sourceCommit } from './lib/grids.mjs';
 
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
 const dir = process.argv[2] || 'data-raw/lroc';
@@ -108,6 +108,7 @@ fs.writeFileSync(path.join(dir, 'panel.json'), JSON.stringify({ width: W, height
 
 fs.writeFileSync(path.join(data, 'lroc_check.json'), JSON.stringify({
   generated: new Date().toISOString(),
+  commit: sourceCommit(),
   product: meta.product, url: meta.url, images: meta.images, imageTimes: meta.imageTimes,
   site: meta.site, region: 'Peak Near Cabeus B (Artemis III candidate region)',
   gridM: cell, areaKm: (2 * half) / 1000, otsuThreshold: thr,
