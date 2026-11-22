@@ -109,10 +109,32 @@ const DATASETS = [
 
 const sha256 = (f) => crypto.createHash('sha256').update(fs.readFileSync(path.join(dataDir, f))).digest('hex');
 const listed = new Set(['manifest.json']);
-const datasets = DATASETS.map((d) => ({
-  ...d,
-  files: d.files.filter((f) => fs.existsSync(path.join(dataDir, f))).map((f) => { listed.add(f); return { path: `data/${f}`, bytes: fs.statSync(path.join(dataDir, f)).size, sha256: sha256(f) }; }),
-}));
+// Coordinate reference and datums (second audit 7.1). All grids use the IAU Moon
+// sphere of radius 1737.4 km (the LOLA reference); there is no ellipsoid.
+const FRAME_INFO = {
+  crs: 'Moon body-fixed (IAU rotation model, mean Earth / polar axis), planetocentric latitude, east-positive longitude',
+  horizontalDatum: 'IAU Moon sphere, radius 1737.4 km',
+  verticalDatum: 'heights above the 1737.4 km reference sphere (metres)',
+};
+// When and from which code a dataset was made: taken from the dataset's own metadata
+// where its generator records it ("generated" / "commit"), never guessed.
+const provenanceOf = (files) => {
+  for (const f of files) {
+    if (!/\.json$/.test(f) || !fs.existsSync(path.join(dataDir, f))) continue;
+    try {
+      const j = read(f);
+      if (j && !Array.isArray(j) && (j.generated || j.commit)) return { generated: j.generated ?? 'not recorded', pipelineCommit: j.commit ?? 'not recorded' };
+    } catch {}
+  }
+  return { generated: 'not recorded', pipelineCommit: 'not recorded' };
+};
+const datasets = DATASETS.map((d) => {
+  const files = d.files.filter((f) => fs.existsSync(path.join(dataDir, f))).map((f) => { listed.add(f); return { path: `data/${f}`, bytes: fs.statSync(path.join(dataDir, f)).size, sha256: sha256(f) }; });
+  // Content version: changes whenever any file of the dataset changes.
+  const version = crypto.createHash('sha256').update(files.map((x) => x.sha256).join('')).digest('hex').slice(0, 12);
+  const geo = d.id === 'imagery' || d.id === 'site-list' || d.id === 'validation-results' ? { crs: FRAME_INFO.crs, horizontalDatum: FRAME_INFO.horizontalDatum, verticalDatum: 'not applicable' } : FRAME_INFO;
+  return { id: d.id, version, ...d, ...geo, ...provenanceOf(d.files), files };
+});
 const all = [];
 const walk = (dir) => { for (const e of fs.readdirSync(dir, { withFileTypes: true })) { const p = path.join(dir, e.name); if (e.isDirectory()) walk(p); else all.push(path.relative(dataDir, p).split(path.sep).join('/')); } };
 walk(dataDir);

@@ -130,7 +130,7 @@ for (const id of windowIds) {
   tiles.push(createGrid(gmetaOut, out));
   console.log(`${s.id.padEnd(16)} 20 m tile ${n}x${n} (${unit}, variant ${best.v}): vs ${best.ref} grid mean |diff| ${best.mae.toFixed(1)} m, bias ${best.bias.toFixed(1)} m, ${filled} gaps filled`);
 }
-fs.writeFileSync(path.join(hiresDir, 'index.json'), JSON.stringify({ note: 'kind "region": 16 km grid over the Artemis III candidate regions (regions = their codes); kind "site": around a south-polar site outside them. Packed: see src/core/tileCodec.js.', source: 'NASA GSFC PGDA LDEM_80S_20MPP_ADJ (Barker et al. 2023)', url: 'https://pgda.gsfc.nasa.gov/products/90', tiles: index }, null, 1));
+fs.writeFileSync(path.join(hiresDir, 'index.json'), JSON.stringify({ generated: new Date().toISOString(), commit: sourceCommit(), note: 'kind "region": 16 km grid over the Artemis III candidate regions (regions = their codes); kind "site": around a south-polar site outside them. Packed: see src/core/tileCodec.js.', source: 'NASA GSFC PGDA LDEM_80S_20MPP_ADJ (Barker et al. 2023)', url: 'https://pgda.gsfc.nasa.gov/products/90', tiles: index }, null, 1));
 
 // ---- 2. Sunlight per site with and without the 20 m tiles -----------------
 const t0 = Date.UTC(2027, 0, 1), t1 = Date.UTC(2028, 0, 1);

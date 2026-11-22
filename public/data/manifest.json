@@ -4,6 +4,7 @@
  "datasets": [
   {
    "id": "lola-sp-240m",
+   "version": "2ee768236160",
    "title": "LOLA south-polar terrain, 240 m",
    "files": [
     {
@@ -26,10 +27,16 @@
    "noData": -32768,
    "generator": "tools/build_polar_dem.py (Build global terrain workflow)",
    "licence": "NASA data: no US copyright (public domain); credit the source",
-   "limitations": "Interpolated between LOLA tracks; crests smoothed by tens of metres."
+   "limitations": "Interpolated between LOLA tracks; crests smoothed by tens of metres.",
+   "crs": "Moon body-fixed (IAU rotation model, mean Earth / polar axis), planetocentric latitude, east-positive longitude",
+   "horizontalDatum": "IAU Moon sphere, radius 1737.4 km",
+   "verticalDatum": "heights above the 1737.4 km reference sphere (metres)",
+   "generated": "not recorded",
+   "pipelineCommit": "not recorded"
   },
   {
    "id": "lola-sp-1km",
+   "version": "5213919a14b8",
    "title": "LOLA south-polar terrain, 1 km",
    "files": [
     {
@@ -52,10 +59,16 @@
    "noData": -32768,
    "generator": "tools/build_polar_dem.py",
    "licence": "NASA data: no US copyright (public domain); credit the source",
-   "limitations": "Used beyond the 240 m grid only."
+   "limitations": "Used beyond the 240 m grid only.",
+   "crs": "Moon body-fixed (IAU rotation model, mean Earth / polar axis), planetocentric latitude, east-positive longitude",
+   "horizontalDatum": "IAU Moon sphere, radius 1737.4 km",
+   "verticalDatum": "heights above the 1737.4 km reference sphere (metres)",
+   "generated": "not recorded",
+   "pipelineCommit": "not recorded"
   },
   {
    "id": "lola-global-ldem16",
+   "version": "8540cc4504eb",
    "title": "LOLA whole-Moon terrain",
    "files": [
     {
@@ -77,10 +90,16 @@
    "units": "int16 little-endian, heights in metres above the 1737.4 km LOLA reference sphere",
    "generator": "tools/build_global_dem.mjs",
    "licence": "NASA data: no US copyright (public domain); credit the source",
-   "limitations": "Block-averaged; site skylines north of 80° S are built from the full LDEM_16 (1.9 km) in CI instead."
+   "limitations": "Block-averaged; site skylines north of 80° S are built from the full LDEM_16 (1.9 km) in CI instead.",
+   "crs": "Moon body-fixed (IAU rotation model, mean Earth / polar axis), planetocentric latitude, east-positive longitude",
+   "horizontalDatum": "IAU Moon sphere, radius 1737.4 km",
+   "verticalDatum": "heights above the 1737.4 km reference sphere (metres)",
+   "generated": "not recorded",
+   "pipelineCommit": "not recorded"
   },
   {
    "id": "lola-pgda-20m-tiles",
+   "version": "8e4950181180",
    "title": "LOLA 20 m tiles: Artemis III candidate regions and south-polar sites",
    "files": [
     {
@@ -858,10 +877,16 @@
    "noData": -32768,
    "generator": "tools/build_hires_terrain.mjs (Add 20 m terrain and check against NASA PGDA workflow)",
    "licence": "NASA data: no US copyright (public domain); credit the source",
-   "limitations": "Each tile checked against the 240 m grid: mean height difference 2–23.9 m; tiles failing a 60 m check (100 m against the 1 km grid) are rejected."
+   "limitations": "Each tile checked against the 240 m grid: mean height difference 2–23.9 m; tiles failing a 60 m check (100 m against the 1 km grid) are rejected.",
+   "crs": "Moon body-fixed (IAU rotation model, mean Earth / polar axis), planetocentric latitude, east-positive longitude",
+   "horizontalDatum": "IAU Moon sphere, radius 1737.4 km",
+   "verticalDatum": "heights above the 1737.4 km reference sphere (metres)",
+   "generated": "not recorded",
+   "pipelineCommit": "not recorded"
   },
   {
    "id": "compact-south-pole",
+   "version": "8411977170b5",
    "title": "Compact south-polar terrain and lighting (5 km / 2 km)",
    "files": [
     {
@@ -883,10 +908,16 @@
    "units": "heights in metres; lighting shares × 1000",
    "generator": "build scripts in tools/",
    "licence": "MIT (this project), derived from NASA data",
-   "limitations": "Used only before the detailed terrain loads; results from it are labelled \"approximate\"."
+   "limitations": "Used only before the detailed terrain loads; results from it are labelled \"approximate\".",
+   "crs": "Moon body-fixed (IAU rotation model, mean Earth / polar axis), planetocentric latitude, east-positive longitude",
+   "horizontalDatum": "IAU Moon sphere, radius 1737.4 km",
+   "verticalDatum": "heights above the 1737.4 km reference sphere (metres)",
+   "generated": "not recorded",
+   "pipelineCommit": "not recorded"
   },
   {
    "id": "site-skylines",
+   "version": "d453cff1b398",
    "title": "Precomputed site skylines",
    "files": [
     {
@@ -903,10 +934,16 @@
    "units": "degrees",
    "generator": "tools/build_site_horizons.mjs",
    "licence": "MIT (this project), derived from NASA data",
-   "limitations": "See docs/VALIDATION.md section 3 for sampling convergence."
+   "limitations": "See docs/VALIDATION.md section 3 for sampling convergence.",
+   "crs": "Moon body-fixed (IAU rotation model, mean Earth / polar axis), planetocentric latitude, east-positive longitude",
+   "horizontalDatum": "IAU Moon sphere, radius 1737.4 km",
+   "verticalDatum": "heights above the 1737.4 km reference sphere (metres)",
+   "generated": "not recorded",
+   "pipelineCommit": "not recorded"
   },
   {
    "id": "map-layers-2027",
+   "version": "4deb6b7e8cde",
    "title": "Sunlight and Earth-visibility map layers, 2027",
    "files": [
     {
@@ -938,10 +975,16 @@
    "units": "uint8 = percent × 2; skylines int8 × 0.25°",
    "generator": "tools/build_map_layers.mjs",
    "licence": "MIT (this project), derived from NASA data",
-   "limitations": "Skyline in 72 directions (5° apart) with the app ray-caster; 6-hour sampling; disk centre, not disk fraction."
+   "limitations": "Skyline in 72 directions (5° apart) with the app ray-caster; 6-hour sampling; disk centre, not disk fraction.",
+   "crs": "Moon body-fixed (IAU rotation model, mean Earth / polar axis), planetocentric latitude, east-positive longitude",
+   "horizontalDatum": "IAU Moon sphere, radius 1737.4 km",
+   "verticalDatum": "heights above the 1737.4 km reference sphere (metres)",
+   "generated": "not recorded",
+   "pipelineCommit": "not recorded"
   },
   {
    "id": "sunlight-map-1km-2027",
+   "version": "a6f8e0cc6291",
    "title": "South-pole sunlight and Earth-visibility map, 1 km, 2027",
    "files": [
     {
@@ -958,10 +1001,16 @@
    "units": "shares × 1000",
    "generator": "tools/illumination_map.mjs",
    "licence": "MIT (this project), derived from NASA data",
-   "limitations": "Average visible fraction of the solar disk, 3-hour sampling; drives the best-spot search and the Beginner sunlight map."
+   "limitations": "Average visible fraction of the solar disk, 3-hour sampling; drives the best-spot search and the Beginner sunlight map.",
+   "crs": "Moon body-fixed (IAU rotation model, mean Earth / polar axis), planetocentric latitude, east-positive longitude",
+   "horizontalDatum": "IAU Moon sphere, radius 1737.4 km",
+   "verticalDatum": "heights above the 1737.4 km reference sphere (metres)",
+   "generated": "not recorded",
+   "pipelineCommit": "not recorded"
   },
   {
    "id": "artemis-iii-regions",
+   "version": "8d1f9a7e366d",
    "title": "Artemis III candidate landing regions",
    "files": [
     {
@@ -978,10 +1027,16 @@
    "units": "degrees",
    "generator": "Artemis III regions workflow",
    "licence": "USGS data: public domain",
-   "limitations": "Outlines as released in Oct 2024."
+   "limitations": "Outlines as released in Oct 2024.",
+   "crs": "Moon body-fixed (IAU rotation model, mean Earth / polar axis), planetocentric latitude, east-positive longitude",
+   "horizontalDatum": "IAU Moon sphere, radius 1737.4 km",
+   "verticalDatum": "heights above the 1737.4 km reference sphere (metres)",
+   "generated": "not recorded",
+   "pipelineCommit": "not recorded"
   },
   {
    "id": "validation-results",
+   "version": "17f82593f747",
    "title": "Validation results",
    "files": [
     {
@@ -1013,10 +1068,16 @@
    "units": "—",
    "generator": "tools/validate-horizons.mjs, tools/build_hires_terrain.mjs, tools/refresh_pgda_site_shares.mjs, tools/lroc_shadow_check.mjs",
    "licence": "MIT (this project), derived from NASA data",
-   "limitations": "Each file records when it was generated."
+   "limitations": "Each file records when it was generated.",
+   "crs": "Moon body-fixed (IAU rotation model, mean Earth / polar axis), planetocentric latitude, east-positive longitude",
+   "horizontalDatum": "IAU Moon sphere, radius 1737.4 km",
+   "verticalDatum": "not applicable",
+   "generated": "2026-11-21T13:51:16.353Z",
+   "pipelineCommit": "not recorded"
   },
   {
    "id": "imagery",
+   "version": "0713b7e61315",
    "title": "Moon and Earth imagery (display only)",
    "files": [
     {
@@ -1063,10 +1124,16 @@
    "units": "JPEG",
    "generator": "tools/build_imagery.py (Moon), tools/make_earth_2k.py (2k Earth)",
    "licence": "NASA data: no US copyright (public domain); credit the source",
-   "limitations": "Pictures only; no numbers are read from them."
+   "limitations": "Pictures only; no numbers are read from them.",
+   "crs": "Moon body-fixed (IAU rotation model, mean Earth / polar axis), planetocentric latitude, east-positive longitude",
+   "horizontalDatum": "IAU Moon sphere, radius 1737.4 km",
+   "verticalDatum": "not applicable",
+   "generated": "not recorded",
+   "pipelineCommit": "not recorded"
   },
   {
    "id": "site-list",
+   "version": "dc9b97454805",
    "title": "Site list",
    "files": [
     {
@@ -1083,7 +1150,12 @@
    "units": "degrees",
    "generator": "hand-edited (src/data/sites.json)",
    "licence": "MIT (this project), derived from NASA data",
-   "limitations": "Region centres are single points."
+   "limitations": "Region centres are single points.",
+   "crs": "Moon body-fixed (IAU rotation model, mean Earth / polar axis), planetocentric latitude, east-positive longitude",
+   "horizontalDatum": "IAU Moon sphere, radius 1737.4 km",
+   "verticalDatum": "not applicable",
+   "generated": "not recorded",
+   "pipelineCommit": "not recorded"
   }
  ],
  "unlistedFiles": []
