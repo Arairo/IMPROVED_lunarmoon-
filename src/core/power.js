@@ -54,14 +54,20 @@ export const DEFAULT_POWER_CONFIG = {
  * A planning estimate, not a battery design: no temperature, ageing or voltage limits.
  */
 export function simulateBattery(watts, stepH, { loadW, capacityWh = Infinity, initialFrac = 1, reserveFrac = 0, chargeEff = 0.95, dischargeEff = 0.95, maxChargeW = Infinity, maxDischargeW = Infinity }) {
-  if (!(stepH > 0) || !(loadW >= 0)) throw new RangeError('simulateBattery: stepH must be > 0 and loadW >= 0');
+  // stepH: hours per sample, one number for all, or one per sample (the last step of
+  // a window can be shorter: see scan in analysis.js).
+  const perStep = typeof stepH !== 'number';
+  if (perStep ? (stepH?.length !== watts.length || !Array.prototype.every.call(stepH, (h) => h > 0)) : !(stepH > 0)) throw new RangeError('simulateBattery: stepH must be > 0 (a number, or one per sample)');
+  if (!(loadW >= 0)) throw new RangeError('simulateBattery: loadW must be >= 0');
   if (!(chargeEff > 0 && chargeEff <= 1 && dischargeEff > 0 && dischargeEff <= 1)) throw new RangeError('simulateBattery: efficiencies must be in (0, 1]');
   const finite = Number.isFinite(capacityWh);
   let soc = finite ? capacityWh * initialFrac : 0; // infinite: track drawdown from a running peak
   let peak = soc, needWh = 0, minSoc = soc, unmetWh = 0, spilledWh = 0, belowReserveH = 0, emptyH = 0;
   const socWh = new Float32Array(watts.length);
   const reserveWh = finite ? capacityWh * reserveFrac : 0;
+  const stepAll = stepH;
   for (let i = 0; i < watts.length; i++) {
+    const stepH = perStep ? stepAll[i] : stepAll;
     const net = watts[i] - loadW;
     if (net >= 0) {
       const inW = Math.min(net, maxChargeW) * chargeEff;

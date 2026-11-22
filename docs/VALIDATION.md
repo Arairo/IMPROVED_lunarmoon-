@@ -82,6 +82,22 @@ farther out, largest ray step, azimuth spacing, refinement, method) and a tier:
 sphere: no terrain). Coarse and no-terrain results are flagged in the app and in
 exported reports.
 
+### Time sampling and totals
+
+Every window is sampled at fixed steps (20 min for 15 days, 30 min for 30 days,
+90 min for 90 days, 4 h for a year; Terrain 3D uses 10 min to 3 h). Each sample
+stands for the time until the next one, and the last one only until the end of
+the window. Energy, average power, the battery estimate, the sunlit / Earth-in-view
+shares and the longest dark or blackout spell all add up those actual durations, so
+they always cover exactly the window you chose.
+
+Until 22 November 2026 the last sample was always counted as a full step, so a
+window that was not a whole number of steps was slightly overcounted (a 25-hour
+window at 4-hour steps was integrated as 28 hours). None of the app's standard
+windows were affected (they are whole numbers of steps), so no published number
+changed; `test/scanIntervals.spec.js` checks divisible, non-divisible, shorter-than-
+one-step and very short windows against an independent sum.
+
 ## 4. What this tool is not
 
 - Not mission-certified. Final site and date decisions use NASA's own analyses

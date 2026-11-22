@@ -143,7 +143,8 @@ export function evaluate(ms, ctx, config = DEFAULT_CONFIG, { withDsn = true } = 
   };
 }
 
-function runs(times, flags, stepMs) {
+/** Intervals where `flags` is set; each sample lasts until the next one (dtMs[i]). */
+function runs(times, flags, dtMs) {
   const out = [];
   let start = null;
   for (let i = 0; i < flags.length; i++) {
@@ -153,11 +154,12 @@ function runs(times, flags, stepMs) {
       start = null;
     }
   }
-  if (start !== null) out.push([start, times[times.length - 1] + stepMs]);
+  if (start !== null) out.push([start, times[times.length - 1] + dtMs[times.length - 1]]);
   return out;
 }
 
-function longestGap(times, flags, stepMs) {
+/** Longest stretch (hours) with `flags` unset, and whether it touches the window edge. */
+function longestGap(times, flags, dtMs) {
   let best = 0;
   let run = 0;
   let touchesEdge = false;
@@ -165,7 +167,7 @@ function longestGap(times, flags, stepMs) {
   for (let i = 0; i < flags.length; i++) {
     if (!flags[i]) {
       if (run === 0) touchesEdge = i === 0;
-      run++;
+      run += dtMs[i];
       const edge = touchesEdge || i === flags.length - 1;
       if (run > best) {
         best = run;
@@ -173,7 +175,7 @@ function longestGap(times, flags, stepMs) {
       }
     } else run = 0;
   }
-  return { hours: (best * stepMs) / 3600000, openEnded: bestTouchesEdge };
+  return { hours: best / 3600000, openEnded: bestTouchesEdge };
 }
 
 /**
@@ -181,7 +183,16 @@ function longestGap(times, flags, stepMs) {
  * operational intervals and summary statistics.
  */
 export function scan(ctx, { startMs, endMs, stepMs = 20 * 60000 }, config = DEFAULT_CONFIG, { withDsn = true } = {}) {
-  const n = Math.max(2, Math.ceil((endMs - startMs) / stepMs));
+  const spanMs = endMs - startMs;
+  if (!(spanMs > 0) || !(stepMs > 0)) throw new RangeError('scan: endMs must be after startMs and stepMs > 0');
+  // Samples at startMs + i * stepMs; each stands for the time until the next sample,
+  // and the last one only until endMs (a window that is not a whole number of steps
+  // is not rounded up). Windows shorter than two steps use two equal halves.
+  if (spanMs < 2 * stepMs) stepMs = spanMs / 2;
+  const n = Math.ceil(spanMs / stepMs - 1e-9);
+  const dtMs = new Float64Array(n);
+  for (let i = 0; i < n; i++) dtMs[i] = Math.min(stepMs, endMs - (startMs + i * stepMs));
+  const dtH = Float64Array.from(dtMs, (d) => d / 3600000);
   const times = new Float64Array(n);
   const sunEl = new Float32Array(n);
   const sunAz = new Float32Array(n);
@@ -201,7 +212,6 @@ export function scan(ctx, { startMs, endMs, stepMs = 20 * 60000 }, config = DEFA
   let cumulative = 0;
   let peak = 0;
   let maxDrawdownWh = 0;
-  const stepH = stepMs / 3600000;
   for (let i = 0; i < n; i++) {
     const ms = startMs + i * stepMs;
     const r = evaluate(ms, ctx, config, { withDsn });
@@ -220,27 +230,30 @@ export function scan(ctx, { startMs, endMs, stepMs = 20 * 60000 }, config = DEFA
     visible[i] = r.earth.visible ? 1 : 0;
     dsnAny[i] = r.dsnAny ? 1 : 0;
     dte[i] = r.earth.los && r.dsnAny && r.link.margin >= 0 ? 1 : 0;
-    energyWh += r.sun.watts * stepH;
+    energyWh += r.sun.watts * dtH[i];
     // Battery sizing: deepest cumulative energy deficit against the load.
-    cumulative += (r.sun.watts - config.power.loadW) * stepH;
+    cumulative += (r.sun.watts - config.power.loadW) * dtH[i];
     if (cumulative > peak) peak = cumulative;
     maxDrawdownWh = Math.max(maxDrawdownWh, peak - cumulative);
   }
-  const mean = (arr) => arr.reduce((a, b) => a + b, 0) / arr.length;
+  // Shares of the window: each sample weighted by the time it stands for.
+  const mean = (arr) => { let a = 0; for (let i = 0; i < n; i++) a += arr[i] * dtMs[i]; return a / spanMs; };
   const pc = { ...DEFAULT_POWER_CONFIG, ...config.power };
-  const battery = simulateBattery(watts, stepH, { loadW: pc.loadW, chargeEff: pc.chargeEff, dischargeEff: pc.dischargeEff });
+  const battery = simulateBattery(watts, dtH, { loadW: pc.loadW, chargeEff: pc.chargeEff, dischargeEff: pc.dischargeEff });
   // A battery of a chosen size: state of charge, time below reserve, time empty.
   const sim = pc.batteryWh > 0
-    ? (({ socWh, ...rest }) => rest)(simulateBattery(watts, stepH, { loadW: pc.loadW, capacityWh: pc.batteryWh, reserveFrac: pc.reserveFrac, chargeEff: pc.chargeEff, dischargeEff: pc.dischargeEff }))
+    ? (({ socWh, ...rest }) => rest)(simulateBattery(watts, dtH, { loadW: pc.loadW, capacityWh: pc.batteryWh, reserveFrac: pc.reserveFrac, chargeEff: pc.chargeEff, dischargeEff: pc.dischargeEff }))
     : null;
-  const dark = longestGap(times, lit, stepMs);
-  const blackout = longestGap(times, dte, stepMs);
-  const hidden = longestGap(times, los, stepMs);
+  const dark = longestGap(times, lit, dtMs);
+  const blackout = longestGap(times, dte, dtMs);
+  const hidden = longestGap(times, los, dtMs);
   const stats = {
     days: (endMs - startMs) / 86400000,
     litFraction: mean(lit),
     fullSunFraction: mean(Array.from(sunFrac, (f) => (f >= 0.99 ? 1 : 0))),
-    avgPowerW: energyWh / (n * stepH),
+    avgPowerW: energyWh / (spanMs / 3600000),
+    // Hours covered by the samples: always exactly the window (checked in tests).
+    integratedHours: dtH.reduce((a, b) => a + b, 0),
     energyKWh: energyWh / 1000,
     maxSunEl: Math.max(...sunEl),
     minSunEl: Math.min(...sunEl),
@@ -268,8 +281,8 @@ export function scan(ctx, { startMs, endMs, stepMs = 20 * 60000 }, config = DEFA
     startMs,
     endMs,
     stepMs,
-    series: { times, sunEl, sunAz, sunHorizon, sunFrac, watts, earthEl, earthAz, earthClear, margin, lit, los, visible, dsnAny, dte },
-    intervals: { lit: runs(times, lit, stepMs), los: runs(times, los, stepMs), dte: runs(times, dte, stepMs) },
+    series: { times, dtH, sunEl, sunAz, sunHorizon, sunFrac, watts, earthEl, earthAz, earthClear, margin, lit, los, visible, dsnAny, dte },
+    intervals: { lit: runs(times, lit, dtMs), los: runs(times, los, dtMs), dte: runs(times, dte, dtMs) },
     stats,
   };
 }

@@ -39,6 +39,38 @@ const sub = (page, k) => page.$eval(`[data-sub="${k}"]`, (e) => e.textContent);
 (async () => {
   const browser = await chromium.launch({ args: GL });
 
+  // Both pages (index.html and planner.html), desktop and phone: no console errors,
+  // no uncaught exceptions and no failed requests for our own files (JS, CSS, fonts,
+  // data). Third-party failures (none are expected: everything is self-hosted) and
+  // aborted requests are reported but do not fail the check.
+  for (const [label, hash, vp] of [
+    ['Landing + Pro, desktop', '#pro&id=ridge', { width: 1366, height: 820 }],
+    ['Landing + Pro, phone', '#pro&id=ridge', { width: 390, height: 844 }],
+    ['Terrain 3D, desktop', 'planner.html#from=pro&id=ridge', { width: 1366, height: 820 }],
+    ['Terrain 3D, phone', 'planner.html#from=pro&id=ridge', { width: 390, height: 844 }],
+  ]) {
+    await check(`Entry point loads cleanly: ${label}`, async () => {
+      const ctx = await browser.newContext({ viewport: vp });
+      await ctx.addInitScript(quiet);
+      const page = await ctx.newPage();
+      const origin = new URL(BASE).origin;
+      const problems = [];
+      page.on('pageerror', (e) => problems.push(`exception: ${e.message}`));
+      page.on('console', (m) => { if (m.type() === 'error' && !/WebGL|GPU stall|GL_|swiftshader/i.test(m.text())) problems.push(`console: ${m.text().slice(0, 160)}`); });
+      page.on('response', (r) => { if (r.url().startsWith(origin) && r.status() >= 400) problems.push(`HTTP ${r.status()} ${r.url().slice(origin.length)}`); });
+      page.on('requestfailed', (r) => { if (r.url().startsWith(origin) && !/ERR_ABORTED/.test(r.failure()?.errorText || '')) problems.push(`failed ${r.url().slice(origin.length)}: ${r.failure()?.errorText}`); });
+      const loaded = [];
+      page.on('requestfinished', (r) => { if (/\.(js|css|woff2?|json|bin|i16z)(\?|$)/.test(r.url())) loaded.push(r.url().split('.').pop().split('?')[0]); });
+      await page.goto(BASE + hash, { waitUntil: 'load', timeout: 90000 });
+      await page.waitForTimeout(hash.startsWith('planner') ? 9000 : 6000);
+      const kinds = [...new Set(loaded)].sort().join(',');
+      assert(/js/.test(kinds) && /css/.test(kinds) && /woff/.test(kinds) && /json/.test(kinds), `critical assets missing: ${kinds}`);
+      assert(!problems.length, problems.slice(0, 6).join(' | '));
+      await ctx.close();
+      return `loaded ${kinds}`;
+    });
+  }
+
   await check('Beginner mode loads its first chapter', async () => {
     const { ctx, page, errors } = await open(browser, '#beginner');
     await page.waitForSelector('.w-say, .w-scene', { timeout: 60000 });

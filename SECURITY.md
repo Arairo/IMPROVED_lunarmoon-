@@ -50,6 +50,7 @@ without one.
 | 2026-11-21 | Deploy workflow published after a data workflow finished, without checking it had succeeded. | Deploy now requires the upstream run to have succeeded on `main`; manual runs only publish from `main`. |
 | 2026-11-21 | GitHub Actions referenced by moving tags (`@v5`). | Pinned to commit SHAs; Dependabot proposes updates. |
 | 2026-11-22 | Dependabot PR: Vite 6.4.6 → 8.3.8 (merged). | Checked after merging: build, 87 unit tests, browser smoke test 8/8, Terrain 3D (CesiumJS plugin) loads and renders with no errors. Major Vite and Tailwind versions are now excluded from automatic PRs. |
+| 2026-11-22 | Second audit: re-check. | Lockfile: Vite 8.3.8, CesiumJS 1.138.0, Three.js 0.187.0. `npm audit` (all and runtime-only): 0 vulnerabilities. Dev server: localhost only (`vite.config.js` sets no host). No keys or tokens in the repository; the only token-shaped string in the build is CesiumJS's own demo token inside its library, which the app never uses (Cesium ion is only contacted if the user types in their own token). All third-party actions pinned to commit SHAs; workflows default to read-only. Deploy gate (upstream success, main only, never for pull requests) is now checked by `test/deployGate.spec.js`. |
 
 ## Known follow-ups
 
