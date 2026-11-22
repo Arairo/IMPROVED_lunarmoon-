@@ -61,11 +61,12 @@ regions combine light and Earth, and how much results change across a region.]
 **Availability:** The tool, its source (MIT licence) and a static read-only API
 (daily tables per site, GeoTIFF lighting maps in IAU 2015 projections, and the
 engine as an ES module) are at https://arairo.github.io/IMPROVED_lunarmoon-/
-and https://github.com/Arairo/IMPROVED_lunarmoon-. It is a planning tool, not
-mission-certified.
+and https://github.com/Arairo/IMPROVED_lunarmoon-; version 1.0.0 is archived
+at Zenodo [6]. It is a planning tool, not mission-certified.
 
 **References:** [1] Mazarico E. et al. (2011) *Icarus, 211*, 1066–1081.
 [2] NASA GSFC PGDA, Lunar south pole average illumination (AVGVISIB, 2016).
 [3] Barker M. K. et al. (2023) *PSJ, 4*, 183. [4] McClernan M. T. (2024) USGS
 data release, doi:10.5066/P1MEQ6UK. [5] Henriksen M. R. et al. (2023) European
-Lunar Symposium, 134–135.
+Lunar Symposium, 134–135. [6] Rasyid A. (2026) Lunar Site Planner v1.0.0,
+Zenodo, doi:10.5281/zenodo.24435110.

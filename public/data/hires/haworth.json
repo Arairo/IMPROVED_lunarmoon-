@@ -1,5 +1,6 @@
 {
  "name": "hires_haworth",
+ "kind": "site",
  "projection": "south-polar-stereographic",
  "radius": 1737400,
  "halfExtent": 8000,
@@ -20,5 +21,7 @@
   "points": 10000,
   "against": "240 m"
  },
- "gapsFilledFrom240m": 0
+ "gapsFilledFrom240m": 0,
+ "encoding": "int16-le, each value minus the one above (row 0: minus the one to the left), gzip",
+ "file": "haworth.i16z"
 }

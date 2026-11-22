@@ -198,3 +198,7 @@ html, body {
 /* Text stays selectable so numbers and explanations can be copied; only the
    surfaces you drag (3D views, maps, the timeline) and buttons opt out. */
 canvas, button, #globeViewport, #polarViewport, #flightViewport, .w-flybox { -webkit-user-select: none; user-select: none; }
+
+/* Skip link: off-screen until it gets keyboard focus. */
+.lsp-skip { position: fixed; left: 12px; top: -60px; z-index: 1000; padding: 10px 16px; border-radius: 10px; background: #0071e3; color: #fff; font: 600 14px system-ui, sans-serif; text-decoration: none; transition: top .15s; }
+.lsp-skip:focus { top: 12px; outline: 3px solid #fbbf24; outline-offset: 2px; }

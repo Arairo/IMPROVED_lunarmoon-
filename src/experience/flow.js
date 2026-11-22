@@ -195,6 +195,21 @@ export function mountFlow({ app, setTime, switchMode, getBestSpots, actions }) {
   rail.querySelectorAll('[data-go]').forEach((b) => b.addEventListener('click', () => go(Number(b.dataset.go))));
   rail.querySelector('.f-back').addEventListener('click', () => go(current - 1));
   rail.querySelector('.f-next').addEventListener('click', () => go(current + 1));
+  // Keyboard users: the first Tab stop jumps past the site list to the current step.
+  if (!document.querySelector('.lsp-skip')) {
+    const skip = document.createElement('a');
+    skip.href = '#paneSite';
+    skip.className = 'lsp-skip';
+    skip.textContent = 'Skip to the mission steps';
+    skip.addEventListener('click', (e) => {
+      e.preventDefault();
+      const step = rail.querySelector('.f-step:not([hidden])');
+      const target = step?.querySelector('button, a, input, select, [tabindex]') || rail.querySelector('.f-next');
+      target?.focus();
+      target?.scrollIntoView({ block: 'nearest' });
+    });
+    document.body.prepend(skip);
+  }
 
   function go(i, { quiet = false } = {}) {
     if (i < 0 || i >= STEPS.length) return;

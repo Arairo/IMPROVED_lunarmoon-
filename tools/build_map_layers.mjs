@@ -15,6 +15,13 @@
 // Uint8 (value / 2 = percent). public/data/layer_skylines.{bin,json} keeps every
 // cell's skyline (36 azimuths, int8 in 0.25° steps) so the browser can draw the
 // map for any moment or any 30-day window.
+//
+//   node tools/build_map_layers.mjs --like-pgda [--out FILE] [--threads 4]
+// Comparison mode (writes only FILE, default data-raw/pgda/ours_like_pgda.f32): the
+// south cap only, measured the way NASA PGDA's AVGVISIB maps are: the average visible
+// fraction of the Sun's disk, and the share of time any part of Earth's disk is up,
+// over a full 18.6-year lunar nutation cycle (from 2009) at 12-hour steps.
+// Float32, south.sun then south.earth, fractions 0-1, 184 x 184 each.
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
@@ -46,15 +53,37 @@ function cells(kind) {
 }
 
 async function main() {
-  const year = Number(process.argv[process.argv.indexOf('--year') + 1] || 0) || 2027;
-  const threads = Number(process.argv[process.argv.indexOf('--threads') + 1] || 0) || Math.max(1, os.cpus().length);
-  // Sun and Earth directions in the Moon-fixed frame, every 6 h through the year.
+  const arg = (k) => { const i = process.argv.indexOf(k); return i > 0 ? process.argv[i + 1] : null; };
+  const year = Number(arg('--year') || 0) || 2027;
+  const threads = Number(arg('--threads') || 0) || Math.max(1, os.cpus().length);
+  const likePgda = process.argv.includes('--like-pgda');
+  // Sun and Earth directions in the Moon-fixed frame, every 6 h through the year
+  // (or every 12 h through an 18.6-year nutation cycle in --like-pgda mode).
   const { moonFixedState } = await import('../src/core/ephemeris.js');
-  const t0 = Date.UTC(year, 0, 1), t1 = Date.UTC(year + 1, 0, 1), step = 6 * 3600000;
+  const t0 = likePgda ? Date.UTC(2009, 0, 1) : Date.UTC(year, 0, 1);
+  const t1 = likePgda ? t0 + 18.6 * 365.25 * 86400000 : Date.UTC(year + 1, 0, 1);
+  const step = (likePgda ? 12 : 6) * 3600000;
   const sun = [], earth = [];
   for (let t = t0; t < t1; t += step) {
     const s = moonFixedState(t);
     sun.push(...s.sun); earth.push(...s.earth);
+  }
+  if (likePgda) {
+    const list = cells('south');
+    const chunk = Math.ceil(list.length / threads);
+    const started = Date.now();
+    const parts = await Promise.all(Array.from({ length: threads }, (_, k) => new Promise((resolve, reject) => {
+      const w = new Worker(fileURLToPath(import.meta.url), { workerData: { cells: list.slice(k * chunk, (k + 1) * chunk), sun, earth, likePgda: true } });
+      w.on('message', resolve); w.on('error', reject);
+    })));
+    const outF = new Float32Array(2 * list.length);
+    let o = 0;
+    for (const p of parts) { outF.set(p.sunFrac, o); outF.set(p.earthAny, list.length + o); o += p.sunFrac.length; }
+    const file = arg('--out') || path.join(root, 'data-raw/pgda/ours_like_pgda.f32');
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.writeFileSync(file, Buffer.from(outF.buffer));
+    console.log(`south cap like PGDA: ${list.length} cells, ${sun.length / 3} times in ${((Date.now() - started) / 1000).toFixed(1)} s -> ${file}`);
+    return;
   }
   const out = { global: null, south: null, north: null };
   for (const kind of ['global', 'south', 'north']) {
@@ -105,6 +134,8 @@ async function work() {
   const T = sun.length / 3;
   const sunOut = new Uint8Array(list.length), earthOut = new Uint8Array(list.length), bothOut = new Uint8Array(list.length);
   const skyOut = new Int8Array(list.length * SKY_AZ);
+  const sunFrac = new Float32Array(list.length), earthAny = new Float32Array(list.length);
+  const { visibleDiskFraction } = await import('../src/core/power.js');
   const hz = new Float32Array(AZ);
   for (let k = 0; k < list.length; k++) {
     const [lat, lon] = list[k];
@@ -133,6 +164,26 @@ async function work() {
       const f = (az / 360) * AZ, i0 = Math.floor(f) % AZ, i1 = (i0 + 1) % AZ, t = f - Math.floor(f);
       return el > hz[i0] * (1 - t) + hz[i1] * t;
     };
+    if (workerData.likePgda) {
+      // As NASA PGDA: visible fraction of the Sun's disk; Earth up if any part of its disk is.
+      let sf = 0, ea = 0;
+      for (let i = 0; i < T; i++) {
+        for (const [arr, isSun] of [[sun, true], [earth, false]]) {
+          const dx = arr[i * 3] - px, dy = arr[i * 3 + 1] - py, dz = arr[i * 3 + 2] - pz;
+          const d = Math.hypot(dx, dy, dz);
+          const el = Math.asin((dx * up[0] + dy * up[1] + dz * up[2]) / d) / DEG;
+          const rad = Math.asin((isSun ? 695700e3 : 6371e3) / d) / DEG;
+          if (el < -8) continue;
+          const e = dx * east[0] + dy * east[1] + dz * east[2], n = dx * north[0] + dy * north[1] + dz * north[2];
+          let az = Math.atan2(e, n) / DEG; if (az < 0) az += 360;
+          const f = (az / 360) * AZ, i0 = Math.floor(f) % AZ, i1 = (i0 + 1) % AZ, t = f - Math.floor(f);
+          const h = hz[i0] * (1 - t) + hz[i1] * t;
+          if (isSun) sf += visibleDiskFraction(el, h, rad); else if (el > h - rad) ea++;
+        }
+      }
+      sunFrac[k] = sf / T; earthAny[k] = ea / T;
+      continue;
+    }
     let nb = 0;
     for (let i = 0; i < T; i++) { const a = test(sun, i), b = test(earth, i); if (a) ns++; if (b) ne++; if (a && b) nb++; }
     sunOut[k] = Math.round((ns / T) * 200);
@@ -142,6 +193,7 @@ async function work() {
     const per = AZ / SKY_AZ;
     for (let j = 0; j < SKY_AZ; j++) skyOut[k * SKY_AZ + j] = Math.max(-127, Math.min(127, Math.round(hz[j * per] / SKY_STEP)));
   }
+  if (workerData.likePgda) { parentPort.postMessage({ sunFrac, earthAny }); return; }
   parentPort.postMessage({ sun: sunOut, earth: earthOut, both: bothOut, sky: skyOut });
 }
 
