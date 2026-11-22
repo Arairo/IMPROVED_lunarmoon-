@@ -159,7 +159,8 @@ async function assessmentClean() {
     await page.fill('#siteFilter', 'Apollo 11'); await page.click('.site-item'); await wait(400);
     t = await text('#assessment');
     assert(/Earth visible \(any part of disk\)\s*100\.0%/.test(t), 'Apollo 11 should always see Earth');
-    assert(t.includes('smooth sphere'), 'Apollo 11 should report no terrain grid');
+    // Since the whole-Moon LOLA grid was added, Apollo 11 has real terrain too.
+    assert(/LOLA .*global grid/.test(t), 'Apollo 11 should use the whole-Moon LOLA grid');
     await page.fill('#siteFilter', '');
     return 'floor 0% sun, Chang’e 4 0% Earth, Apollo 11 100% Earth';
   });

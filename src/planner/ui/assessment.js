@@ -14,6 +14,7 @@ const PRECISION = {
   approx: 'approximate position',
   custom: 'custom point',
   computed: 'point chosen from LOLA terrain',
+  'region centre': 'centre of the candidate region (spots inside it vary)',
 };
 
 // Plain-language status text. Status is always shown as shape + text + colour.
@@ -27,7 +28,7 @@ export function renderSkeleton(root, site, ctx) {
     <div class="site-title">
       <div>
         <h2>${escapeHtml(site.name)}</h2>
-        <p class="site-meta"><span class="mono">${fmtLatLon(site.lat, site.lon)}</span> · ${escapeHtml(group)}${site.group === 'computed' || !site.group ? '' : ` · ${PRECISION[site.precision ?? 'custom']}`}</p>
+        <p class="site-meta"><span class="mono">${fmtLatLon(site.lat, site.lon)}</span> · ${escapeHtml(group)}${site.group === 'computed' || !site.group ? '' : ` · ${escapeHtml(PRECISION[site.precision ?? 'custom'] ?? site.precision)}`}</p>
         <p class="site-meta">Terrain: ${escapeHtml(ctx.horizon.source)}${ctx.horizon.terrain ? ` · ground <span class="mono">${ctx.groundHeight >= 0 ? '+' : '−'}${Math.abs(ctx.groundHeight).toFixed(0)} m</span>` : ''} ${term('lola')}</p>
       </div>
       <div class="actions">

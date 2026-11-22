@@ -6,7 +6,7 @@
 //
 // Terrain: LOLA south-polar grids (240 m / 1 km) + the whole-Moon LOLA grid
 // (public/data/global_dem.*). For each map cell we ray-cast the skyline in 72
-// directions out to 300 km (2 m mast), then test the Sun and Earth against it
+// directions out to 300 km (2 m mast) with the app's ray-caster, then test the Sun and Earth against it
 // every 6 hours for a year. Output (public/data/layers.{bin,json}):
 //   global   360 x 180, 1° cells, lat +89.5..-89.5, lon -179.5..179.5
 //   south    184 x 184, 5 km cells, south-polar stereographic, ±460 km (lat < ~-75°)
@@ -95,9 +95,8 @@ async function main() {
 }
 
 async function work() {
-  const { createGrid, createTerrain } = await import('../src/core/horizon.js');
+  const { createGrid, createTerrain, rayHorizon } = await import('../src/core/horizon.js');
   const { createGlobalGrid } = await import('../src/core/globalDem.js');
-  const { destination } = await import('../src/core/geo.js');
   const dataDir = path.join(root, 'public/data');
   const grid = (n) => createGrid(JSON.parse(fs.readFileSync(path.join(dataDir, `${n}.json`))), new Int16Array(fs.readFileSync(path.join(dataDir, `${n}.bin`)).buffer.slice(0)));
   const gmeta = JSON.parse(fs.readFileSync(path.join(dataDir, 'global_dem.json')));
@@ -112,17 +111,11 @@ async function work() {
     const g = terrain.heightAt(lat, lon);
     const h0 = g ? g.height : 0;
     const r0 = R + h0 + MAST;
+    // Same ray-caster as the app (src/core/horizon.js: growing steps plus crest
+    // refinement), so the maps and every site agree on how a skyline is found.
     for (let a = 0; a < AZ; a++) {
-      let best = -90; // terrain is sampled everywhere (global grid), so the skyline comes from it
-      for (let s = 1500; s < 300000; s *= 1.045) {
-        const p = destination(lat, lon, (a * 360) / AZ, s);
-        const h = terrain.heightAt(p.lat, p.lon);
-        if (!h) continue;
-        const th = s / R, r1 = R + h.height;
-        const el = Math.atan2(r1 * Math.cos(th) - r0, r1 * Math.sin(th)) / DEG;
-        if (el > best) best = el;
-      }
-      hz[a] = best;
+      const r = rayHorizon(terrain, lat, lon, (a * 360) / AZ, { ground: g ?? { height: 0, cell: 1000 }, mastHeight: MAST, maxDistM: 300000 });
+      hz[a] = r.el;
     }
     // Local east/north/up and the site position.
     const cl = Math.cos(lat * DEG), sl = Math.sin(lat * DEG), co = Math.cos(lon * DEG), so = Math.sin(lon * DEG);
