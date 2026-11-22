@@ -152,7 +152,7 @@ for (const s of polar) {
   const hasTile = index.some((t) => t.id === s.id);
   const b = hasTile ? share(computeHorizon(withHires, s.lat, s.lon, { mastHeight: 2, azStepDeg: 2 }), s.lat, s.lon) : null;
   const p = illumMeta?.sites?.[s.id] ?? {};
-  const row = { id: s.id, name: s.name, ours240: a, ours20: b, pgdaSun60: pct(p.sun60m), pgdaSun120: pct(p.sun120m), pgdaEarth120: pct(p.earth120m) };
+  const row = { id: s.id, name: s.name, ours240: a, ours20: b, pgdaSun60: pct(p.sun60m), pgdaSun60Detail: p.sun60mDetail ?? null, pgdaSun120: pct(p.sun120m), pgdaEarth120: pct(p.earth120m) };
   siteRows.push(row);
   console.log(`${s.id.padEnd(16)} sun 2027: 240 m ${a.sun}%  20 m ${b ? b.sun + '%' : '-'}  PGDA ${row.pgdaSun60 ?? row.pgdaSun120 ?? '-'}% | earth: 240 m ${a.earth}%  20 m ${b ? b.earth + '%' : '-'}  PGDA ${row.pgdaEarth120 ?? '-'}%`);
 }

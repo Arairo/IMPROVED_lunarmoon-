@@ -148,16 +148,45 @@ for name, url in (('sun', SUN_URL), ('earth', EARTH_URL)):
     for s in POLAR:
         meta['sites'].setdefault(s['id'], {})[name + '120m'] = point(ds, m, *xy(s['lat'], s['lon']))
 
-# KNOWN ISSUE (22 Nov 2026): this 60 m point read gives 0% at the Shackleton connecting
-# ridge, where the 120 m map gives 67.7%, so the 85S product's coordinates or no-data
-# handling are probably read wrongly here. The app and docs use the 120 m values only
-# (pgdaSun120); check this before relying on sun60m.
+def neighbourhood(ds, meta, x, y, r=1):
+    """Centre pixel, median and zero count of the (2r+1)^2 pixels around (x, y).
+    A single 60 m pixel can sit in a gap or a tiny pit (the ridge read 0% here while
+    the 120 m map gives 67.7%), so the comparison uses the 3x3 median and keeps the
+    centre value and the zero count for inspection."""
+    gt, u = meta['geotransform'], meta['unitToMetres']
+    px = int((x / u - gt[0]) / gt[1]); py = int((y / u - gt[3]) / gt[5])
+    x0, y0 = px - r, py - r
+    if x0 < 0 or y0 < 0 or x0 + 2 * r + 1 > ds.RasterXSize or y0 + 2 * r + 1 > ds.RasterYSize:
+        return None
+    for attempt in range(3):
+        try:
+            a = ds.GetRasterBand(1).ReadAsArray(x0, y0, 2 * r + 1, 2 * r + 1).astype(np.float64)
+            break
+        except RuntimeError as e:
+            print('neighbourhood read failed, retrying:', str(e)[:120], flush=True)
+            time.sleep(2)
+    else:
+        return None
+    nd = meta['noData']
+    if nd is not None and nd != 'nan':
+        a[a == nd] = np.nan
+    a = a * (meta['scale'] or 1) + (meta['offset'] or 0)
+    good = a[np.isfinite(a)]
+    if not good.size:
+        return None
+    return {'centre': float(a[r, r]), 'median': float(np.median(good)), 'zeros': int((good == 0).sum()), 'n': int(good.size)}
+
+
 try:
     ds85 = gdal.Open(SUN85_URL)
     m85 = info(ds85)
     meta['products']['sun85'] = {'url': SUN85_URL.replace('/vsicurl/', ''), **m85}
+    print('sun85', json.dumps(m85, default=str)[:900], flush=True)
     for s in POLAR:
-        meta['sites'][s['id']]['sun60m'] = point(ds85, m85, *xy(s['lat'], s['lon']))
+        nb = neighbourhood(ds85, m85, *xy(s['lat'], s['lon']))
+        meta['sites'][s['id']]['sun60m'] = nb['median'] if nb else None
+        meta['sites'][s['id']]['sun60mDetail'] = nb
+        print(f"{s['id']}: 60 m 3x3 {nb}", flush=True)
 except RuntimeError as e:
     print('60 m Sun map unavailable, using the 120 m one only:', e, flush=True)
 json.dump(meta, open(os.path.join(OUT, 'illum_meta.json'), 'w'), indent=1, default=str)
