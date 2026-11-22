@@ -15,9 +15,16 @@ updates:
         dependency-type: development
         update-types: [minor, patch]
     # CesiumJS is pinned on purpose (with overrides in package.json); update it by hand.
+    # Major versions of the build tools change their configuration (Tailwind 4 moved
+    # to CSS-based config; Vite majors change plugins), so they are planned migrations,
+    # not automatic bumps. Minor and patch updates still come weekly.
     ignore:
       - dependency-name: cesium
       - dependency-name: "@cesium/*"
+      - dependency-name: tailwindcss
+        update-types: ["version-update:semver-major"]
+      - dependency-name: vite
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: github-actions
     directory: /

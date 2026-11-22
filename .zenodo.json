@@ -5,7 +5,8 @@
   "creators": [
     {
       "name": "Rasyid, Ammar",
-      "affiliation": "Universiti Tenaga Nasional (UNITEN)"
+      "affiliation": "Universiti Tenaga Nasional (UNITEN)",
+      "orcid": "0009-0003-0437-2119"
     }
   ],
   "license": "MIT",
@@ -51,5 +52,5 @@
     }
   ],
   "version": "1.0.0",
-  "notes": "Full author name: Ammar Rasyid bin Remy Azrai (Malay patronymic). Add an ORCID to the creator once registered."
+  "notes": "Full author name: Ammar Rasyid bin Remy Azrai (Malay patronymic)."
 }

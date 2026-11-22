@@ -49,6 +49,7 @@ without one.
 | 2026-11-21 | Vite advisory [GHSA-p4f5-76q4-ffq7](https://github.com/vitejs/vite/security/advisories/GHSA-p4f5-76q4-ffq7): remote code execution in the **dev server** (Vite ≤ 6.4.5) when it is exposed to the network with `--host` / `server.host`. The project had Vite 6.4.5 and `server.host: true`. | Upgraded to Vite 6.4.6 (lockfile updated); the dev server now listens on localhost only. The advisory concerns the development server, not the built static site on GitHub Pages; there is no evidence the live site was affected. |
 | 2026-11-21 | Deploy workflow published after a data workflow finished, without checking it had succeeded. | Deploy now requires the upstream run to have succeeded on `main`; manual runs only publish from `main`. |
 | 2026-11-21 | GitHub Actions referenced by moving tags (`@v5`). | Pinned to commit SHAs; Dependabot proposes updates. |
+| 2026-11-22 | Dependabot PR: Vite 6.4.6 → 8.3.8 (merged). | Checked after merging: build, 87 unit tests, browser smoke test 8/8, Terrain 3D (CesiumJS plugin) loads and renders with no errors. Major Vite and Tailwind versions are now excluded from automatic PRs. |
 
 ## Known follow-ups
 
