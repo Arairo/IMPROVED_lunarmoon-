@@ -341,8 +341,8 @@
    "files": [
     {
      "path": "data/precomputedHorizons.json",
-     "bytes": 42370,
-     "sha256": "c97b9146fcd8e8fa1f736b0b87e4eac6b7c451b20387d1b88e1f64fe6b97614d"
+     "bytes": 42365,
+     "sha256": "2a11c582c917e67e5771919e26ad0c5fdc0dac47a5dd771ea246d45ef4e68bea"
     }
    ],
    "provider": "this project",
@@ -441,8 +441,8 @@
     },
     {
      "path": "data/pgda_check.json",
-     "bytes": 6579,
-     "sha256": "e0dbda326b8fb108d57819639b783049a4861428cbee89229f90b665342167e3"
+     "bytes": 6419,
+     "sha256": "748aabe8ad2baae67f2bcb460e231fb3e72396296540edd67fbcf284b47782b9"
     },
     {
      "path": "data/lroc_check.json",
