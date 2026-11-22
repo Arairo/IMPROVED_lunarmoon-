@@ -534,6 +534,9 @@ body.xp-enter header { animation: xpHeadIn 0.7s var(--xp-ease) both; }
 @keyframes xpSelPulse { 0% { transform: scale(1); opacity: .9; } 100% { transform: scale(2.2); opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .xp-mark-sel::before { animation: none; display: none; } }
 
+/* While the landing intro or the Beginner walk covers the app, it is not visible (public/early.js). */
+html.app-covered body > header, html.app-covered #explorerView, html.app-covered #compareView { visibility: hidden; }
+
 /* Intro on short or narrow screens: stack everything, let it scroll, and never
    let the stats chips cover the Start button. */
 .xp-stats { pointer-events: none; }

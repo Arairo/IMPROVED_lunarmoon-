@@ -756,13 +756,15 @@ async function boot() {
   app.proSession = fromPro ? loadSession() : null;
   if (app.proSession?.config) mergeConfig(app.config, app.proSession.config);
   else welcome.offer(); // ask about the video tutorial right away, while data loads
-  $('#assessment').innerHTML = '<div class="empty">Loading LOLA terrain…</div>';
-  try {
-    app.terrain = await loadTerrain(DATA);
-    app.terrain.global = await loadGlobalDem(DATA); // whole-Moon LOLA where the polar grids end (null until built)
-  } catch (err) {
-    setStatus(`Terrain grids failed to load (${err.message}); horizons fall back to a bare sphere`);
-  }
+  $('#assessment').innerHTML = '<div class="empty">Loading…</div>';
+  // The terrain grids (14.5 MB) download together, in the background. Listed sites
+  // have precomputed skylines, so their numbers show first (a 4G phone waited ~18 s
+  // for them before; docs/PERFORMANCE.md); the 3D terrain and any custom point's
+  // skyline follow when the grids arrive.
+  const terrainReady = Promise.all([
+    loadTerrain(DATA).catch((err) => { setStatus(`Terrain grids failed to load (${err.message}); horizons fall back to a bare sphere`); return null; }),
+    loadGlobalDem(DATA).catch(() => null), // whole-Moon LOLA where the polar grids end
+  ]).then(([t, g]) => { if (t) t.global = g; return t; });
   try {
     const res = await fetch(`${DATA}/sp_illum_2027.json`);
     if (res.ok) {
@@ -794,9 +796,18 @@ async function boot() {
   syncWindowButtons();
   initial ??= app.sites.find((s) => s.id === 'ridge') ?? app.sites[0];
 
-  // Analysis first, so the panel is useful even while WebGL spins up.
+  // Analysis first, so the panel is useful even while the terrain and WebGL load.
   selectSite(initial);
   renderScenarios();
+  setStatus('Loading LOLA terrain for the 3D view…');
+  app.terrain = await terrainReady;
+  if (app.terrain) {
+    // Same site again with the full grids (custom points get their real skyline).
+    selectSite(app.site, { keepScenario: true });
+    for (const sc of app.scenarios) { sc.ctx = prepareSite(sc.site, app.terrain, app.config); sc.scan = computeScan(sc.ctx, sc.startMs, sc.windowDays); }
+    renderScenarios();
+    setStatus('LOLA terrain loaded');
+  }
 
   try {
     app.scene = await createMoonScene($('#cesium'), { terrain: app.terrain, onPick: pickHandler, onStatus: setStatus });

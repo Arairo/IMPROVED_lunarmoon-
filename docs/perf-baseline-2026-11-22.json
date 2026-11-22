@@ -1,0 +1,212 @@
+{
+ "note": "loadMs = the browser load event (all images); readyMs = when the page is usable, from navigation start",
+ "when": "2026-11-22T16:17:44.207Z",
+ "base": "http://localhost:4302/",
+ "machine": "Intel(R) Xeon(R) Processor @ 2.10GHz x4, 17 GB, linux",
+ "browser": "Chromium 157.0.8103.78 headless, software WebGL",
+ "server": "vite preview (gzip for text, binary files as is: like GitHub Pages)",
+ "profiles": {
+  "desktop": {
+   "viewport": {
+    "width": 1366,
+    "height": 820
+   },
+   "cpu": 1,
+   "net": null
+  },
+  "phone": {
+   "viewport": {
+    "width": 390,
+    "height": 844
+   },
+   "cpu": 4,
+   "net": {
+    "latency": 40,
+    "downloadThroughput": 1125000,
+    "uploadThroughput": 375000
+   }
+  }
+ },
+ "pages": [
+  {
+   "profile": "desktop",
+   "page": "landing",
+   "requests": 20,
+   "transferMB": 4.81,
+   "loadMs": 3664,
+   "readyMs": 1310,
+   "fcp": 1316,
+   "lcp": 4292,
+   "cls": 0,
+   "slowestClickMs": 720,
+   "heapMB": 14,
+   "tiles20m": {
+    "count": 0,
+    "MB": 0
+   },
+   "externalHosts": []
+  },
+  {
+   "profile": "desktop",
+   "page": "beginner",
+   "requests": 20,
+   "transferMB": 4.81,
+   "loadMs": 731,
+   "readyMs": 434,
+   "fcp": 440,
+   "lcp": 1220,
+   "cls": 0,
+   "slowestClickMs": 32,
+   "heapMB": 15,
+   "tiles20m": {
+    "count": 0,
+    "MB": 0
+   },
+   "externalHosts": []
+  },
+  {
+   "profile": "desktop",
+   "page": "pro",
+   "requests": 32,
+   "transferMB": 19.77,
+   "loadMs": 4438,
+   "readyMs": 3110,
+   "fcp": 1952,
+   "lcp": 4332,
+   "cls": 0.024,
+   "slowestClickMs": 1864,
+   "heapMB": 33,
+   "tiles20m": {
+    "count": 2,
+    "MB": 0.45
+   },
+   "externalHosts": []
+  },
+  {
+   "profile": "desktop",
+   "page": "pro (Artemis region, 20 m tiles)",
+   "requests": 30,
+   "transferMB": 19.51,
+   "loadMs": 2730,
+   "readyMs": 1380,
+   "fcp": 92,
+   "lcp": 2604,
+   "cls": 0.033,
+   "slowestClickMs": 32,
+   "heapMB": 28,
+   "tiles20m": {
+    "count": 1,
+    "MB": 0.19
+   },
+   "externalHosts": []
+  },
+  {
+   "profile": "desktop",
+   "page": "terrain3d",
+   "requests": 48,
+   "transferMB": 23.45,
+   "loadMs": 454,
+   "readyMs": 1282,
+   "fcp": 436,
+   "lcp": 1304,
+   "cls": 0.026,
+   "slowestClickMs": 32,
+   "heapMB": 72,
+   "tiles20m": {
+    "count": 2,
+    "MB": 0.45
+   },
+   "externalHosts": []
+  },
+  {
+   "profile": "phone",
+   "page": "landing",
+   "requests": 19,
+   "transferMB": 4.78,
+   "loadMs": 7735,
+   "readyMs": 3016,
+   "fcp": 504,
+   "lcp": 6164,
+   "cls": 0,
+   "slowestClickMs": 864,
+   "heapMB": 18,
+   "tiles20m": {
+    "count": 0,
+    "MB": 0
+   },
+   "externalHosts": []
+  },
+  {
+   "profile": "phone",
+   "page": "beginner",
+   "requests": 19,
+   "transferMB": 4.78,
+   "loadMs": 6172,
+   "readyMs": 1822,
+   "fcp": 492,
+   "lcp": 2660,
+   "cls": 0,
+   "slowestClickMs": 64,
+   "heapMB": 17,
+   "tiles20m": {
+    "count": 0,
+    "MB": 0
+   },
+   "externalHosts": []
+  },
+  {
+   "profile": "phone",
+   "page": "pro",
+   "requests": 31,
+   "transferMB": 19.74,
+   "loadMs": 10980,
+   "readyMs": 3081,
+   "fcp": 360,
+   "lcp": 464,
+   "cls": 0.007,
+   "slowestClickMs": 56,
+   "heapMB": 28,
+   "tiles20m": {
+    "count": 2,
+    "MB": 0.45
+   },
+   "externalHosts": []
+  },
+  {
+   "profile": "phone",
+   "page": "pro (Artemis region, 20 m tiles)",
+   "requests": 25,
+   "transferMB": 10.99,
+   "loadMs": 10420,
+   "readyMs": 3276,
+   "fcp": 364,
+   "lcp": 488,
+   "cls": 0.008,
+   "slowestClickMs": 48,
+   "heapMB": 16,
+   "tiles20m": {
+    "count": 0,
+    "MB": 0
+   },
+   "externalHosts": []
+  },
+  {
+   "profile": "phone",
+   "page": "terrain3d",
+   "requests": 43,
+   "transferMB": 23.37,
+   "loadMs": 2480,
+   "readyMs": 18193,
+   "fcp": 2228,
+   "lcp": 2228,
+   "cls": 0.038,
+   "slowestClickMs": 40,
+   "heapMB": 60,
+   "tiles20m": {
+    "count": 2,
+    "MB": 0.45
+   },
+   "externalHosts": []
+  }
+ ]
+}

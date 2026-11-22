@@ -76,4 +76,4 @@ html[data-theme] .seg button { border-radius: 0; }
 .theme-toggle { min-width: 34px; padding: 6px 10px; }
 
 /* Opened from Professional as the Terrain 3D view: hide the duplicate help and compare tools. */
-body.terrain-view #videoBtn, body.terrain-view #tourBtn, body.terrain-view #learnBtn, body.terrain-view #compareBtn { display: none !important; }
+.terrain-view #videoBtn, .terrain-view #tourBtn, .terrain-view #learnBtn, .terrain-view #compareBtn { display: none !important; }

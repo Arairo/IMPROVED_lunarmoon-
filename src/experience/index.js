@@ -283,6 +283,7 @@ export function initExperience(api) {
     // Leaving Professional mode pauses its clock so it doesn't run unseen.
     if (mode !== 'pro' && app.playing) document.getElementById('playPauseBtn')?.click();
     document.body.dataset.mode = mode;
+    document.documentElement.classList.toggle('app-covered', mode !== 'pro'); // see public/early.js
     if (location.hash !== `#${mode}`) history.replaceState(null, '', `#${mode}`);
     if (mode === 'beginner') {
       walk.open();
