@@ -11,7 +11,7 @@ is automated, so you can re-run it with the tests or a GitHub workflow.
 | Sun and Earth positions seen from the surface | NASA JPL Horizons, 154 site/time pairs (11 sites × 7 dates from 1969 to 2030 × Sun and Earth; widened from 48 on 21 Nov 2026) | Worst elevation difference **0.007°** (0.0067°, Sun at Apollo 11 in 1969), median 0.001°, worst azimuth 0.02° (the Sun's disk is 0.53° wide) | *Validate against JPL Horizons* workflow; `public/data/validation.json` |
 | Sun height at landing | Five Apollo landings (mission reports) | All within **0.35°**: Apollo 11 −0.10°, 12 +0.04°, 14 +0.04°, 15 −0.18°, 17 +0.35° | `npm test` (test/flown.spec.js) |
 | Local sunset | Blue Ghost M1, Chandrayaan-3, SLIM (dates the teams reported) | Within **0.4 days** for all three | `npm test` |
-| Year-long sunlight map, south pole | NASA Goddard PGDA average visibility, 120 m (Mazarico et al. method) | Correlation **r = 0.92**, mean difference 4.2 percentage points over 24,344 cells. Ours averages 34.4% vs PGDA 31.5%: about 3 points sunnier. The map comes from `tools/build_map_layers.mjs` (skyline in 72 directions); it has not been rebuilt with the ridge-crest refinement below, which is expected to lower it | *Add 20 m terrain and check against NASA PGDA* workflow; `public/data/pgda_check.json` |
+| Year-long sunlight map, south pole | NASA Goddard PGDA average visibility, 120 m (Mazarico et al. method) | Correlation **r = 0.92**, mean difference 4.2 percentage points over 24,344 cells. Ours averages 34.4% vs PGDA 31.5%: about 3 points sunnier. The map comes from `tools/build_map_layers.mjs` (skyline in 72 directions); rebuilt on 22 Nov 2026 with the app's ray-caster and crest refinement; the PGDA comparison is being re-run | *Add 20 m terrain and check against NASA PGDA* workflow; `public/data/pgda_check.json` |
 | Year-long Earth-in-view map | NASA PGDA Earth visibility, 120 m | **r = 0.975**, mean difference 4.7 points | same |
 | Sunlight at the Shackleton connecting ridge | NASA PGDA | Ours **64%** (63.6%) of 2027 with 20 m terrain vs PGDA **68%** (74% with our 240 m grid). Until 21 Nov 2026 this read 66% / 79%: the skyline ray-caster could step over the crest that hides the Sun (section 3). PGDA's figure is a multi-year average of the visible *fraction of the disk*; ours is the disk *centre* in 2027, which reads lower at a site where the Sun grazes the skyline | same; site rows recomputed with `tools/refresh_pgda_site_shares.mjs` |
 | 20 m terrain tiles | Our 240 m LOLA grid (1 km beyond it) | Mean height difference **2.0–3.6 m** at every tile | same |
@@ -68,11 +68,11 @@ terrain), Best-lit #3 (51.0% → 49.8%) and, on the 240 m grid, Peak Near Cabeus
 (43.8% → 35.5%): part of what looked like a 240 m-vs-20 m difference there was
 the ray steps. Craters and flat ground did not change.
 
-The LROC shadow check was re-run with refinement: agreement rose at both
-resolutions and false "lit" cells fell (section 1). Not yet rebuilt with
-refinement (they need data only CI has, or a long run): the skylines of sites
-north of 80° S (built from the full-resolution LOLA map by *Build global
-terrain*), the year-long map layers and the 1 km south-pole map.
+Rebuilt with refinement (22 Nov 2026): every site skyline (sites north of
+80° S by *Build global terrain*, skyline changes at most 0.5°), the year-long map
+layers (which now use the app's ray-caster instead of their own coarser one;
+south-cap average sunlight 36.8% → 36.0%) and the 1 km south-pole map. The LROC
+shadow check was re-run too: agreement rose at both resolutions (section 1).
 
 Each horizon result now carries a `quality` record (grid size at the site and
 farther out, largest ray step, azimuth spacing, refinement, method) and a tier:

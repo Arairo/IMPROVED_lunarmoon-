@@ -7,7 +7,7 @@ const ALIASES = {
   'peak-shackleton': ['ridge high point', 'high point', 'massif', 'peak near shackleton'],
   shackleton: ['shackleton crater', 'shackleton floor', 'crater floor', 'shackleton'],
   'best-1': ['best-lit cell #2', 'best lit cell 2', 'best-lit 2'],
-  'best-2': ['best-lit cell #3', 'best lit cell 3', 'best-lit 3'],
+  'best-2': ['well-lit cell', 'well lit cell', 'best-lit cell #3', 'best lit cell 3', 'best-lit 3'],
   degerlache: ['de gerlache', 'gerlache'],
   shoemaker: ['shoemaker'],
   haworth: ['haworth'],
