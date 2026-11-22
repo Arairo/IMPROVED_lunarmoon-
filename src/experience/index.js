@@ -182,7 +182,7 @@ export function initExperience(api) {
     ]);
   }
 
-  const mapLayers = mountLayers({ getGlobe, viewTabs: toolRow || viewTabs, app });
+  const mapLayers = mountLayers({ getGlobe, viewTabs: toolRow || viewTabs, app, setMarksVisible: (on) => api.setMarksVisible?.(on) });
   const flight = mountFlight({ app, viewTabs, switchSubView: api.switchSubView, setTime });
 
   const controlsCoach = createSpotlight([
@@ -507,7 +507,29 @@ export function initExperience(api) {
   // selected region is drawn brighter.
   const regions = { features: null, key: '' };
   fetch(`${import.meta.env?.BASE_URL ?? '/'}data/artemis_regions.geojson`).then((r) => (r.ok ? r.json() : null)).then((g) => { regions.features = g?.features || []; drawRegions(); }).catch(() => {});
+  // Listed sites and the Artemis III region names on the 3D Moon (Map layers can hide them).
+  const MARK_COLOURS = { artemis: '#a5b4fc', apollo: '#e5e7eb', clps: '#34d399', intl: '#f9a8d4', south: '#fcd34d', computed: '#67e8f9' };
+  let marksSet = false;
+  function drawMarks() {
+    const g = getGlobe?.();
+    if (!g?.setMarks) return;
+    if (!marksSet) {
+      marksSet = true;
+      g.setMarks(sites.map((s) => ({
+        id: s.id, lat: s.lat, lon: s.lon, color: MARK_COLOURS[s.group] || '#e5e7eb',
+        kind: s.group === 'artemis' ? 'region' : 'site',
+        label: s.group === 'artemis' ? s.name.replace(/^Artemis III region:\s*/, '') : (s.short || s.name),
+        title: s.name,
+      })), { onPick: (id) => { const s = sites.find((x) => x.id === id); if (s) selectSite(s, true); } });
+      let on = true;
+      try { on = localStorage.getItem('lsp.marks') !== 'off'; } catch {}
+      g.setMarksVisible(on);
+    }
+  }
+  api.setMarksVisible = (on) => { try { localStorage.setItem('lsp.marks', on ? 'on' : 'off'); } catch {} getGlobe?.()?.setMarksVisible?.(on); };
+
   function drawRegions() {
+    drawMarks();
     const g = getGlobe?.();
     if (!g?.setOutlines || !regions.features) return;
     const sel = app.site?.region || '';

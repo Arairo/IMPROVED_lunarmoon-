@@ -515,6 +515,25 @@ body.xp-enter header { animation: xpHeadIn 0.7s var(--xp-ease) both; }
 }
 .xp-spot-label span { font-weight: 400; color: #c7c9d1; font-size: 10.5px; }
 
+/* Site and region markers on the 3D Moon (globeRenderer setMarks). */
+.xp-marks { position: absolute; inset: 0; pointer-events: none; z-index: 10; overflow: hidden; }
+.xp-mark { position: absolute; left: 0; top: 0; display: flex; align-items: center; gap: 6px; margin: -6px 0 0 -6px; padding: 0; border: 0; background: none; color: #fff; cursor: pointer; pointer-events: auto; font: 600 11px/1 var(--xp-font); white-space: nowrap; }
+.xp-mark i { width: 8px; height: 8px; border-radius: 50%; background: var(--c); box-shadow: 0 0 0 2px rgba(0,0,0,.55); flex: none; margin: 2px; }
+.xp-mark span { padding: 3px 7px; border-radius: 8px; background: rgba(0,0,0,.6); color: #eef0f5; opacity: 0; transform: translateX(-4px); transition: opacity .2s, transform .2s; pointer-events: none; }
+.xp-mark.is-region i { width: 6px; height: 6px; border-radius: 2px; transform: rotate(45deg); }
+.xp-mark.is-region span { color: #c7d2fe; border: 1px solid rgba(129,140,248,.45); }
+.xp-mark.show-label span, .xp-mark:hover span { opacity: 1; transform: none; }
+.xp-mark.show-label { z-index: 1; }
+.xp-mark:hover { z-index: 3; }
+.xp-mark.is-selected { z-index: 2; }
+.xp-mark.is-selected span { background: rgba(0,0,0,.75); color: #fff; font-weight: 700; }
+.xp-mark-sel { position: absolute; left: 0; top: 0; width: 0; height: 0; pointer-events: none; }
+.xp-mark-sel::before, .xp-mark-sel::after { content: ''; position: absolute; left: -13px; top: -13px; width: 26px; height: 26px; border-radius: 50%; border: 2px solid #fbbf24; box-sizing: border-box; }
+.xp-mark-sel::after { box-shadow: 0 0 0 1px rgba(0,0,0,.5); }
+.xp-mark-sel::before { animation: xpSelPulse 2s ease-out infinite; }
+@keyframes xpSelPulse { 0% { transform: scale(1); opacity: .9; } 100% { transform: scale(2.2); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .xp-mark-sel::before { animation: none; display: none; } }
+
 /* Intro on short or narrow screens: stack everything, let it scroll, and never
    let the stats chips cover the Start button. */
 .xp-stats { pointer-events: none; }
