@@ -36,8 +36,8 @@ cases). The Sun's elevation at five Apollo landings is within 0.35° of the
 mission reports, and local sunset at Blue Ghost M1, Chandrayaan-3 and SLIM is
 within 0.4 days of the dates the teams reported. Our 2027 sunlight map of the
 south pole correlates with NASA Goddard's average visibility map [2] at
-r = 0.92 (mean difference 4.2 points over 24,344 cells), and Earth visibility at
-r = 0.975. At the Shackleton connecting ridge, sunlight drops from 74% of 2027
+r = 0.92 (mean difference 4.0 points over 24,344 cells), and Earth visibility at
+r = 0.97. At the Shackleton connecting ridge, sunlight drops from 74% of 2027
 with 240 m terrain to 64% with 20 m terrain, against 68% from [2] (which counts a
 partly visible Sun): terrain resolution, not ephemeris, dominates the error budget. Against an LROC NAC
 controlled mosaic of the Peak Near Cabeus B region (eight images, 18 September
@@ -49,8 +49,8 @@ slightly too short, as expected from terrain that is partly interpolated.
 <!-- TO CHECK BEFORE SUBMITTING (21 Nov 2026): the horizon engine now refines ray
 samples around skyline crests, which changed the ridge numbers above (was 79% / 66%).
 The LROC numbers above were re-run with it (93.2%, κ 0.865; 88.6%, κ 0.774). The
-PGDA map correlations (r = 0.92 / 0.975) were measured before it: re-run the
-PGDA workflow and update them here. See docs/VALIDATION.md section 3. --> For flight, Apollo 11's trans-lunar injection, lunar orbit
+PGDA map comparison was re-run with it on 22 Nov 2026 (r = 0.92 / 0.97, numbers
+above updated). See docs/VALIDATION.md section 3. --> For flight, Apollo 11's trans-lunar injection, lunar orbit
 insertion and descent are reproduced to within 0.05 km/s.
 
 **Results:** [Table: for each of the nine Artemis III region centres over 2027,
