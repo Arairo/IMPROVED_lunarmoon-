@@ -41,12 +41,14 @@ against the code on branch `claude/nice-mccarthy-mumgen` before changing it.
 
 ## Phase 1 results
 
-See the end of this file's commit for exact commands; summary:
+Commands run on 22 November 2026 (production build served by `npx vite preview --port 4302`):
 
-| Check | Result |
+| Command | Result |
 |---|---|
 | `npm test` | 109 passed, 0 failed |
 | `npx vite build` | succeeds |
-| `node test/smoke-e2e.cjs` (production build) | being re-run with the new entry-point checks |
+| `node test/smoke-e2e.cjs http://localhost:4302/` | 13 of 13 passed (incl. both pages at desktop and phone size: JS, CSS, fonts and data loaded, no console errors or failed requests) |
+| `node test/browser-e2e.cjs http://localhost:4302/planner.html` | 42 of 42 passed (a first run lost its browser part-way, while other jobs shared the machine; re-run alone) |
+| `npm audit` / `npm audit --omit=dev` | 0 vulnerabilities |
 
 Phase 2 (scientific reliability) has not been started.
