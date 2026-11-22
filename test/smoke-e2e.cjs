@@ -39,6 +39,38 @@ const sub = (page, k) => page.$eval(`[data-sub="${k}"]`, (e) => e.textContent);
 (async () => {
   const browser = await chromium.launch({ args: GL });
 
+  // Both pages (index.html and planner.html), desktop and phone: no console errors,
+  // no uncaught exceptions and no failed requests for our own files (JS, CSS, fonts,
+  // data). Third-party failures (none are expected: everything is self-hosted) and
+  // aborted requests are reported but do not fail the check.
+  for (const [label, hash, vp] of [
+    ['Landing + Pro, desktop', '#pro&id=ridge', { width: 1366, height: 820 }],
+    ['Landing + Pro, phone', '#pro&id=ridge', { width: 390, height: 844 }],
+    ['Terrain 3D, desktop', 'planner.html#from=pro&id=ridge', { width: 1366, height: 820 }],
+    ['Terrain 3D, phone', 'planner.html#from=pro&id=ridge', { width: 390, height: 844 }],
+  ]) {
+    await check(`Entry point loads cleanly: ${label}`, async () => {
+      const ctx = await browser.newContext({ viewport: vp });
+      await ctx.addInitScript(quiet);
+      const page = await ctx.newPage();
+      const origin = new URL(BASE).origin;
+      const problems = [];
+      page.on('pageerror', (e) => problems.push(`exception: ${e.message}`));
+      page.on('console', (m) => { if (m.type() === 'error' && !/WebGL|GPU stall|GL_|swiftshader/i.test(m.text())) problems.push(`console: ${m.text().slice(0, 160)}`); });
+      page.on('response', (r) => { if (r.url().startsWith(origin) && r.status() >= 400) problems.push(`HTTP ${r.status()} ${r.url().slice(origin.length)}`); });
+      page.on('requestfailed', (r) => { if (r.url().startsWith(origin) && !/ERR_ABORTED/.test(r.failure()?.errorText || '')) problems.push(`failed ${r.url().slice(origin.length)}: ${r.failure()?.errorText}`); });
+      const loaded = [];
+      page.on('requestfinished', (r) => { if (/\.(js|css|woff2?|json|bin|i16z)(\?|$)/.test(r.url())) loaded.push(r.url().split('.').pop().split('?')[0]); });
+      await page.goto(BASE + hash, { waitUntil: 'load', timeout: 90000 });
+      await page.waitForTimeout(hash.startsWith('planner') ? 9000 : 6000);
+      const kinds = [...new Set(loaded)].sort().join(',');
+      assert(/js/.test(kinds) && /css/.test(kinds) && /woff/.test(kinds) && /json/.test(kinds), `critical assets missing: ${kinds}`);
+      assert(!problems.length, problems.slice(0, 6).join(' | '));
+      await ctx.close();
+      return `loaded ${kinds}`;
+    });
+  }
+
   await check('Beginner mode loads its first chapter', async () => {
     const { ctx, page, errors } = await open(browser, '#beginner');
     await page.waitForSelector('.w-say, .w-scene', { timeout: 60000 });
@@ -74,6 +106,44 @@ const sub = (page, k) => page.$eval(`[data-sub="${k}"]`, (e) => e.textContent);
     assert(!got.length, `downloaded ${got.join(', ')}`);
     await ctx.close();
     return 'no .bin files';
+  });
+
+  await check('Terrain 3D and back: site, date, step, settings and compare list are kept', async () => {
+    const { ctx, page, errors } = await open(browser, '#pro&id=a3-mp&t=2027-03-01T00:00Z');
+    await page.waitForFunction(() => /GO|CARE/.test(document.querySelector('[data-sub="check"]')?.textContent || ''), null, { timeout: 60000 });
+    await goStep(page, 1);
+    await page.$eval('[data-dt]', (i) => { i.value = '2027-06-15T12:00'; i.dispatchEvent(new Event('change', { bubbles: true })); });
+    await page.waitForFunction(() => /15 Jun 2027/.test(document.querySelector('[data-sub="date"]')?.textContent || ''), null, { timeout: 30000 });
+    await page.$eval('#settingsOpenBtn', (b) => b.click());
+    await page.$eval('#settingsForm', (f) => { f.loadW.value = '250'; f.requestSubmit(); });
+    await page.waitForTimeout(800);
+    await goStep(page, 2);
+    await page.getByRole('button', { name: /Add this plan to compare/ }).first().click();
+    await page.waitForTimeout(600);
+    const before = { site: await sub(page, 'site'), date: await sub(page, 'date'), compare: await page.$eval('#modeCompareBtn', (b) => b.textContent.replace(/\D+/g, '')) };
+    await goStep(page, 2);
+    // "See it up close" -> Terrain 3D, then its "Back to Professional" link.
+    await Promise.all([page.waitForURL(/planner\.html/, { timeout: 60000 }), page.$eval('[data-terrain]', (b) => b.click())]);
+    await page.waitForSelector('a.mode-link', { timeout: 60000 });
+    // Terrain 3D uses the Professional plan's spacecraft settings.
+    await page.$eval('#settingsBtn', (b) => b.click());
+    const t3dLoad = await page.$eval('#settingsForm', (f) => f.loadW.value);
+    await page.keyboard.press('Escape');
+    assert(t3dLoad === '250', `Terrain 3D load ${t3dLoad}`);
+    await Promise.all([page.waitForURL(/#pro/, { timeout: 60000 }), page.$eval('a.mode-link', (a) => a.click())]);
+    await page.waitForFunction(() => /15 Jun 2027/.test(document.querySelector('[data-sub="date"]')?.textContent || ''), null, { timeout: 60000 });
+    const after = { site: await sub(page, 'site'), date: await sub(page, 'date'), compare: await page.$eval('#modeCompareBtn', (b) => b.textContent.replace(/\D+/g, '')) };
+    const step = await page.$eval('[data-go][aria-current="step"]', (b) => b.dataset.go);
+    await page.$eval('#settingsOpenBtn', (b) => b.click());
+    const load = await page.$eval('#settingsForm', (f) => f.loadW.value);
+    assert(after.site === before.site, `site ${before.site} -> ${after.site}`);
+    assert(after.date === before.date, `date ${before.date} -> ${after.date}`);
+    assert(after.compare === before.compare && before.compare === '1', `compare ${before.compare} -> ${after.compare}`);
+    assert(step === '2', `step ${step}`);
+    assert(load === '250', `load ${load}`);
+    assert(!errors.length, errors.join(' | '));
+    await ctx.close();
+    return `${after.site} · ${after.date} · step ${Number(step) + 1} · compare ${after.compare} · load ${load} W`;
   });
 
   await check('Pro mode: site, date, Check verdict, power and radio settings, compare, flight, exports', async () => {

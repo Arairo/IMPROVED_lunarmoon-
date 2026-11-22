@@ -5,6 +5,7 @@ import sitesData from './data/sites.js';
 import { clamp, SITE_GROUPS, SITE_BADGES, SYNODIC_MONTH_DAYS } from './core/constants.js';
 import { prepareSite, scanWindow, evaluate } from './core/analysis.js';
 import { DEFAULT_COMMS_CONFIG } from './core/comms.js';
+import { DEFAULT_POWER_CONFIG } from './core/power.js';
 import { esc, fmtLatLon, fmtUtc } from './ui/format.js';
 import { createGlobeRenderer } from './scene/globeRenderer.js';
 import { hasWebGL, showNoWebGL } from './ui/webgl.js';
@@ -14,6 +15,7 @@ import { loadGlobalDem, setGlobalDem } from './core/globalDem.js';
 import { loadTerrain, setSharedTerrain, ensureHiresTile } from './core/horizon.js';
 import { renderAssessmentPanel } from './ui/assessment.js';
 import { addScenario, renderCompareTable, exportCompareCsv } from './ui/compare.js';
+import { snapshotSession, saveSession, loadSession, mergeConfig } from './ui/session.js';
 import { createTour, openGlossary, showToast } from './ui/modals.js';
 import { initExperience } from './experience/index.js';
 
@@ -38,7 +40,9 @@ export const app = {
   scenarios: [],
   config: {
     mastHeightM: 2.0,
-    power: { mode: 'vertical_tracking', areaM2: 2.0, efficiency: 0.29, fixedAzDeg: 0, loadW: 120 },
+    // Engine defaults (incl. battery charge/discharge efficiencies), so Terrain 3D and
+    // exported reports carry the full set.
+    power: { ...DEFAULT_POWER_CONFIG, mode: 'vertical_tracking', areaM2: 2.0, efficiency: 0.29, fixedAzDeg: 0, loadW: 120 },
     // Start from the engine defaults so the link budget has every term it needs
     // (losses, required Eb/N0, DSN minimum elevation).
     comms: { ...DEFAULT_COMMS_CONFIG, preset: 's_mga', minClearanceDeg: 2.0, targetMarginDb: 3.0, dataRateBps: 256000 },
@@ -61,7 +65,7 @@ try {
 let globe = null;
 let polar = null;
 let xp = null;
-const xpApi = { copyLink: () => copyScenarioLink(), compareSites: (...a) => compareSites(...a), app, sites: sitesData, selectSite: (...a) => selectSite(...a), setTime: (...a) => setTime(...a), switchMode: (...a) => switchMode(...a), getGlobe: () => globe, switchSubView: (v) => switchSubView(v), setHint: () => {} };
+const xpApi = { copyLink: () => copyScenarioLink(), compareSites: (...a) => compareSites(...a), app, sites: sitesData, selectSite: (...a) => selectSite(...a), setTime: (...a) => setTime(...a), switchMode: (...a) => switchMode(...a), getGlobe: () => globe, switchSubView: (v) => switchSubView(v), setHint: () => {}, saveSession: () => saveSession(snapshotSession(app, { step: xp?.flowStep?.() ?? 0 })) };
 
 export function onLayoutChange() {
   window.dispatchEvent(new Event('resize'));
@@ -173,7 +177,7 @@ function readScenarioHash() {
     }
   }
   const t = Date.parse(p.get('t') || '');
-  return { site, t: Number.isFinite(t) ? t : null };
+  return { site, t: Number.isFinite(t) ? t : null, resume: p.get('resume') === '1' };
 }
 
 export function selectSite(site, fly = false) {
@@ -243,6 +247,40 @@ export function setTime(ms, reanchor = false) {
   } else {
     updateCurrentTime(false);
   }
+}
+
+/** Highlight the window-length buttons for app.windowDays. */
+function syncWindowButtons() {
+  document.querySelectorAll('.win-btn').forEach((b) => {
+    b.className = Number(b.dataset.win) === app.windowDays
+      ? 'win-btn px-2 py-0.5 text-[11px] font-semibold bg-slate-900 text-white'
+      : 'win-btn px-2 py-0.5 text-[11px] font-medium text-slate-600 hover:bg-slate-100';
+  });
+}
+
+/** Put back the Pro state saved before going to Terrain 3D (src/ui/session.js). */
+function restoreSession(s) {
+  if (!s) return false;
+  const resolve = (ref) => app.sites.find((x) => x.id === ref.id && x.lat === ref.lat && x.lon === ref.lon)
+    || { id: String(ref.id || '').startsWith('custom') ? ref.id : `custom-${ref.lat.toFixed(2)}`, name: ref.name || `Custom point ${fmtLatLon(ref.lat, ref.lon, 2)}`, short: ref.short || 'Custom point', lat: ref.lat, lon: ref.lon, group: 'computed' };
+  mergeConfig(app.config, s.config);
+  // Compare list first: each plan with its own window length and settings.
+  const keepConfig = app.config;
+  for (const c of s.scenarios) {
+    app.config = mergeConfig(JSON.parse(JSON.stringify(keepConfig)), c.config);
+    app.windowDays = [15, 30, 90, 365].includes(c.windowDays) ? c.windowDays : s.windowDays;
+    addScenario(app, resolve(c.site), c.startMs, c.label || 'Plan');
+  }
+  app.config = keepConfig;
+  app.windowDays = s.windowDays;
+  syncWindowButtons();
+  app.windowStartMs = s.windowStartMs;
+  app.timeMs = s.timeMs;
+  selectSite(resolve(s.site), true);
+  if (s.view !== 'globe') switchSubView(s.view);
+  xp?.goStep?.(s.step);
+  if (s.mode === 'compare') switchMode('compare');
+  return true;
 }
 
 /** Open a Compare scenario in the planner with its own date AND window length. */
@@ -713,6 +751,7 @@ function boot() {
   window.addEventListener('lsp-theme', () => updateCurrentTime(false));
   if (shared?.t) { app.timeMs = app.windowStartMs = shared.t; }
   selectSite(shared?.site || app.sites.find((s) => s.id === 'ridge') || app.sites[0], true);
+  if (shared?.resume) restoreSession(loadSession());
   // Full terrain grids (240 m / 1 km south pole + whole-Moon LOLA, ~14.5 MB) are
   // only needed for custom points, nudges and the slope / landing-area checks:
   // listed sites use precomputed skylines. So they load in Professional mode

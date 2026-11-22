@@ -30,10 +30,11 @@ const NOW_KEY = {
 };
 const pctLut = (id) => makeLut((v) => ramp(LAYERS.find((l) => l.id === id).stops, v / 2));
 
-export function mountLayers({ getGlobe, viewTabs, app }) {
+export function mountLayers({ getGlobe, viewTabs, app, setMarksVisible }) {
   const gv = document.getElementById('globeViewport');
   if (!viewTabs || !gv) return null;
   let current = null;
+  const marksShown = () => { try { return localStorage.getItem('lsp.marks') !== 'off'; } catch { return true; } };
   let mode = 'now';
   let layers = null, dem = null, sky = null, cells = null, pix = null;
   let nowVals = null, nowMs = null;
@@ -160,6 +161,8 @@ export function mountLayers({ getGlobe, viewTabs, app }) {
     ...LAYERS.map((l) => ({ icon: { sun: 'sun', earth: 'globe', both: 'check', shadow: 'moon', height: 'mountain', slope: 'scale' }[l.id], label: l.label, sub: l.sub, toggle: current === l.id, run: () => show(current === l.id ? null : l.id) })),
     { sep: true },
     { icon: 'x', label: 'No layer', sub: 'Plain LROC imagery', run: () => show(null) },
+    { sep: true },
+    { icon: 'mapPin', label: 'Site and region names', sub: 'Dots for listed sites; Artemis III regions named', toggle: marksShown(), keepOpen: true, run: () => setMarksVisible?.(!marksShown()) },
   ]);
 
   // Follow the timeline: redraw "Now" as time moves (at most ~6 times a second),

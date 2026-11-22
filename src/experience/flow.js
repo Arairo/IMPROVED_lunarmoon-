@@ -161,10 +161,43 @@ export function mountFlow({ app, setTime, switchMode, getBestSpots, actions }) {
   trayGo.addEventListener('click', () => { if (app.scenarios.length >= 2) { app.cmpView = 'result'; switchMode('compare'); } });
 
   // 5 · Report
-  slot(4).innerHTML = '<div class="f-report" data-report></div><div class="f-row f-wrap"><button type="button" class="f-primary" data-r="print">Print / save as PDF</button><button type="button" data-r="json">Download JSON</button><button type="button" data-r="csv" title="Sun, power, Earth, DSN and link margin at every time step of the window">Time series (CSV)</button><button type="button" data-r="link">Copy link</button><button type="button" data-r="terrain">Terrain 3D ↗</button><button type="button" data-r="lumi">Ask Lumi</button></div><p class="f-note">For GIS and scripts: <a href="https://github.com/Arairo/IMPROVED_lunarmoon-/blob/main/docs/API.md" target="_blank" rel="noopener">GeoTIFF lighting maps, day-by-day tables, Artemis III region outlines and the engine as a JavaScript module</a>.</p>';
+  slot(4).innerHTML = '<div class="f-report f-report-sum" data-report-sum></div><button type="button" class="f-primary f-openreport" data-r="open" aria-haspopup="dialog">Open the full report</button><div class="f-row f-wrap"><button type="button" data-r="print">Print / save as PDF</button><button type="button" data-r="json">Download JSON</button><button type="button" data-r="csv" title="Sun, power, Earth, DSN and link margin at every time step of the window">Time series (CSV)</button><button type="button" data-r="link">Copy link</button><button type="button" data-r="terrain">Terrain 3D ↗</button><button type="button" data-r="lumi">Ask Lumi</button></div><p class="f-note">For GIS and scripts: <a href="https://github.com/Arairo/IMPROVED_lunarmoon-/blob/main/docs/API.md" target="_blank" rel="noopener">GeoTIFF lighting maps, day-by-day tables, Artemis III region outlines and the engine as a JavaScript module</a>.</p>';
   const s5 = slot(4);
-  s5.querySelector('[data-r="print"]').addEventListener('click', () => printReport());
-  s5.querySelector('[data-r="link"]').addEventListener('click', () => actions.copyLink());
+  // The full report opens in a wide panel on the right (full screen on phones),
+  // over the Moon, with the same export buttons.
+  const panel = document.createElement('div');
+  panel.className = 'xp-flow xp-report';
+  panel.id = 'xp-report';
+  panel.setAttribute('role', 'dialog');
+  panel.setAttribute('aria-modal', 'false');
+  panel.setAttribute('aria-labelledby', 'xp-report-title');
+  panel.hidden = true;
+  panel.innerHTML = `<header class="r-head"><h2 id="xp-report-title" tabindex="-1">Mission report</h2>
+      <div class="r-tools"><button type="button" class="f-primary" data-r="print">Print / save as PDF</button><button type="button" data-r="json">JSON</button><button type="button" data-r="csv" title="Sun, power, Earth, DSN and link margin at every time step of the window">Time series (CSV)</button><button type="button" data-r="link">Copy link</button>
+      <button type="button" class="r-close" data-r="close" aria-label="Close the report">${icon('x', 18)}</button></div></header>
+    <div class="f-report r-body" data-report></div>`;
+  document.body.appendChild(panel);
+  let lastFocus = null;
+  const openReport = () => {
+    lastFocus = document.activeElement;
+    panel.querySelector('[data-report]').innerHTML = reportHtml();
+    reportKey = '';
+    panel.hidden = false;
+    requestAnimationFrame(() => { panel.classList.add('is-open'); panel.querySelector('#xp-report-title').focus(); });
+    play('tick');
+  };
+  const closeReport = () => {
+    if (panel.hidden) return;
+    panel.classList.remove('is-open');
+    setTimeout(() => { panel.hidden = true; }, 220);
+    lastFocus?.focus?.();
+  };
+  panel.addEventListener('keydown', (e) => { if (e.key === 'Escape') { e.stopPropagation(); closeReport(); } });
+  s5.querySelector('[data-r="open"]').addEventListener('click', openReport);
+  const onBoth = (k, fn) => [s5, panel].forEach((c) => c.querySelector(`[data-r="${k}"]`)?.addEventListener('click', fn));
+  panel.querySelector('[data-r="close"]').addEventListener('click', closeReport);
+  onBoth('print', () => printReport());
+  onBoth('link', () => actions.copyLink());
   const saveFile = (text, type, ext) => {
     const a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob([text], { type }));
@@ -173,9 +206,9 @@ export function mountFlow({ app, setTime, switchMode, getBestSpots, actions }) {
     setTimeout(() => URL.revokeObjectURL(a.href), 2000);
     play('go');
   };
-  s5.querySelector('[data-r="json"]').addEventListener('click', () => saveFile(JSON.stringify(decisionSummary(), null, 2), 'application/json', 'json'));
+  onBoth('json', () => saveFile(JSON.stringify(decisionSummary(), null, 2), 'application/json', 'json'));
   loadManifest(import.meta.env?.BASE_URL ?? '/');
-  s5.querySelector('[data-r="csv"]').addEventListener('click', () => {
+  onBoth('csv', () => {
     if (!app.scan) return;
     const q = app.ctx?.horizon?.quality;
     const provenance = [
@@ -296,7 +329,7 @@ export function mountFlow({ app, setTime, switchMode, getBestSpots, actions }) {
     const ws = windowStats(app.site, app.windowStartMs, app.config, app.windowDays, app.windowDays > 60 ? 2 * 3600000 : 3600000);
     const range = document.querySelector('.xp-plan .p-range')?.textContent || '';
     const spots = getBestSpots().map((sp) => `<li>${esc(sp.title)}: ${esc(sp.r.site.name)} (${pct(sp.r.ops)} with Sun and Earth together)</li>`).join('');
-    return `<h3>${esc(app.site.name)}</h3>
+    return `<div class="r-cols"><div class="r-main"><h3>${esc(app.site.name)}</h3>
       <p class="f-meta">${fmtLatLon(app.site.lat, app.site.lon)} · touchdown ${when(app.windowStartMs)} · ${app.windowDays}-day window</p>
       <p class="f-rv"><span class="${v.overall}">${LIGHT[v.overall][0]}</span> Power ${LIGHT[v.power][0]} · Earth ${LIGHT[v.earth][0]}</p>
       <table class="f-table">
@@ -311,13 +344,28 @@ export function mountFlow({ app, setTime, switchMode, getBestSpots, actions }) {
         ${(() => { const d = app.lastDispersion; return d && d.siteId === app.site.id && d.start === app.windowStartMs ? `<tr><td>Landing anywhere within ${d.radiusM >= 1000 ? `${d.radiusM / 1000} km` : `${d.radiusM} m`}: worst / typical</td><td>${pct(d.min)} / ${pct(d.p50)}</td></tr>` : ''; })()}
       </table>
       ${range ? `<p class="f-note">${esc(range)} (how much the answer changes within one terrain cell).</p>` : ''}
+      </div><div class="r-side">
       ${spots ? `<p class="f-meta">Best spots for the 30 days from touchdown:</p><ul>${spots}</ul>` : ''}
       ${(() => { const f = flightNow(); return `<p class="f-meta">Getting there (${esc(ROUTES[f.route].label)} route, ${esc(f.lander.label.toLowerCase())}):</p>
         <table class="f-table"><tr><td>Launch from ${esc(f.launchSite.short)}</td><td>${when(f.launchMs)}</td></tr>
         <tr><td>Leave Earth orbit / arrive in lunar orbit</td><td>${when(f.tliMs)} / ${when(f.loiMs)}</td></tr>
         <tr><td>Door to door</td><td>${(f.doorToDoorDays).toFixed(1)} days</td></tr>
         <tr><td>Lander speed changes / fuel</td><td>${f.landerDv.toFixed(2)} km/s / ${Math.round(f.propKg).toLocaleString('en-GB')} kg</td></tr></table>`; })()}
-      <p class="f-note">Lunar Site Planner · NASA LOLA terrain · ephemeris checked against NASA JPL Horizons · verdicts use our own rules of thumb.</p>`;
+      <p class="f-note">Lunar Site Planner · NASA LOLA terrain · ephemeris checked against NASA JPL Horizons · verdicts are preliminary screening under the assumptions above, using our own rules of thumb.</p></div></div>`;
+  }
+  /** Short version for the Report step; the full report opens in the side panel. */
+  function reportSummaryHtml() {
+    const v = verdictNow();
+    const s = app.scan?.stats;
+    if (!v || !s) return '<p>Calculating…</p>';
+    return `<h3>${esc(app.site.name)}</h3>
+      <p class="f-meta">touchdown ${when(app.windowStartMs)} · ${app.windowDays}-day window</p>
+      <p class="f-rv"><span class="${v.overall}">${LIGHT[v.overall][0]}</span> Power ${LIGHT[v.power][0]} · Earth ${LIGHT[v.earth][0]}</p>
+      <table class="f-table">
+        <tr><td>Sunlight</td><td>${pct(s.litFraction)}</td></tr>
+        <tr><td>Earth in view</td><td>${pct(s.earthCentreFraction)}</td></tr>
+        <tr><td>Battery needed (estimate)</td><td>${s.batteryKWh.toFixed(1)} kWh${s.batteryOpenEnded ? '+' : ''}</td></tr>
+      </table>`;
   }
   /** The flight for this plan, with the route and lander chosen in the Flight view (Direct by default). */
   function flightNow() {
@@ -394,7 +442,12 @@ export function mountFlow({ app, setTime, switchMode, getBestSpots, actions }) {
     if (current === 4) {
       const range = document.querySelector('.xp-plan .p-range')?.textContent || '';
       const k = `${app.site.lat},${app.site.lon}|${app.windowStartMs}|${app.windowDays}|${JSON.stringify(app.config)}|${getBestSpots().length}|${range}`;
-      if (force || k !== reportKey) { reportKey = k; slot(4).querySelector('[data-report]').innerHTML = reportHtml(); }
+      if (force || k !== reportKey) {
+        reportKey = k;
+        slot(4).querySelector('[data-report-sum]').innerHTML = reportSummaryHtml();
+        const full = document.querySelector('#xp-report:not([hidden]) [data-report]');
+        if (full) full.innerHTML = reportHtml();
+      }
     }
   }
   let reportKey = '';
@@ -402,5 +455,5 @@ export function mountFlow({ app, setTime, switchMode, getBestSpots, actions }) {
   window.addEventListener('lsp-terrain', () => { keys.verdict = null; if (current === 2) renderVerdict(); });
 
   go(0, { quiet: true });
-  return { refresh, go, print: () => printReport(), renderBest: () => { if (current === 0) renderBest(); } };
+  return { refresh, go, step: () => current, print: () => printReport(), renderBest: () => { if (current === 0) renderBest(); } };
 }

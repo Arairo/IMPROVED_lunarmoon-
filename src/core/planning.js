@@ -37,13 +37,13 @@ export function nudgeSite(site, dir, km) {
 export function windowStats(site, startMs, config, days = 30, stepMs = HOUR) {
   const ctx = prepareSite(site, null, config);
   const sc = scan(ctx, { startMs, endMs: startMs + days * DAY, stepMs }, config, { withDsn: false });
-  const { lit, los } = sc.series;
-  let both = 0;
-  for (let i = 0; i < lit.length; i++) if (lit[i] && los[i]) both++;
+  const { lit, los, dtH } = sc.series;
+  let both = 0, total = 0;
+  for (let i = 0; i < lit.length; i++) { total += dtH[i]; if (lit[i] && los[i]) both += dtH[i]; }
   return {
     sun: sc.stats.litFraction,
     earth: sc.stats.earthCentreFraction,
-    both: both / lit.length,
+    both: both / total,
     darkH: sc.stats.longestDarkH,
     avgPowerW: sc.stats.avgPowerW,
   };

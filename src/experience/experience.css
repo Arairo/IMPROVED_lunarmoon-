@@ -515,6 +515,25 @@ body.xp-enter header { animation: xpHeadIn 0.7s var(--xp-ease) both; }
 }
 .xp-spot-label span { font-weight: 400; color: #c7c9d1; font-size: 10.5px; }
 
+/* Site and region markers on the 3D Moon (globeRenderer setMarks). */
+.xp-marks { position: absolute; inset: 0; pointer-events: none; z-index: 10; overflow: hidden; }
+.xp-mark { position: absolute; left: 0; top: 0; display: flex; align-items: center; gap: 6px; margin: -6px 0 0 -6px; padding: 0; border: 0; background: none; color: #fff; cursor: pointer; pointer-events: auto; font: 600 11px/1 var(--xp-font); white-space: nowrap; }
+.xp-mark i { width: 8px; height: 8px; border-radius: 50%; background: var(--c); box-shadow: 0 0 0 2px rgba(0,0,0,.55); flex: none; margin: 2px; }
+.xp-mark span { padding: 3px 7px; border-radius: 8px; background: rgba(0,0,0,.6); color: #eef0f5; opacity: 0; transform: translateX(-4px); transition: opacity .2s, transform .2s; pointer-events: none; }
+.xp-mark.is-region i { width: 6px; height: 6px; border-radius: 2px; transform: rotate(45deg); }
+.xp-mark.is-region span { color: #c7d2fe; border: 1px solid rgba(129,140,248,.45); }
+.xp-mark.show-label span, .xp-mark:hover span { opacity: 1; transform: none; }
+.xp-mark.show-label { z-index: 1; }
+.xp-mark:hover { z-index: 3; }
+.xp-mark.is-selected { z-index: 2; }
+.xp-mark.is-selected span { background: rgba(0,0,0,.75); color: #fff; font-weight: 700; }
+.xp-mark-sel { position: absolute; left: 0; top: 0; width: 0; height: 0; pointer-events: none; }
+.xp-mark-sel::before, .xp-mark-sel::after { content: ''; position: absolute; left: -13px; top: -13px; width: 26px; height: 26px; border-radius: 50%; border: 2px solid #fbbf24; box-sizing: border-box; }
+.xp-mark-sel::after { box-shadow: 0 0 0 1px rgba(0,0,0,.5); }
+.xp-mark-sel::before { animation: xpSelPulse 2s ease-out infinite; }
+@keyframes xpSelPulse { 0% { transform: scale(1); opacity: .9; } 100% { transform: scale(2.2); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .xp-mark-sel::before { animation: none; display: none; } }
+
 /* Intro on short or narrow screens: stack everything, let it scroll, and never
    let the stats chips cover the Start button. */
 .xp-stats { pointer-events: none; }
@@ -694,6 +713,37 @@ body[data-mode='pro'] #expandResultsBtn { display: none !important; }
 @media (max-width: 1023px) {
   #paneSite.xp-flow { flex: 1; }
 }
+
+/* ---------- Full report: wide panel on the right (full screen on phones) ---------- */
+.xp-flow .f-openreport { width: 100%; margin-top: 10px; min-height: 40px; }
+.xp-flow .f-report-sum .f-table { margin-bottom: 0; }
+.xp-report { position: fixed; top: 64px; right: 12px; bottom: 12px; z-index: 110; width: min(860px, calc(100vw - 420px)); min-width: 560px; display: flex; flex-direction: column; border-radius: 20px; border: 1px solid var(--xp-line-strong); background: var(--xp-surface-solid); box-shadow: var(--xp-shadow); font-family: var(--xp-font); color: var(--xp-ink); opacity: 0; transform: translateX(24px); transition: opacity .2s ease, transform .35s var(--xp-spring); }
+.xp-report.is-open { opacity: 1; transform: none; }
+.xp-report[hidden] { display: none; }
+.xp-report .r-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px 12px 22px; border-bottom: 1px solid var(--xp-line); flex-wrap: wrap; }
+.xp-report .r-head h2 { margin: 0; font: 700 18px var(--xp-font); letter-spacing: -0.01em; outline: none; }
+.xp-report .r-tools { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.xp-report .r-tools button:not(.f-primary) { min-height: 34px; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--xp-line-strong); background: var(--xp-surface-2); color: var(--xp-ink); font: 600 12.5px var(--xp-font); cursor: pointer; }
+.xp-report .r-tools button:hover { filter: brightness(1.08); }
+.xp-report .r-close { width: 34px; padding: 0 !important; display: grid; place-items: center; }
+.xp-report .r-body { flex: 1; overflow: auto; margin: 0; border: 0; border-radius: 0 0 20px 20px; padding: 18px 22px 22px; background: transparent; }
+.xp-report .r-cols { display: grid; grid-template-columns: 1.15fr 1fr; gap: 28px; }
+.xp-report .f-report h3, .xp-report h3 { font-size: 22px; }
+.xp-report .f-meta { font-size: 13px; }
+.xp-report .f-rv { font-size: 14px; }
+.xp-report .f-table { font-size: 14px; }
+.xp-report .f-table td { padding: 8px 2px; }
+.xp-report .f-note, .xp-report ul { font-size: 13px; }
+@media (max-width: 1100px) {
+  .xp-report { width: auto; min-width: 0; left: 12px; }
+}
+@media (max-width: 760px) {
+  .xp-report { inset: 0; border-radius: 0; }
+  .xp-report .r-cols { grid-template-columns: 1fr; gap: 12px; }
+  .xp-report .r-body { border-radius: 0; padding: 14px 16px 24px; }
+  .xp-report .r-head { padding: 12px 14px; }
+}
+@media (prefers-reduced-motion: reduce) { .xp-report { transition: none; transform: none; } }
 
 /* ---------- Ask Lumi (chat panel) ---------- */
 #xp-lumi { position: fixed; right: 16px; bottom: 16px; z-index: 120; width: min(390px, calc(100vw - 32px)); height: min(580px, calc(100vh - 110px)); display: flex; flex-direction: column; border-radius: 24px; border: 1px solid var(--xp-line-strong); background: var(--xp-surface); backdrop-filter: blur(28px) saturate(170%); -webkit-backdrop-filter: blur(28px) saturate(170%); box-shadow: var(--xp-shadow); font-family: var(--xp-font); color: var(--xp-ink); opacity: 0; transform: translateY(18px) scale(0.96); transform-origin: bottom right; pointer-events: none; visibility: hidden; transition: opacity 0.25s ease, transform 0.45s var(--xp-spring), visibility 0s linear 0.45s; }
@@ -1296,13 +1346,15 @@ html[data-theme='dark'] .cc-badge.amber { color: var(--xp-warn); }
 .xp-flight .fl-caption button { margin-top: 6px; display: inline-flex; gap: 6px; align-items: center; border: 0; border-radius: 999px; padding: 6px 12px; background: #2997ff; color: #fff; font: 600 12px var(--xp-font); cursor: pointer; }
 .xp-flight .fl-bar { position: absolute; left: 12px; right: 12px; bottom: 12px; z-index: 3; display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 16px; background: rgba(10,14,26,.9); border: 1px solid rgba(148,163,184,.22); }
 .xp-flight .fl-play { flex: none; width: 40px; height: 40px; border-radius: 50%; border: 0; background: #fbbf24; color: #1c1917; display: grid; place-items: center; cursor: pointer; box-shadow: 0 4px 14px rgba(251,191,36,.35); }
-.xp-flight .fl-track { position: relative; flex: 1; padding-bottom: 16px; }
+.xp-flight .fl-track { position: relative; flex: 1; padding: 6px 0 22px; }
 .xp-flight .fl-phases { display: flex; height: 6px; border-radius: 999px; overflow: hidden; }
 .xp-flight .fl-phases span { position: relative; height: 6px; }
 .xp-flight .fl-phases span i { position: absolute; inset: 0 1px; background: var(--c); opacity: .8; }
-.xp-flight .fl-phases span em { position: absolute; top: 9px; left: 2px; right: 2px; font: 600 10px var(--xp-font); font-style: normal; color: #94a3b8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.xp-flight .fl-phases span em { position: absolute; top: 14px; left: 2px; right: 2px; font: 600 10.5px/1.2 var(--xp-font); font-style: normal; color: #a8b3c4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none; }
 .xp-flight .fl-phases { overflow: visible; }
-.xp-flight .fl-track input { position: absolute; left: 0; right: 0; top: -7px; width: 100%; margin: 0; background: transparent; -webkit-appearance: none; appearance: none; height: 20px; cursor: pointer; }
+.xp-flight .fl-track input { position: absolute; left: 0; right: 0; top: -1px; width: 100%; margin: 0; background: transparent; -webkit-appearance: none; appearance: none; height: 20px; cursor: pointer; }
+/* The slider sits on the coloured bar only; phase names are in their own row below it. */
+.xp-flight .fl-track input:focus-visible { outline: 2px solid #2997ff; outline-offset: 2px; border-radius: 999px; }
 .xp-flight .fl-track input::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: #fff; border: 3px solid #fbbf24; box-shadow: 0 2px 6px rgba(0,0,0,.4); }
 .xp-flight .fl-track input::-moz-range-thumb { width: 12px; height: 12px; border-radius: 50%; background: #fff; border: 3px solid #fbbf24; }
 .xp-flight .fl-ctrl { display: flex; gap: 6px; }

@@ -15,10 +15,12 @@ window in seconds, and we report how it compares with independent references.
 It started as a NASA Space Apps Challenge 2026 entry.
 
 **Methods:** *Terrain.* Skylines are cast from NASA LRO LOLA topography: the
-20 m south-polar product LDEM_80S_20MPP_ADJ [3] within 8 km of each analysed
-site, 240 m and 1 km south-polar grids beyond, and a global 8 px/deg grid. Each
-20 m tile is checked against the 240 m grid before use (mean height difference
-2.0–3.6 m). *Ephemeris.* Sun and Earth positions come from astronomy-engine with
+20 m south-polar product LDEM_80S_20MPP_ADJ [3] over all nine Artemis III
+candidate regions (64 tiles of 16 km) and within 8 km of other analysed sites,
+240 m and 1 km south-polar grids beyond, and a global 8 px/deg grid. Each 20 m
+tile is checked against the coarser grid before use (mean height difference
+2.0–5 m for 67 of 76 tiles; up to 24 m for tiles beyond the 240 m grid, which
+can only be checked against the smoother 1 km grid). *Ephemeris.* Sun and Earth positions come from astronomy-engine with
 the IAU lunar rotation model, converted to local azimuth and elevation at a 2 m
 mast. *Operations.* Each time step gives the visible fraction of the solar disk,
 solar power for a tracking array, Earth clearance above the skyline, DSN

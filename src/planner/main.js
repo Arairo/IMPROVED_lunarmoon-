@@ -5,6 +5,10 @@ import '@fontsource/ibm-plex-mono/400.css';
 import '@fontsource/ibm-plex-mono/500.css';
 import './styles.css';
 import './theme-apple.css';
+import '@fontsource/inter/400.css';
+import '@fontsource/inter/600.css';
+import '@fontsource/inter/700.css';
+import './theme-pro.css';
 import { createMoonScene } from './scene/moonScene.js';
 import { loadTerrain, addHiresTileTo } from '../core/horizon.js';
 import { loadGlobalDem } from '../core/globalDem.js';
@@ -24,6 +28,7 @@ import { createTour } from './ui/tour.js';
 import { createVideoTutorial } from './ui/videoTutorial.js';
 import { createWelcome } from './ui/welcome.js';
 import { findBestSpots } from '../experience/bestSpots.js';
+import { loadSession, saveSession, mergeConfig } from '../ui/session.js';
 
 // Shared light/dark theme with the main app (dark by default).
 const savedTheme = (() => { try { return localStorage.getItem('lsp.theme'); } catch { return null; } })();
@@ -474,6 +479,11 @@ function applySettings() {
   const tokenChanged = token !== app.ionToken;
   app.ionToken = token;
   savePrefs();
+  // Opened from Professional mode: hand the new settings back to it as well.
+  if (app.proSession) {
+    const snap = loadSession();
+    if (snap) { snap.config = structuredClone(app.config); snap.savedAt = Date.now(); saveSession(snap); app.proSession = snap; }
+  }
   selectSite(app.site, { keepScenario: true });
   for (const sc of app.scenarios) {
     sc.ctx = prepareSite(sc.site, app.terrain, app.config);
@@ -741,6 +751,10 @@ async function boot() {
   // without the welcome dialog or the help buttons Professional already has.
   const fromPro = new URLSearchParams(location.hash.slice(1)).get('from') === 'pro';
   if (fromPro) document.body.classList.add('terrain-view');
+  // Same spacecraft settings as the Professional plan that opened this page, so
+  // both pages show the same power, battery and radio numbers.
+  app.proSession = fromPro ? loadSession() : null;
+  if (app.proSession?.config) mergeConfig(app.config, app.proSession.config);
   else welcome.offer(); // ask about the video tutorial right away, while data loads
   $('#assessment').innerHTML = '<div class="empty">Loading LOLA terrain…</div>';
   try {

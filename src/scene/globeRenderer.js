@@ -199,6 +199,75 @@ export function createGlobeRenderer(canvas, onPickSite, options = {}) {
     renderGlobe();
   }
 
+  // --- Site and region names on the surface ----------------------------------
+  // HTML markers projected each frame: a pulsing ring on the selected site, a small
+  // dot per listed site and the Artemis III region names. Labels that would overlap
+  // one already placed are hidden (selected first, then regions, then sites); a
+  // hidden label still shows when the pointer is over its dot.
+  const markLayer = document.createElement('div');
+  markLayer.className = 'xp-marks';
+  canvas.parentElement?.appendChild(markLayer);
+  const selMark = document.createElement('div');
+  selMark.className = 'xp-mark-sel';
+  selMark.setAttribute('aria-hidden', 'true');
+  markLayer.appendChild(selMark);
+  let marks = [];
+  let marksOn = true;
+  function setMarks(list = [], { onPick } = {}) {
+    for (const m of marks) m.el.remove();
+    marks = list.map((m) => {
+      const el = document.createElement('button');
+      el.type = 'button';
+      el.tabIndex = -1; // the site list is the keyboard path; these are for pointing
+      el.setAttribute('aria-hidden', 'true');
+      el.className = `xp-mark is-${m.kind || 'site'}`;
+      el.style.setProperty('--c', m.color || '#e5e7eb');
+      const dot = document.createElement('i');
+      const label = document.createElement('span');
+      label.textContent = m.label;
+      el.append(dot, label);
+      el.title = m.title || m.label;
+      el.addEventListener('click', (e) => { e.stopPropagation(); onPick?.(m.id); });
+      el.addEventListener('pointerdown', (e) => e.stopPropagation());
+      markLayer.appendChild(el);
+      return { ...m, el, label, v: latLonToVec3(m.lat, m.lon, 1.004) };
+    });
+    renderGlobe();
+  }
+  function placeMarks(cw, ch) {
+    markLayer.hidden = !marksOn || !three;
+    if (markLayer.hidden) return;
+    const T = three.T;
+    const cam = three.camera.position;
+    const project = (v) => {
+      const pos = new T.Vector3(v[0], v[1], v[2]);
+      const facing = pos.clone().normalize().dot(cam.clone().sub(pos)) > 0;
+      const q = pos.clone().project(three.camera);
+      return { on: facing && q.z < 1 && Math.abs(q.x) < 1.02 && Math.abs(q.y) < 1.02, x: ((q.x + 1) / 2) * cw, y: ((1 - q.y) / 2) * ch };
+    };
+    const boxes = [];
+    const free = (b) => boxes.every((o) => b.x1 < o.x0 || b.x0 > o.x1 || b.y1 < o.y0 || b.y0 > o.y1);
+    if (selectedSite) {
+      const s0 = project(latLonToVec3(selectedSite.lat, selectedSite.lon, 1.004));
+      selMark.style.display = s0.on ? '' : 'none';
+      selMark.style.transform = `translate(${s0.x}px, ${s0.y}px)`;
+      if (s0.on) boxes.push({ x0: s0.x - 18, x1: s0.x + 18, y0: s0.y - 18, y1: s0.y + 18 });
+    } else selMark.style.display = 'none';
+    const order = [...marks].sort((a, b) => (b.id === selectedSite?.id) - (a.id === selectedSite?.id) || (a.kind === 'region' ? 0 : 1) - (b.kind === 'region' ? 0 : 1));
+    for (const m of order) {
+      const p = project(m.v);
+      m.el.style.display = p.on ? '' : 'none';
+      if (!p.on) continue;
+      m.el.style.transform = `translate(${p.x}px, ${p.y}px)`;
+      const w = 12 + m.label.textContent.length * 6.4;
+      const box = { x0: p.x + 6, x1: p.x + 8 + w, y0: p.y - 10, y1: p.y + 10 };
+      const show = m.id === selectedSite?.id || free(box);
+      m.el.classList.toggle('show-label', show);
+      m.el.classList.toggle('is-selected', m.id === selectedSite?.id);
+      if (show) boxes.push(box);
+    }
+  }
+
   function renderGlobe() {
     const cw = canvas.clientWidth || 0;
     const ch = canvas.clientHeight || 0;
@@ -256,6 +325,7 @@ export function createGlobeRenderer(canvas, onPickSite, options = {}) {
       }
       three.renderer.render(three.scene, three.camera);
       placeLabels(cw, ch);
+      placeMarks(cw, ch);
       if (settling && !renderGlobe.queued) {
         renderGlobe.queued = true;
         requestAnimationFrame(() => { renderGlobe.queued = false; renderGlobe(); });
@@ -475,6 +545,9 @@ export function createGlobeRenderer(canvas, onPickSite, options = {}) {
       renderGlobe();
     },
     setHighlights,
+    /** Site and region markers: [{ id, lat, lon, label, title, color, kind: 'site' | 'region' }]. */
+    setMarks,
+    setMarksVisible(on) { marksOn = !!on; renderGlobe(); },
     /**
      * Region outlines on the surface, e.g. NASA's Artemis III candidate regions.
      * list: [{ ring: [[lon, lat], ...], color, selected }]. Edges are drawn

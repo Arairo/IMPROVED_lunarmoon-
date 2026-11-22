@@ -106,7 +106,7 @@ export function initExperience(api) {
     headerRight.prepend(tools);
 
     createMenu(tools.querySelector('[data-x="help"]'), () => [
-      { icon: 'route', label: 'Guided tour', sub: 'Lumi shows you this screen, controls included', run: () => (app.mode === 'compare' ? startCmpTour() : proTour.start()) },
+      { icon: 'route', label: 'Guided tour', sub: 'Lumi shows you this screen, controls included', run: () => startTour() },
       { icon: 'video', label: 'Tutorial video', sub: 'Two minutes, narrated', run: () => openVideo() },
       { icon: 'sparkles', label: 'Ask Lumi a question', run: () => document.querySelector('[data-x="lumi"]')?.click() },
       { icon: 'check', label: 'Accuracy, data and sources', sub: 'How we know the numbers are right', run: () => import('./trust.js').then((m) => m.openTrust({ sites })) },
@@ -182,7 +182,7 @@ export function initExperience(api) {
     ]);
   }
 
-  const mapLayers = mountLayers({ getGlobe, viewTabs: toolRow || viewTabs, app });
+  const mapLayers = mountLayers({ getGlobe, viewTabs: toolRow || viewTabs, app, setMarksVisible: (on) => api.setMarksVisible?.(on) });
   const flight = mountFlight({ app, viewTabs, switchSubView: api.switchSubView, setTime });
 
   const controlsCoach = createSpotlight([
@@ -200,13 +200,34 @@ export function initExperience(api) {
     { target: null, mood: 'happy', title: 'Welcome to Professional mode', body: 'Professional mode walks you through a landing plan in five steps, with the 3D Moon in the middle. I’ll show you round in under a minute.' },
     { target: '#paneSite .f-top', mood: 'think', title: 'Five steps, in order', body: 'Site → Date → Check → What if → Report. Each step shows only what it needs. Tap a number to jump, or use Next at the bottom.', why: 'Mission planners work in this order: choose where, choose when, check it works, test what happens if plans change, then write it up.' },
     { target: '#paneSite .f-body', before: () => flow.go(0, { quiet: true }), mood: 'happy', title: 'Step 1: pick a landing site', body: 'Choose from Apollo, CLPS, Chandrayaan-3, Chang’e and computed best-lit spots, type coordinates with “+ Coords”, or tap the best-spot shortcut.', why: 'Sites marked “computed” were found by scanning NASA LOLA terrain for the places that see the most Sun.' },
-    { target: '#globeViewport', pad: 0, mood: 'wow', title: 'The 3D Moon', body: 'Gold is the direction of the Sun from your site; blue is Earth. Click anywhere on the surface to test that exact spot. Map layers (top right) colours the Moon by sunlight, Earth in view, shadow, height or slope.', extra: GESTURES },
-    { target: '#xp-notch', pad: 8, mood: 'happy', title: 'Live status', body: 'This pill tells you, at a glance, whether you have power and a radio link right now. The numbers flash green when they rise and red when they fall.' },
+    { target: '#globeViewport', pad: 0, before: () => showGlobe(), mood: 'wow', title: 'The 3D Moon', body: 'Gold is the direction of the Sun from your site; blue is Earth. Click anywhere on the surface to test that exact spot. Map layers (top right) colours the Moon by sunlight, Earth in view, shadow, height or slope.', extra: GESTURES },
+    { target: '#xp-notch', pad: 8, before: () => showGlobe(), mood: 'happy', title: 'Live status', body: 'This pill tells you, at a glance, whether you have power and a radio link right now. The numbers flash green when they rise and red when they fall.' },
     { target: '#clockToolbar', mood: 'think', title: 'Travel through time', body: 'Press Play to watch the Sun circle the sky, or scrub the timeline below. Step 2 (Date) is where you set the touchdown date.', why: 'At the south pole the Sun circles the whole horizon once every 29.5 days. Play at 6 h/s to watch it skim the ridges.' },
     { target: '#timelineWrap', mood: 'happy', title: 'The operations timeline', body: 'Each row is a resource over the window: sunlight, power, Earth in view, Deep Space Network coverage and the direct-to-Earth link. Drag across it to scrub time.' },
     { target: '[data-x="lumi"]', pad: 6, mood: 'wow', title: 'Ask Lumi', body: 'Stuck? Type what you want: “best date at the ridge in 2027”, “compare ridge and IM-2”, “move 1 km north” or “what is libration?”.', why: 'Lumi runs in your browser with no AI service: it turns your words into planner actions and reads every number from the same engine you see on screen.' },
     { target: '[data-x="help"]', pad: 6, mood: 'happy', title: 'Help is always here', body: 'Help has this tour, the tutorial video, Ask Lumi and how we check the numbers. The View menu above the Moon has the mouse controls and standard views. Settings (the gear) has light and dark mode, sound, the spacecraft assumptions and the Beginner walk.' },
   ], { label: 'Tour' });
+
+  // ---------- Flight tour (its own view) ----------
+  const showView = (v) => { if (app.view !== v) { api.switchSubView?.(v); return 450; } return 0; };
+  const showGlobe = () => showView('globe');
+  const flightTour = createSpotlight([
+    { target: null, before: () => showView('flight'), mood: 'happy', title: 'The flight, launch to touchdown', body: 'This view plans the trip that ends at your site on your touchdown date (set in the Date step). It is a simplified model for comparing routes, not for navigating a real spacecraft.' },
+    { target: '.fl-routes', mood: 'think', title: 'Three ways to get there', body: 'Direct is quick but the lander brakes hard; phasing loops and the low-energy route take longer and need less fuel. Pick one to see its numbers.', why: 'Flown examples: Apollo 11 and IM-1 went direct; Chandrayaan-3 and Blue Ghost used phasing loops; SLIM took the low-energy route.' },
+    { target: '.fl-stats', mood: 'happy', title: 'The headline numbers', body: 'Launch date, door-to-door time, the speed changes the lander must make itself (Δv) and the fuel that needs, with a 5% reserve.' },
+    { target: '.fl-tabs', mood: 'think', title: 'More detail', body: 'Timeline lists each phase; Burns and fuel shows every engine burn and whether its number is computed, assumed or a rule of thumb; Compare routes puts the three side by side; At touchdown checks Sun and Earth on arrival.' },
+    { target: '.fl-bar', pad: 6, mood: 'wow', title: 'Watch it fly', body: 'Press play or drag along the coloured bar: each colour is a phase. Long coasts play faster so the short burns don’t vanish. 1× changes the speed; Follow keeps the camera on the spacecraft.' },
+    { target: '.fl-canvas', pad: 0, mood: 'happy', title: 'Look around', body: 'Drag to orbit, scroll to zoom. Switch Follow off to look freely; the caption at the top says what is happening.' },
+  ], { label: 'Flight tour' });
+
+  // ---------- South-pole map tour ----------
+  const mapTour = createSpotlight([
+    { target: '#polarCanvas', pad: 0, before: () => showView('polar'), mood: 'happy', title: 'The south pole from above', body: 'A flat map of the region around the south pole, from NASA’s LROC camera mosaic. Click anywhere to test that spot; it becomes your site.' },
+    { target: '#polarViewport fieldset', mood: 'think', title: 'Colour it by sunlight or Earth', body: 'Overlays show the share of 2027 with the Sun, or Earth, above the local skyline, computed from NASA LOLA terrain. Bright = more of the year.', why: 'Ridges and crater rims near the pole catch the low Sun; crater floors can stay dark for billions of years.' },
+    { target: () => document.getElementById('polarZoomInBtn')?.parentElement, pad: 6, mood: 'happy', title: 'Zoom and reset', body: 'Use + and − (or scroll) to zoom, drag to pan, Reset to go back to the whole region.' },
+  ], { label: 'Map tour' });
+  /** The tour for whatever is on screen. */
+  const startTour = () => (app.mode === 'compare' ? startCmpTour() : app.view === 'flight' ? flightTour.start() : app.view === 'polar' ? mapTour.start() : proTour.start());
 
   // ---------- Compare Lab tour ----------
   const cmpTour = createSpotlight([
@@ -436,12 +457,20 @@ export function initExperience(api) {
     slipCompare: () => { app.cmpView = 'dates'; app.cmpDatesSite = null; switchMode('compare'); },
     compareBest: () => api.compareSites?.([app.site, ...best.spots.map((sp) => sp.r.site)]),
     copyLink: () => api.copyLink?.(),
-    terrain: () => { const a = document.querySelector('[data-x="terrain"]'); if (a) location.href = a.href; },
+    terrain: () => {
+      const a = document.querySelector('[data-x="terrain"]');
+      if (!a) return;
+      // Keep this tab's progress so "Back to Professional" (or the browser's Back
+      // button) returns to the same site, date, step and compare list.
+      api.saveSession?.();
+      history.replaceState(null, '', '#pro&resume=1');
+      location.href = a.href;
+    },
     flight: (route) => { api.switchSubView?.('flight'); return flight?.setRoute(route); },
     lumi: () => assistant.open(),
     look: (body) => getGlobe()?.lookAlong?.(body),
     theme: (v) => applyTheme(v),
-    tour: () => (app.mode === 'compare' ? startCmpTour() : proTour.start()),
+    tour: () => startTour(),
     beginner: () => setMode('beginner'),
     play: (on) => { if (app.playing !== on) document.getElementById('playPauseBtn')?.click(); },
     step: (i) => { document.querySelector('[data-mob="site"]')?.offsetParent && matchMedia('(max-width: 1023px)').matches && document.querySelector('[data-mob="site"]').click(); flow.go(i); },
@@ -478,7 +507,29 @@ export function initExperience(api) {
   // selected region is drawn brighter.
   const regions = { features: null, key: '' };
   fetch(`${import.meta.env?.BASE_URL ?? '/'}data/artemis_regions.geojson`).then((r) => (r.ok ? r.json() : null)).then((g) => { regions.features = g?.features || []; drawRegions(); }).catch(() => {});
+  // Listed sites and the Artemis III region names on the 3D Moon (Map layers can hide them).
+  const MARK_COLOURS = { artemis: '#a5b4fc', apollo: '#e5e7eb', clps: '#34d399', intl: '#f9a8d4', south: '#fcd34d', computed: '#67e8f9' };
+  let marksSet = false;
+  function drawMarks() {
+    const g = getGlobe?.();
+    if (!g?.setMarks) return;
+    if (!marksSet) {
+      marksSet = true;
+      g.setMarks(sites.map((s) => ({
+        id: s.id, lat: s.lat, lon: s.lon, color: MARK_COLOURS[s.group] || '#e5e7eb',
+        kind: s.group === 'artemis' ? 'region' : 'site',
+        label: s.group === 'artemis' ? s.name.replace(/^Artemis III region:\s*/, '') : (s.short || s.name),
+        title: s.name,
+      })), { onPick: (id) => { const s = sites.find((x) => x.id === id); if (s) selectSite(s, true); } });
+      let on = true;
+      try { on = localStorage.getItem('lsp.marks') !== 'off'; } catch {}
+      g.setMarksVisible(on);
+    }
+  }
+  api.setMarksVisible = (on) => { try { localStorage.setItem('lsp.marks', on ? 'on' : 'off'); } catch {} getGlobe?.()?.setMarksVisible?.(on); };
+
   function drawRegions() {
+    drawMarks();
     const g = getGlobe?.();
     if (!g?.setOutlines || !regions.features) return;
     const sel = app.site?.region || '';
@@ -507,5 +558,7 @@ export function initExperience(api) {
       }
     },
     proTour, controlsCoach, setMode,
+    flowStep: () => flow.step(),
+    goStep: (i) => flow.go(i, { quiet: true }),
   };
 }

@@ -30,7 +30,7 @@ How big each source of error is, and what it does to the answers.
 | Ephemeris (astronomy-engine, IAU lunar rotation) | ≤ 0.007° | None you can see: 1/100 of the Sun's width. |
 | Skyline sampling (ray steps, 2° azimuth storage) | Up to 0.9° on one skyline; typically under 0.2° | Yearly sunlight share within **0.2 points**, Earth within **0.1 points** of a 4× finer computation on the same terrain (section 3). Before 21 Nov 2026 (no crest refinement) up to 2.8 points too sunny. |
 | Terrain resolution: 240 m / 1 km grids | Ridges and crests are smoothed by tens of metres | At crests, sunlight shares can be **10–20 points too high** (ridge: 74% at 240 m vs 64% at 20 m). Craters and flat ground change by under 1 point. This is the dominant error, which is why we use 20 m tiles near the main south-polar sites and the Artemis III regions. |
-| Terrain resolution: 20 m tiles | LOLA tracks are interpolated between shots; NASA's 5 m products quote 0.3–0.5 m RMS height error | Matters only within a few hundred metres of where the Sun or Earth grazes the skyline. |
+| Terrain resolution: 20 m tiles | LOLA tracks are interpolated between shots; NASA's 5 m products quote 0.3–0.5 m RMS height error. Coverage: all nine Artemis III candidate regions (64 tiles of 16 km) plus 12 other sites; one tile at the northern edge of Haworth (centre x −40 km, y 104 km) was not produced in the November 2026 run, so that 1–2 km strip uses the 240 m grid. Each tile is checked against the coarser grid: median 2.8 m mean difference; 9 tiles beyond the 240 m grid differ by 9–24 m from the smoother 1 km grid | Matters only within a few hundred metres of where the Sun or Earth grazes the skyline. |
 | Sun as a disk vs a point | The Sun is 0.53° wide | We count "Sun up" when any part of the disk is up (window summaries) or its centre (year maps). The two differ by a few points at grazing sites. NASA PGDA reports the visible fraction of the disk. |
 | Mast height | 2 m by default (settings) | Matters only at grazing sites, where a taller mast sees over nearby rises; change it in the spacecraft settings to test. |
 | Time sampling | 20 min to 4 h steps by window length; 6 h for the year maps | Event times (sunrise, Earthset) are good to about half a step; the Lumi "when is sunset" search refines to ~30 s. |
@@ -81,6 +81,22 @@ farther out, largest ray step, azimuth spacing, refinement, method) and a tier:
 (a 5 km grid used only before the detailed terrain has loaded) or `none` (smooth
 sphere: no terrain). Coarse and no-terrain results are flagged in the app and in
 exported reports.
+
+### Time sampling and totals
+
+Every window is sampled at fixed steps (20 min for 15 days, 30 min for 30 days,
+90 min for 90 days, 4 h for a year; Terrain 3D uses 10 min to 3 h). Each sample
+stands for the time until the next one, and the last one only until the end of
+the window. Energy, average power, the battery estimate, the sunlit / Earth-in-view
+shares and the longest dark or blackout spell all add up those actual durations, so
+they always cover exactly the window you chose.
+
+Until 22 November 2026 the last sample was always counted as a full step, so a
+window that was not a whole number of steps was slightly overcounted (a 25-hour
+window at 4-hour steps was integrated as 28 hours). None of the app's standard
+windows were affected (they are whole numbers of steps), so no published number
+changed; `test/scanIntervals.spec.js` checks divisible, non-divisible, shorter-than-
+one-step and very short windows against an independent sum.
 
 ## 4. What this tool is not
 
