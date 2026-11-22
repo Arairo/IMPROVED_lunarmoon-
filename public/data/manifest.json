@@ -1036,7 +1036,7 @@
   },
   {
    "id": "validation-results",
-   "version": "17f82593f747",
+   "version": "aa6c51eb27ca",
    "title": "Validation results",
    "files": [
     {
@@ -1051,13 +1051,13 @@
     },
     {
      "path": "data/lroc_check.json",
-     "bytes": 1815,
-     "sha256": "cb558700f8c0eb336450be5fa882ca9dc11793ab5b6dd4e797a79903eba8b45b"
+     "bytes": 1868,
+     "sha256": "73311c0b58c491524a9ba19dad77569141288786da89263dc43b0c0bebed608d"
     },
     {
      "path": "data/lroc_check.png",
-     "bytes": 171893,
-     "sha256": "3669d72dc31b4e68180a7092a89092d69229d896135abd3d91ffd598f853b57e"
+     "bytes": 171597,
+     "sha256": "f72905db364d6dc9ea3820053a73a862ee7dbf0fc5e0ebfe815fb9e40d6ce4e5"
     }
    ],
    "provider": "this project",
