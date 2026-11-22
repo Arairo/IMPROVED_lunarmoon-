@@ -2,7 +2,7 @@
  "schemaVersion": 1,
  "kind": "terrain + illumination: average sunlight / Earth visibility maps",
  "applicationCommit": "not recorded",
- "datasetVersion": "public/data/manifest.json sha256 0107d3c1922e6659be7d540faf555720073e02c5e0abee88f5f28ef7b799004f",
+ "datasetVersion": "public/data/manifest.json sha256 8e21d260a2c10699649d0722d45d916a248db4e3883129d61bd27631f3673152",
  "validationDateUtc": "2026-11-22T07:34:55.926Z",
  "reference": "NASA GSFC PGDA average visibility (Mazarico et al. 2011 method, product 201608): https://pgda.gsfc.nasa.gov/data/MoonIllumination/AVGVISIB_75S_120M_201608.TIF, https://pgda.gsfc.nasa.gov/data/MoonIllumination/AVGVISIB_75S_120M_201608_EARTH.TIF, https://pgda.gsfc.nasa.gov/data/MoonIllumination/AVGVISIB_85S_060M_201608.TIF",
  "caseCount": 48710,

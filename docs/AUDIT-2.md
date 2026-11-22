@@ -51,4 +51,33 @@ Commands run on 22 November 2026 (production build served by `npx vite preview -
 | `node test/browser-e2e.cjs http://localhost:4302/planner.html` | 42 of 42 passed (a first run lost its browser part-way, while other jobs shared the machine; re-run alone) |
 | `npm audit` / `npm audit --omit=dev` | 0 vulnerabilities |
 
-Phase 2 (scientific reliability) has not been started.
+## Phase 2: scientific reliability (22 Nov 2026)
+
+| Roadmap item | What was done | Evidence |
+|---|---|---|
+| 6.1 Azimuth resolution and convergence | Skylines cast every 2°, 1°, 0.5° and as shipped, compared with a 0.25° reference at 19 sites through 2027, counting false lit / false shadowed time | `tools/azimuth_resolution.mjs`, `docs/validation/azimuth-resolution.json`, `docs/VALIDATION.md` §3. Shipped: worst 0.19 sunlight points, 0.3% of time steps falsely lit, 0.14% falsely shadowed; no site over 0.5 points |
+| 6.1 Resolution disclosed | Each skyline's `quality` record (DEM cell at the site and far away, largest ray step, azimuth spacing, refinement) is shown in the Check step ("How this was worked out") and exported | `src/core/horizon.js` `horizonQuality`; report JSON `site.terrainQuality` |
+| 6.2 Validation records | One JSON per check with commit, dataset hash, settings, error distribution and failed cases; JPL recomputed with the current code | `tools/validation_records.mjs`, `docs/validation/`, `test/validationRecords.spec.js`. Data workflows now record their commit |
+| 6.2 Re-run after data changes | LROC shadow check re-run with the 20 m region tiles (its fetch script had to stop reading a tile that no longer exists) | 93.5% agreement, κ 0.870 (was 93.2% / 0.865) |
+| 6.3 Kinds of uncertainty | The 250 m range is labelled positional sensitivity, not an error bar; report and JSON list terrain, model, input and reference uncertainty separately, saying which are not quantified | `docs/VALIDATION.md` "Kinds of uncertainty"; JSON `uncertainty` |
+| 6.4 Power and battery | Illustrative Nominal / Conservative / Degraded settings (labelled, editable battery efficiency); tests for energy conservation, limits with losses, and that the worse scenarios never look better | `POWER_SCENARIOS` in `src/core/power.js`; `test/powerCommsEdges.spec.js` |
+| 6.5 Communications | Tests: grazing loss at the clearance limit and at 0°, DSN mask boundary, partly visible Earth is not line of sight, `scheduled` stays `null` | `test/powerCommsEdges.spec.js` |
+| 6.6 Flight | Claims reviewed: the model already labels each burn computed / assumed / rule of thumb and lists what it leaves out; no wording found that implies navigation-grade results | `src/core/flight.js` `flightModelInfo` |
+
+New finding: against NASA PGDA's *finest* map at each site (60 m where it covers
+the site), our site sunlight differs by a median 1.2 points (worst 8.1); against
+the 120 m map only, worst 16.5. Mixing resolutions exaggerated the differences.
+
+## Phase 3: data and product experience (22 Nov 2026)
+
+| Roadmap item | What was done |
+|---|---|
+| 7.1 Manifest | Each dataset has a content version, coordinate reference, horizontal and vertical datum, and its generation date and pipeline commit where the generator recorded them (`"not recorded"` otherwise; never guessed) |
+| 7.2 Exports | JSON: build version and commit, datasets, coordinates and frame, window, sampling step and integration rule, all settings, the matching example scenario, uncertainty kinds, validation references. CSV header states how rows add up |
+| 8.1 First visit | The landing page already says what the tool is and offers two ways in after Start; the trust chips now say how it is checked and open About |
+| 8.2 Summary → evidence → assumptions → detail | Check step: screening result, then the evidence lines, then an "Assuming …" line with Change, then "How this was worked out" folded away |
+| 8.3 Suitability wording | GO / GO WITH CARE / NO GO kept (familiar, used in Beginner) but labelled a screening at touchdown with your settings, with what each means ("Favourable under these assumptions", "Possible, but limited: further analysis needed", "Not favourable in this scenario"); never a landing approval |
+| 8.4 Two levels | Beginner and Professional use the same engine and the same rules (`verdicts` in `src/experience/walk.js`) |
+| 8.5–8.6 Design and accessibility | Report opens as a column beside the Moon (the view shrinks, nothing is covered); axe: 0 violations on eight views (`docs/ACCESSIBILITY.md`) |
+
+Phase 4 (performance) follows.
