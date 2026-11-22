@@ -31,6 +31,24 @@ export const PANEL_MODES = {
 
 // Example lander, not a specific spacecraft. Every value is an assumption the user
 // can change in the spacecraft settings, and every report includes them.
+/**
+ * Example settings to see how sensitive a plan is to the spacecraft (second audit 6.4).
+ * Illustrative only: not validated hardware profiles. Each changes a few fields of the
+ * power settings; everything else is left as the user set it.
+ */
+export const POWER_SCENARIOS = {
+  nominal: { label: 'Nominal', note: 'The defaults: 29% cells, 120 W load, 95% battery efficiency each way.', efficiency: 0.29, loadW: 120, chargeEff: 0.95, dischargeEff: 0.95 },
+  conservative: { label: 'Conservative', note: 'Less from the array (26% cells) and a higher load (150 W).', efficiency: 0.26, loadW: 150, chargeEff: 0.95, dischargeEff: 0.95 },
+  degraded: { label: 'Degraded', note: 'Aged hardware: cells down 20% (23%), battery 90% efficient each way.', efficiency: 0.23, loadW: 120, chargeEff: 0.9, dischargeEff: 0.9 },
+};
+/** Which example scenario the power settings match, or 'custom'. */
+export function matchScenario(power) {
+  for (const [id, s] of Object.entries(POWER_SCENARIOS)) {
+    if (['efficiency', 'loadW', 'chargeEff', 'dischargeEff'].every((k) => Math.abs((power[k] ?? DEFAULT_POWER_CONFIG[k]) - s[k]) < 1e-9)) return id;
+  }
+  return 'custom';
+}
+
 export const DEFAULT_POWER_CONFIG = {
   mode: 'vertical_tracking',
   areaM2: 2.0,

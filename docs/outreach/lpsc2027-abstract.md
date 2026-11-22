@@ -44,13 +44,13 @@ with 240 m terrain to 64% with 20 m terrain, against 68% from [2] (which counts 
 partly visible Sun): terrain resolution, not ephemeris, dominates the error budget. Against an LROC NAC
 controlled mosaic of the Peak Near Cabeus B region (eight images, 18 September
 2017) [5], predicted lit and shadowed terrain agrees with the photo in
-93% of 103,587 comparable 40 m cells (Cohen's κ = 0.87) with 20 m terrain,
+93% of 103,584 comparable 40 m cells (Cohen's κ = 0.87) with 20 m terrain,
 versus 89% (κ = 0.77) with 240 m terrain. Nearly all disagreements are cells we
 predict lit that the photo shows dark, along shadow edges: our shadows are
 slightly too short, as expected from terrain that is partly interpolated.
 <!-- TO CHECK BEFORE SUBMITTING (21 Nov 2026): the horizon engine now refines ray
 samples around skyline crests, which changed the ridge numbers above (was 79% / 66%).
-The LROC numbers above were re-run with it (93.2%, κ 0.865; 88.6%, κ 0.774). The
+The LROC numbers above were re-run with it and again with the 20 m region tiles on 22 Nov 2026 (93.5%, κ 0.870; 88.6%, κ 0.774). The
 PGDA map comparison was re-run with it on 22 Nov 2026 (r = 0.92 / 0.97, numbers
 above updated). See docs/VALIDATION.md section 3. --> For flight, Apollo 11's trans-lunar injection, lunar orbit
 insertion and descent are reproduced to within 0.05 km/s.

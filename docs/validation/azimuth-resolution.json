@@ -1,0 +1,895 @@
+{
+ "schemaVersion": 1,
+ "kind": "horizon sampling: azimuth spacing",
+ "applicationCommit": "b42ab99161c39e018eb802d0e17c40135f4caec6",
+ "datasetVersion": "public/data/manifest.json sha256 0107d3c1922e6659be7d540faf555720073e02c5e0abee88f5f28ef7b799004f",
+ "validationDateUtc": "2026-11-22T15:35:01.630Z",
+ "reference": "Same LOLA terrain, skyline every 0.25° with ray steps 0.3% of the distance, refined (an internal convergence reference, not independent data)",
+ "caseCount": 83220,
+ "sites": [
+  "a3-hw",
+  "a3-ma",
+  "a3-mp",
+  "a3-mm",
+  "a3-n1",
+  "a3-g2",
+  "a3-sp",
+  "ridge",
+  "peak-shackleton",
+  "shackleton",
+  "best-1",
+  "best-2",
+  "degerlache",
+  "shoemaker",
+  "haworth",
+  "faustini",
+  "nobile",
+  "lcross",
+  "im2"
+ ],
+ "dates": {
+  "start": "2027-01-01T00:00:00.000Z",
+  "end": "2028-01-01T00:00:00.000Z",
+  "stepHours": 2
+ },
+ "configuration": {
+  "mastHeightM": 2,
+  "sunCriterion": "Sun's centre above the skyline",
+  "earthCriterion": "Earth's centre above the skyline",
+  "terrain": "20 m PGDA tiles where present, LOLA 240 m / 1 km south-polar grids, LDEM_16 beyond",
+  "variants": [
+   {
+    "id": "rays-2deg",
+    "label": "Rays every 2°, refined",
+    "rayAzStepDeg": 2,
+    "storedAzStepDeg": 2,
+    "growth": 0.015,
+    "refine": true
+   },
+   {
+    "id": "rays-1deg",
+    "label": "Rays every 1°, refined",
+    "rayAzStepDeg": 1,
+    "storedAzStepDeg": 1,
+    "growth": 0.015,
+    "refine": true
+   },
+   {
+    "id": "rays-0.5deg",
+    "label": "Rays every 0.5°, refined",
+    "rayAzStepDeg": 0.5,
+    "storedAzStepDeg": 0.5,
+    "growth": 0.015,
+    "refine": true
+   },
+   {
+    "id": "shipped",
+    "label": "Shipped: rays every 0.5°, refined, stored every 2°",
+    "rayAzStepDeg": 0.5,
+    "storedAzStepDeg": 2,
+    "growth": 0.015,
+    "refine": true
+   }
+  ]
+ },
+ "metrics": {
+  "rays-2deg": {
+   "label": "Rays every 2°, refined",
+   "worstSunErrPts": 0.19,
+   "meanSunErrPts": 0.03,
+   "worstEarthErrPts": 0.09,
+   "worstFalseLitPct": 0.3,
+   "worstFalseShadowPct": 0.14,
+   "worstSkylineErrDeg": 0.86
+  },
+  "rays-1deg": {
+   "label": "Rays every 1°, refined",
+   "worstSunErrPts": 0.05,
+   "meanSunErrPts": 0.01,
+   "worstEarthErrPts": 0.04,
+   "worstFalseLitPct": 0.14,
+   "worstFalseShadowPct": 0.09,
+   "worstSkylineErrDeg": 1.34
+  },
+  "rays-0.5deg": {
+   "label": "Rays every 0.5°, refined",
+   "worstSunErrPts": 0.06,
+   "meanSunErrPts": 0.01,
+   "worstEarthErrPts": 0.04,
+   "worstFalseLitPct": 0.09,
+   "worstFalseShadowPct": 0.02,
+   "worstSkylineErrDeg": 0.89
+  },
+  "shipped": {
+   "label": "Shipped: rays every 0.5°, refined, stored every 2°",
+   "worstSunErrPts": 0.19,
+   "meanSunErrPts": 0.03,
+   "worstEarthErrPts": 0.09,
+   "worstFalseLitPct": 0.3,
+   "worstFalseShadowPct": 0.14,
+   "worstSkylineErrDeg": 0.86
+  }
+ },
+ "failedCases": [],
+ "perSite": [
+  {
+   "id": "a3-hw",
+   "name": "Artemis III region: Haworth",
+   "lat": -86.7639,
+   "lon": -22.777,
+   "siteCellM": 20,
+   "reference": {
+    "sun": 9.16,
+    "earth": 37.21
+   },
+   "variants": {
+    "rays-2deg": {
+     "sunErrPts": 0.02,
+     "earthErrPts": 0,
+     "falseLitPct": 0.02,
+     "falseShadowPct": 0,
+     "maxSkylineErrDeg": 0.16
+    },
+    "rays-1deg": {
+     "sunErrPts": 0.02,
+     "earthErrPts": 0,
+     "falseLitPct": 0.02,
+     "falseShadowPct": 0,
+     "maxSkylineErrDeg": 0.07
+    },
+    "rays-0.5deg": {
+     "sunErrPts": 0,
+     "earthErrPts": 0,
+     "falseLitPct": 0,
+     "falseShadowPct": 0,
+     "maxSkylineErrDeg": 0.03
+    },
+    "shipped": {
+     "sunErrPts": 0.02,
+     "earthErrPts": 0,
+     "falseLitPct": 0.02,
+     "falseShadowPct": 0,
+     "maxSkylineErrDeg": 0.16
+    }
+   }
+  },
+  {
+   "id": "a3-ma",
+   "name": "Artemis III region: Malapert Massif",
+   "lat": -85.9948,
+   "lon": -0.236,
+   "siteCellM": 20,
+   "reference": {
+    "sun": 21.46,
+    "earth": 46.03
+   },
+   "variants": {
+    "rays-2deg": {
+     "sunErrPts": 0,
+     "earthErrPts": 0.04,
+     "falseLitPct": 0.02,
+     "falseShadowPct": 0.02,
+     "maxSkylineErrDeg": 0.16
+    },
+    "rays-1deg": {
+     "sunErrPts": 0,
+     "earthErrPts": 0,
+     "falseLitPct": 0,
+     "falseShadowPct": 0,
+     "maxSkylineErrDeg": 0.08
+    },
+    "rays-0.5deg": {
+     "sunErrPts": 0,
+     "earthErrPts": 0,
+     "falseLitPct": 0,
+     "falseShadowPct": 0,
+     "maxSkylineErrDeg": 0.05
+    },
+    "shipped": {
+     "sunErrPts": 0,
+     "earthErrPts": 0.04,
+     "falseLitPct": 0.02,
+     "falseShadowPct": 0.02,
+     "maxSkylineErrDeg": 0.16
+    }
+   }
+  },
+  {
+   "id": "a3-mp",
+   "name": "Artemis III region: Mons Mouton Plateau",
+   "lat": -84.3347,
+   "lon": 30.592,
+   "siteCellM": 20,
+   "reference": {
+    "sun": 23.79,
+    "earth": 60.11
+   },
+   "variants": {
+    "rays-2deg": {
+     "sunErrPts": 0.02,
+     "earthErrPts": 0,
+     "falseLitPct": 0.02,
+     "falseShadowPct": 0,
+     "maxSkylineErrDeg": 0.08
+    },
+    "rays-1deg": {
+     "sunErrPts": 0,
+     "earthErrPts": 0,
+     "falseLitPct": 0,
+     "falseShadowPct": 0,
+     "maxSkylineErrDeg": 0.03
+    },
+    "rays-0.5deg": {
+     "sunErrPts": 0,
+     "earthErrPts": 0,
+     "falseLitPct": 0,
+     "falseShadowPct": 0,
+     "maxSkylineErrDeg": 0.03
+    },
+    "shipped": {
+     "sunErrPts": 0.02,
+     "earthErrPts": 0,
+     "falseLitPct": 0.02,
+     "falseShadowPct": 0,
+     "maxSkylineErrDeg": 0.08
+    }
+   }
+  },
+  {
+   "id": "a3-mm",
+   "name": "Artemis III region: Mons Mouton",
+   "lat": -85.4266,
+   "lon": 31.743,
+   "siteCellM": 20,
+   "reference": {
+    "sun": 21.55,
+    "earth": 36
+   },
+   "variants": {
+    "rays-2deg": {
+     "sunErrPts": 0,
+     "earthErrPts": 0,
+     "falseLitPct": 0.02,
+     "falseShadowPct": 0.02,
+     "maxSkylineErrDeg": 0.16
+    },
+    "rays-1deg": {
+     "sunErrPts": -0.02,
+     "earthErrPts": 0,
+     "falseLitPct": 0.02,
+     "falseShadowPct": 0.05,
+     "maxSkylineErrDeg": 0.07
+    },
+    "rays-0.5deg": {
+     "sunErrPts": -0.02,
+     "earthErrPts": 0,
+     "falseLitPct": 0,
+     "falseShadowPct": 0.02,
+     "maxSkylineErrDeg": 0.04
+    },
+    "shipped": {
+     "sunErrPts": 0,
+     "earthErrPts": 0,
+     "falseLitPct": 0.02,
+     "falseShadowPct": 0.02,
+     "maxSkylineErrDeg": 0.16
+    }
+   }
+  },
+  {
+   "id": "a3-n1",
+   "name": "Artemis III region: Nobile Rim 1",
+   "lat": -85.4364,
+   "lon": 37.347,
+   "siteCellM": 20,
+   "reference": {
+    "sun": 29.73,
+    "earth": 32.67
+   },
+   "variants": {
+    "rays-2deg": {
+     "sunErrPts": -0.03,
+     "earthErrPts": 0,
+     "falseLitPct": 0,
+     "falseShadowPct": 0.02,
+     "maxSkylineErrDeg": 0.15
+    },
+    "rays-1deg": {
+     "sunErrPts": 0,
+     "earthErrPts": 0,
+     "falseLitPct": 0.02,
+     "falseShadowPct": 0.02,
+     "maxSkylineErrDeg": 0.1
+    },
+    "rays-0.5deg": {
+     "sunErrPts": 0,
+     "earthErrPts": 0,
+     "falseLitPct": 0,
+     "falseShadowPct": 0,
+     "maxSkylineErrDeg": 0.04
+    },
+    "shipped": {
+     "sunErrPts": -0.03,
+     "earthErrPts": 0,
+     "falseLitPct": 0,
+     "falseShadowPct": 0.02,
+     "maxSkylineErrDeg": 0.15
+    }
+   }
+  },
+  {
+   "id": "a3-g2",
+   "name": "Artemis III region: de Gerlache Rim 2",
+   "lat": -88.23,
+   "lon": -64.628,
+   "siteCellM": 20,
+   "reference": {
+    "sun": 35.98,
+    "earth": 49.59
+   },
+   "variants": {
+    "rays-2deg": {
+     "sunErrPts": 0.05,
+     "earthErrPts": -0.09,
+     "falseLitPct": 0.05,
+     "falseShadowPct": 0,
+     "maxSkylineErrDeg": 0.23
+    },
+    "rays-1deg": {
+     "sunErrPts": 0,
+     "earthErrPts": 0.02,
+     "falseLitPct": 0,
+     "falseShadowPct": 0,
+     "maxSkylineErrDeg": 0.12
+    },
+    "rays-0.5deg": {
+     "sunErrPts": 0,
+     "earthErrPts": -0.02,
+     "falseLitPct": 0,
+     "falseShadowPct": 0,
+     "maxSkylineErrDeg": 0.05
+    },
+    "shipped": {
+     "sunErrPts": 0.05,
+     "earthErrPts": -0.09,
+     "falseLitPct": 0.05,
+     "falseShadowPct": 0,
+     "maxSkylineErrDeg": 0.23
+    }
+   }
+  },
+  {
+   "id": "a3-sp",
+   "name": "Artemis III region: Slater Plain",
+   "lat": -87.1637,
+   "lon": 125.538,
+   "siteCellM": 20,
+   "reference": {
+    "sun": 1.69,
+    "earth": 35.07
+   },
+   "variants": {
+    "rays-2deg": {
+     "sunErrPts": 0,
+     "earthErrPts": -0.07,
+     "falseLitPct": 0,
+     "falseShadowPct": 0,
+     "maxSkylineErrDeg": 0.1
+    },
+    "rays-1deg": {
+     "sunErrPts": 0,
+     "earthErrPts": 0,
+     "falseLitPct": 0,
+     "falseShadowPct": 0,
+     "maxSkylineErrDeg": 0.04
+    },
+    "rays-0.5deg": {
+     "sunErrPts": 0,
+     "earthErrPts": -0.02,
+     "falseLitPct": 0,
+     "falseShadowPct": 0,
+     "maxSkylineErrDeg": 0.02
+    },
+    "shipped": {
+     "sunErrPts": 0,
+     "earthErrPts": -0.07,
+     "falseLitPct": 0,
+     "falseShadowPct": 0,
+     "maxSkylineErrDeg": 0.1
+    }
+   }
+  },
+  {
+   "id": "ridge",
+   "name": "Shackleton connecting ridge",
+   "lat": -89.45,
+   "lon": -137.31,
+   "siteCellM": 20,
+   "reference": {
+    "sun": 63.58,
+    "earth": 42.53
+   },
+   "variants": {
+    "rays-2deg": {
+     "sunErrPts": 0.03,
+     "earthErrPts": 0,
+     "falseLitPct": 0.07,
+     "falseShadowPct": 0.05,
+     "maxSkylineErrDeg": 0.53
+    },
+    "rays-1deg": {
+     "sunErrPts": 0.05,
+     "earthErrPts": 0,
+     "falseLitPct": 0.07,
+     "falseShadowPct": 0.02,
+     "maxSkylineErrDeg": 0.46
+    },
+    "rays-0.5deg": {
+     "sunErrPts": 0,
+     "earthErrPts": 0,
+     "falseLitPct": 0,
+     "falseShadowPct": 0,
+     "maxSkylineErrDeg": 0.31
+    },
+    "shipped": {
+     "sunErrPts": 0.03,
+     "earthErrPts": 0,
+     "falseLitPct": 0.07,
+     "falseShadowPct": 0.05,
+     "maxSkylineErrDeg": 0.53
+    }
+   }
+  },
+  {
+   "id": "peak-shackleton",
+   "name": "Ridge high point near Shackleton (88.8°S)",
+   "lat": -88.81,
+   "lon": 123.64,
+   "siteCellM": 20,
+   "reference": {
+    "sun": 63.42,
+    "earth": 50.62
+   },
+   "variants": {
+    "rays-2deg": {
+     "sunErrPts": 0.12,
+     "earthErrPts": 0,
+     "falseLitPct": 0.23,
+     "falseShadowPct": 0.11,
+     "maxSkylineErrDeg": 0.16
+    },
+    "rays-1deg": {
+     "sunErrPts": 0.03,
+     "earthErrPts": 0,
+     "falseLitPct": 0.05,
+     "falseShadowPct": 0.02,
+     "maxSkylineErrDeg": 0.09
+    },
+    "rays-0.5deg": {
+     "sunErrPts": 0,
+     "earthErrPts": 0,
+     "falseLitPct": 0.02,
+     "falseShadowPct": 0.02,
+     "maxSkylineErrDeg": 0.06
+    },
+    "shipped": {
+     "sunErrPts": 0.12,
+     "earthErrPts": 0,
+     "falseLitPct": 0.23,
+     "falseShadowPct": 0.11,
+     "maxSkylineErrDeg": 0.16
+    }
+   }
+  },
+  {
+   "id": "shackleton",
+   "name": "Shackleton crater floor",
+   "lat": -89.67,
+   "lon": 129.78,
+   "siteCellM": 20,
+   "reference": {
+    "sun": 0,
+    "earth": 0
+   },
+   "variants": {
+    "rays-2deg": {
+     "sunErrPts": 0,
+     "earthErrPts": 0,
+     "falseLitPct": 0,
+     "falseShadowPct": 0,
+     "maxSkylineErrDeg": 0.06
+    },
+    "rays-1deg": {
+     "sunErrPts": 0,
+     "earthErrPts": 0,
+     "falseLitPct": 0,
+     "falseShadowPct": 0,
+     "maxSkylineErrDeg": 0.04
+    },
+    "rays-0.5deg": {
+     "sunErrPts": 0,
+     "earthErrPts": 0,
+     "falseLitPct": 0,
+     "falseShadowPct": 0,
+     "maxSkylineErrDeg": 0.03
+    },
+    "shipped": {
+     "sunErrPts": 0,
+     "earthErrPts": 0,
+     "falseLitPct": 0,
+     "falseShadowPct": 0,
+     "maxSkylineErrDeg": 0.06
+    }
+   }
+  },
+  {
+   "id": "best-1",
+   "name": "Best-lit cell #2 (1 km map, 2027)",
+   "lat": -88.7049,
+   "lon": -68.334,
+   "siteCellM": 20,
+   "reference": {
+    "sun": 66.07,
+    "earth": 55.02
+   },
+   "variants": {
+    "rays-2deg": {
+     "sunErrPts": 0.19,
+     "earthErrPts": 0,
+     "falseLitPct": 0.3,
+     "falseShadowPct": 0.11,
+     "maxSkylineErrDeg": 0.2
+    },
+    "rays-1deg": {
+     "sunErrPts": 0.05,
+     "earthErrPts": 0,
+     "falseLitPct": 0.14,
+     "falseShadowPct": 0.09,
+     "maxSkylineErrDeg": 0.07
+    },
+    "rays-0.5deg": {
+     "sunErrPts": -0.02,
+     "earthErrPts": 0,
+     "falseLitPct": 0,
+     "falseShadowPct": 0.02,
+     "maxSkylineErrDeg": 0.05
+    },
+    "shipped": {
+     "sunErrPts": 0.19,
+     "earthErrPts": 0,
+     "falseLitPct": 0.3,
+     "falseShadowPct": 0.11,
+     "maxSkylineErrDeg": 0.2
+    }
+   }
+  },
+  {
+   "id": "best-2",
+   "name": "Well-lit cell near the pole (1 km map, 2027)",
+   "lat": -89.8008,
+   "lon": -155.556,
+   "siteCellM": 20,
+   "reference": {
+    "sun": 49.57,
+    "earth": 48.42
+   },
+   "variants": {
+    "rays-2deg": {
+     "sunErrPts": -0.03,
+     "earthErrPts": -0.06,
+     "falseLitPct": 0.11,
+     "falseShadowPct": 0.14,
+     "maxSkylineErrDeg": 0.86
+    },
+    "rays-1deg": {
+     "sunErrPts": 0.04,
+     "earthErrPts": -0.04,
+     "falseLitPct": 0.11,
+     "falseShadowPct": 0.07,
+     "maxSkylineErrDeg": 1.34
+    },
+    "rays-0.5deg": {
+     "sunErrPts": 0.06,
+     "earthErrPts": -0.02,
+     "falseLitPct": 0.09,
+     "falseShadowPct": 0.02,
+     "maxSkylineErrDeg": 0.89
+    },
+    "shipped": {
+     "sunErrPts": -0.03,
+     "earthErrPts": -0.06,
+     "falseLitPct": 0.11,
+     "falseShadowPct": 0.14,
+     "maxSkylineErrDeg": 0.86
+    }
+   }
+  },
+  {
+   "id": "degerlache",
+   "name": "de Gerlache crater",
+   "lat": -88.5,
+   "lon": -87.1,
+   "siteCellM": 20,
+   "reference": {
+    "sun": 0,
+    "earth": 0
+   },
+   "variants": {
+    "rays-2deg": {
+     "sunErrPts": 0,
+     "earthErrPts": 0,
+     "falseLitPct": 0,
+     "falseShadowPct": 0,
+     "maxSkylineErrDeg": 0.06
+    },
+    "rays-1deg": {
+     "sunErrPts": 0,
+     "earthErrPts": 0,
+     "falseLitPct": 0,
+     "falseShadowPct": 0,
+     "maxSkylineErrDeg": 0.03
+    },
+    "rays-0.5deg": {
+     "sunErrPts": 0,
+     "earthErrPts": 0,
+     "falseLitPct": 0,
+     "falseShadowPct": 0,
+     "maxSkylineErrDeg": 0.02
+    },
+    "shipped": {
+     "sunErrPts": 0,
+     "earthErrPts": 0,
+     "falseLitPct": 0,
+     "falseShadowPct": 0,
+     "maxSkylineErrDeg": 0.06
+    }
+   }
+  },
+  {
+   "id": "shoemaker",
+   "name": "Shoemaker crater",
+   "lat": -88.14,
+   "lon": 44.9,
+   "siteCellM": 20,
+   "reference": {
+    "sun": 0,
+    "earth": 15.25
+   },
+   "variants": {
+    "rays-2deg": {
+     "sunErrPts": 0,
+     "earthErrPts": -0.02,
+     "falseLitPct": 0,
+     "falseShadowPct": 0,
+     "maxSkylineErrDeg": 0.11
+    },
+    "rays-1deg": {
+     "sunErrPts": 0,
+     "earthErrPts": 0,
+     "falseLitPct": 0,
+     "falseShadowPct": 0,
+     "maxSkylineErrDeg": 0.05
+    },
+    "rays-0.5deg": {
+     "sunErrPts": 0,
+     "earthErrPts": 0.02,
+     "falseLitPct": 0,
+     "falseShadowPct": 0,
+     "maxSkylineErrDeg": 0.02
+    },
+    "shipped": {
+     "sunErrPts": 0,
+     "earthErrPts": -0.02,
+     "falseLitPct": 0,
+     "falseShadowPct": 0,
+     "maxSkylineErrDeg": 0.11
+    }
+   }
+  },
+  {
+   "id": "haworth",
+   "name": "Haworth crater",
+   "lat": -87.45,
+   "lon": -4,
+   "siteCellM": 20,
+   "reference": {
+    "sun": 0,
+    "earth": 0
+   },
+   "variants": {
+    "rays-2deg": {
+     "sunErrPts": 0,
+     "earthErrPts": 0,
+     "falseLitPct": 0,
+     "falseShadowPct": 0,
+     "maxSkylineErrDeg": 0.1
+    },
+    "rays-1deg": {
+     "sunErrPts": 0,
+     "earthErrPts": 0,
+     "falseLitPct": 0,
+     "falseShadowPct": 0,
+     "maxSkylineErrDeg": 0.05
+    },
+    "rays-0.5deg": {
+     "sunErrPts": 0,
+     "earthErrPts": 0,
+     "falseLitPct": 0,
+     "falseShadowPct": 0,
+     "maxSkylineErrDeg": 0.03
+    },
+    "shipped": {
+     "sunErrPts": 0,
+     "earthErrPts": 0,
+     "falseLitPct": 0,
+     "falseShadowPct": 0,
+     "maxSkylineErrDeg": 0.1
+    }
+   }
+  },
+  {
+   "id": "faustini",
+   "name": "Faustini crater",
+   "lat": -87.18,
+   "lon": 84.31,
+   "siteCellM": 20,
+   "reference": {
+    "sun": 0,
+    "earth": 0
+   },
+   "variants": {
+    "rays-2deg": {
+     "sunErrPts": 0,
+     "earthErrPts": 0,
+     "falseLitPct": 0,
+     "falseShadowPct": 0,
+     "maxSkylineErrDeg": 0.1
+    },
+    "rays-1deg": {
+     "sunErrPts": 0,
+     "earthErrPts": 0,
+     "falseLitPct": 0,
+     "falseShadowPct": 0,
+     "maxSkylineErrDeg": 0.04
+    },
+    "rays-0.5deg": {
+     "sunErrPts": 0,
+     "earthErrPts": 0,
+     "falseLitPct": 0,
+     "falseShadowPct": 0,
+     "maxSkylineErrDeg": 0.02
+    },
+    "shipped": {
+     "sunErrPts": 0,
+     "earthErrPts": 0,
+     "falseLitPct": 0,
+     "falseShadowPct": 0,
+     "maxSkylineErrDeg": 0.1
+    }
+   }
+  },
+  {
+   "id": "nobile",
+   "name": "Nobile crater",
+   "lat": -85.28,
+   "lon": 53.29,
+   "siteCellM": 20,
+   "reference": {
+    "sun": 34.5,
+    "earth": 20.94
+   },
+   "variants": {
+    "rays-2deg": {
+     "sunErrPts": 0,
+     "earthErrPts": -0.05,
+     "falseLitPct": 0.02,
+     "falseShadowPct": 0.02,
+     "maxSkylineErrDeg": 0.24
+    },
+    "rays-1deg": {
+     "sunErrPts": 0.02,
+     "earthErrPts": 0.04,
+     "falseLitPct": 0.02,
+     "falseShadowPct": 0,
+     "maxSkylineErrDeg": 0.08
+    },
+    "rays-0.5deg": {
+     "sunErrPts": 0,
+     "earthErrPts": 0,
+     "falseLitPct": 0,
+     "falseShadowPct": 0,
+     "maxSkylineErrDeg": 0.03
+    },
+    "shipped": {
+     "sunErrPts": 0,
+     "earthErrPts": -0.05,
+     "falseLitPct": 0.02,
+     "falseShadowPct": 0.02,
+     "maxSkylineErrDeg": 0.24
+    }
+   }
+  },
+  {
+   "id": "lcross",
+   "name": "LCROSS impact (Cabeus)",
+   "lat": -84.675,
+   "lon": -48.725,
+   "siteCellM": 20,
+   "reference": {
+    "sun": 0,
+    "earth": 15.41
+   },
+   "variants": {
+    "rays-2deg": {
+     "sunErrPts": 0,
+     "earthErrPts": 0.07,
+     "falseLitPct": 0,
+     "falseShadowPct": 0,
+     "maxSkylineErrDeg": 0.4
+    },
+    "rays-1deg": {
+     "sunErrPts": 0,
+     "earthErrPts": -0.04,
+     "falseLitPct": 0,
+     "falseShadowPct": 0,
+     "maxSkylineErrDeg": 0.23
+    },
+    "rays-0.5deg": {
+     "sunErrPts": 0,
+     "earthErrPts": -0.04,
+     "falseLitPct": 0,
+     "falseShadowPct": 0,
+     "maxSkylineErrDeg": 0.14
+    },
+    "shipped": {
+     "sunErrPts": 0,
+     "earthErrPts": 0.07,
+     "falseLitPct": 0,
+     "falseShadowPct": 0,
+     "maxSkylineErrDeg": 0.4
+    }
+   }
+  },
+  {
+   "id": "im2",
+   "name": "IM-2 Athena (Mons Mouton)",
+   "lat": -84.8,
+   "lon": 29.2,
+   "siteCellM": 20,
+   "reference": {
+    "sun": 44.13,
+    "earth": 80.89
+   },
+   "variants": {
+    "rays-2deg": {
+     "sunErrPts": -0.02,
+     "earthErrPts": -0.05,
+     "falseLitPct": 0.07,
+     "falseShadowPct": 0.09,
+     "maxSkylineErrDeg": 0.12
+    },
+    "rays-1deg": {
+     "sunErrPts": 0,
+     "earthErrPts": 0.02,
+     "falseLitPct": 0,
+     "falseShadowPct": 0,
+     "maxSkylineErrDeg": 0.05
+    },
+    "rays-0.5deg": {
+     "sunErrPts": 0,
+     "earthErrPts": 0,
+     "falseLitPct": 0,
+     "falseShadowPct": 0,
+     "maxSkylineErrDeg": 0.02
+    },
+    "shipped": {
+     "sunErrPts": -0.02,
+     "earthErrPts": -0.05,
+     "falseLitPct": 0.07,
+     "falseShadowPct": 0.09,
+     "maxSkylineErrDeg": 0.12
+    }
+   }
+  }
+ ]
+}

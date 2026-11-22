@@ -1,0 +1,320 @@
+{
+ "schemaVersion": 1,
+ "kind": "terrain + illumination: average sunlight / Earth visibility maps",
+ "applicationCommit": "not recorded",
+ "datasetVersion": "public/data/manifest.json sha256 8e21d260a2c10699649d0722d45d916a248db4e3883129d61bd27631f3673152",
+ "validationDateUtc": "2026-11-22T07:34:55.926Z",
+ "reference": "NASA GSFC PGDA average visibility (Mazarico et al. 2011 method, product 201608): https://pgda.gsfc.nasa.gov/data/MoonIllumination/AVGVISIB_75S_120M_201608.TIF, https://pgda.gsfc.nasa.gov/data/MoonIllumination/AVGVISIB_75S_120M_201608_EARTH.TIF, https://pgda.gsfc.nasa.gov/data/MoonIllumination/AVGVISIB_85S_060M_201608.TIF",
+ "caseCount": 48710,
+ "sites": [
+  "a3-cb",
+  "a3-hw",
+  "a3-ma",
+  "a3-mp",
+  "a3-mm",
+  "a3-n1",
+  "a3-n2",
+  "a3-g2",
+  "a3-sp",
+  "ridge",
+  "peak-shackleton",
+  "shackleton",
+  "best-1",
+  "best-2",
+  "degerlache",
+  "shoemaker",
+  "haworth",
+  "faustini",
+  "nobile",
+  "lcross",
+  "im1",
+  "im2"
+ ],
+ "dates": {
+  "ours": "calendar year 2027, 6-hour steps (main comparison); 18.6-year cycle from 2009 (like for like)",
+  "pgda": "multi-year average"
+ },
+ "configuration": {
+  "mastHeightM": 2,
+  "mapGrid": "184 x 184 cells of 5 km, within 440 km of the south pole",
+  "note": "PGDA \"average visibility\" (Mazarico et al. 2011 method; product 201608) is a multi-year average of the visible fraction of the Sun's / Earth's disk at the surface. Ours is the share of 2027 with the disk centre above the skyline from a 2 m mast. Expect differences of several points; the comparison is about the pattern.",
+  "likeForLikeMethod": "Same quantities as PGDA AVGVISIB: visible fraction of the solar disk; Earth counted when any part of its disk is above the terrain; averaged over an 18.6-year nutation cycle from 2009 (12-hour steps for the 5 km map, 3-hour steps at sites); 2 m mast. PGDA uses hourly steps and its own LOLA terrain at 60-240 m."
+ },
+ "metrics": {
+  "mapsMain": {
+   "sun": {
+    "v": 0,
+    "r": 0.918,
+    "n": 24344,
+    "meanAbsDiff": 3.993,
+    "meanDiff": 1.78,
+    "pgdaMean": 31.539,
+    "oursMean": 33.319
+   },
+   "earth": {
+    "v": 0,
+    "r": 0.971,
+    "n": 24344,
+    "meanAbsDiff": 5.006,
+    "meanDiff": -1.786,
+    "pgdaMean": 31.349,
+    "oursMean": 29.563
+   }
+  },
+  "mapsLikeForLike": {
+   "sun": {
+    "v": 0,
+    "r": 0.92,
+    "n": 24344,
+    "meanAbsDiff": 3.757,
+    "meanDiff": 1.504,
+    "oursMean": 33.044,
+    "pgdaMean": 31.539
+   },
+   "earth": {
+    "v": 0,
+    "r": 0.977,
+    "n": 24344,
+    "meanAbsDiff": 4.569,
+    "meanDiff": 2.293,
+    "oursMean": 33.642,
+    "pgdaMean": 31.349
+   }
+  },
+  "sitesSunAbsDiffPtsVsFinestPgda": {
+   "n": 22,
+   "median": 1.2,
+   "p95": 7.95,
+   "max": 8.1
+  },
+  "sitesSunAbsDiffPtsVsPgda120": {
+   "n": 22,
+   "median": 1.55,
+   "p95": 13.07,
+   "max": 16.5
+  }
+ },
+ "failedCases": [],
+ "perSite": [
+  {
+   "id": "a3-cb",
+   "ours20mSun": 34.2,
+   "ours240mSun": 35.5,
+   "pgdaSun120": 38.4,
+   "pgdaSun60": null,
+   "pgdaEarth120": 44.1,
+   "comparedWith": "PGDA 120 m",
+   "diffPts": -4.2
+  },
+  {
+   "id": "a3-hw",
+   "ours20mSun": 9,
+   "ours240mSun": 11.2,
+   "pgdaSun120": 10.3,
+   "pgdaSun60": 9.1,
+   "pgdaEarth120": 43.9,
+   "comparedWith": "PGDA 60 m",
+   "diffPts": -0.1
+  },
+  {
+   "id": "a3-ma",
+   "ours20mSun": 21.6,
+   "ours240mSun": 42.5,
+   "pgdaSun120": 38.1,
+   "pgdaSun60": 27.9,
+   "pgdaEarth120": 52.9,
+   "comparedWith": "PGDA 60 m",
+   "diffPts": -6.3
+  },
+  {
+   "id": "a3-mp",
+   "ours20mSun": 23.6,
+   "ours240mSun": 26.2,
+   "pgdaSun120": 26.2,
+   "pgdaSun60": 25.6,
+   "pgdaEarth120": 66.4,
+   "comparedWith": "PGDA 60 m",
+   "diffPts": -2
+  },
+  {
+   "id": "a3-mm",
+   "ours20mSun": 21.6,
+   "ours240mSun": 31.6,
+   "pgdaSun120": 18.8,
+   "pgdaSun60": 21.7,
+   "pgdaEarth120": 36.6,
+   "comparedWith": "PGDA 60 m",
+   "diffPts": -0.1
+  },
+  {
+   "id": "a3-n1",
+   "ours20mSun": 29.5,
+   "ours240mSun": 29.1,
+   "pgdaSun120": 30,
+   "pgdaSun60": 28.6,
+   "pgdaEarth120": 37,
+   "comparedWith": "PGDA 60 m",
+   "diffPts": 0.9
+  },
+  {
+   "id": "a3-n2",
+   "ours20mSun": 39.9,
+   "ours240mSun": 39.5,
+   "pgdaSun120": 41.6,
+   "pgdaSun60": null,
+   "pgdaEarth120": 68.8,
+   "comparedWith": "PGDA 120 m",
+   "diffPts": -1.7
+  },
+  {
+   "id": "a3-g2",
+   "ours20mSun": 36,
+   "ours240mSun": 35.8,
+   "pgdaSun120": 37.1,
+   "pgdaSun60": 37.2,
+   "pgdaEarth120": 54.8,
+   "comparedWith": "PGDA 60 m",
+   "diffPts": -1.2
+  },
+  {
+   "id": "a3-sp",
+   "ours20mSun": 1.7,
+   "ours240mSun": 2.1,
+   "pgdaSun120": 3,
+   "pgdaSun60": 2.9,
+   "pgdaEarth120": 41.4,
+   "comparedWith": "PGDA 60 m",
+   "diffPts": -1.2
+  },
+  {
+   "id": "ridge",
+   "ours20mSun": 63.6,
+   "ours240mSun": 74.1,
+   "pgdaSun120": 67.7,
+   "pgdaSun60": 55.5,
+   "pgdaEarth120": 52.3,
+   "comparedWith": "PGDA 60 m",
+   "diffPts": 8.1
+  },
+  {
+   "id": "peak-shackleton",
+   "ours20mSun": 63.6,
+   "ours240mSun": 77.1,
+   "pgdaSun120": 72.3,
+   "pgdaSun60": 55.6,
+   "pgdaEarth120": 55.9,
+   "comparedWith": "PGDA 60 m",
+   "diffPts": 8
+  },
+  {
+   "id": "shackleton",
+   "ours20mSun": 0,
+   "ours240mSun": 0,
+   "pgdaSun120": 0,
+   "pgdaSun60": 0,
+   "pgdaEarth120": 0,
+   "comparedWith": "PGDA 60 m",
+   "diffPts": 0
+  },
+  {
+   "id": "best-1",
+   "ours20mSun": 66.4,
+   "ours240mSun": 66.4,
+   "pgdaSun120": 79.7,
+   "pgdaSun60": 59.4,
+   "pgdaEarth120": 61.1,
+   "comparedWith": "PGDA 60 m",
+   "diffPts": 7
+  },
+  {
+   "id": "best-2",
+   "ours20mSun": 49.7,
+   "ours240mSun": 57.9,
+   "pgdaSun120": 51.4,
+   "pgdaSun60": 50,
+   "pgdaEarth120": 53.2,
+   "comparedWith": "PGDA 60 m",
+   "diffPts": -0.3
+  },
+  {
+   "id": "degerlache",
+   "ours20mSun": 0,
+   "ours240mSun": 0,
+   "pgdaSun120": 0.1,
+   "pgdaSun60": 0.1,
+   "pgdaEarth120": 0,
+   "comparedWith": "PGDA 60 m",
+   "diffPts": -0.1
+  },
+  {
+   "id": "shoemaker",
+   "ours20mSun": 0,
+   "ours240mSun": 0,
+   "pgdaSun120": 0,
+   "pgdaSun60": 0,
+   "pgdaEarth120": 24.4,
+   "comparedWith": "PGDA 60 m",
+   "diffPts": 0
+  },
+  {
+   "id": "haworth",
+   "ours20mSun": 0,
+   "ours240mSun": 0,
+   "pgdaSun120": 0,
+   "pgdaSun60": 0,
+   "pgdaEarth120": 0.9,
+   "comparedWith": "PGDA 60 m",
+   "diffPts": 0
+  },
+  {
+   "id": "faustini",
+   "ours20mSun": 0,
+   "ours240mSun": 0,
+   "pgdaSun120": 0,
+   "pgdaSun60": 0,
+   "pgdaEarth120": 1.2,
+   "comparedWith": "PGDA 60 m",
+   "diffPts": 0
+  },
+  {
+   "id": "nobile",
+   "ours20mSun": 34.4,
+   "ours240mSun": 34.4,
+   "pgdaSun120": 35.8,
+   "pgdaSun60": 35.7,
+   "pgdaEarth120": 29.9,
+   "comparedWith": "PGDA 60 m",
+   "diffPts": -1.3
+  },
+  {
+   "id": "lcross",
+   "ours20mSun": 0,
+   "ours240mSun": 0,
+   "pgdaSun120": 0,
+   "pgdaSun60": 0,
+   "pgdaEarth120": 18.6,
+   "comparedWith": "PGDA 60 m",
+   "diffPts": 0
+  },
+  {
+   "id": "im1",
+   "ours20mSun": 37.8,
+   "ours240mSun": 41.7,
+   "pgdaSun120": 35.6,
+   "pgdaSun60": null,
+   "pgdaEarth120": 100,
+   "comparedWith": "PGDA 120 m",
+   "diffPts": 2.2
+  },
+  {
+   "id": "im2",
+   "ours20mSun": 43.8,
+   "ours240mSun": 44.2,
+   "pgdaSun120": 47,
+   "pgdaSun60": 46.4,
+   "pgdaEarth120": 93.6,
+   "comparedWith": "PGDA 60 m",
+   "diffPts": -2.6
+  }
+ ]
+}

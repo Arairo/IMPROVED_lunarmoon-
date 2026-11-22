@@ -2,7 +2,7 @@
 // paths over the analysis window. Azimuth runs left to right centred on north
 // (S, W, N, E, S); elevation is in degrees above the site's level plane.
 
-import { AZ_COUNT, AZ_STEP_DEG } from '../../core/horizon.js';
+import { AZ_COUNT, AZ_STEP_DEG, horizonAt } from '../../core/horizon.js';
 import { fitCanvas, token } from './format.js';
 
 const toX = (az, w) => (((((az + 180) % 360) + 360) % 360) / 360) * w; // N in the middle
@@ -28,7 +28,9 @@ export function drawSkyPlot(canvas, { horizon, scan, now }) {
 
   let maxHz = -90;
   let minHz = 90;
-  for (const v of horizon.elevations) {
+  // Precomputed skylines store every 2° (el180), computed ones every 0.5°: horizonAt reads both.
+  for (let k = 0; k < AZ_COUNT; k++) {
+    const v = horizonAt(horizon, k * AZ_STEP_DEG);
     maxHz = Math.max(maxHz, v);
     minHz = Math.min(minHz, v);
   }
@@ -120,8 +122,7 @@ export function drawSkyPlot(canvas, { horizon, scan, now }) {
   for (let k = 0; k <= AZ_COUNT; k++) {
     // iterate screen left to right: azimuth 180 -> 540
     const az = 180 + k * AZ_STEP_DEG;
-    const idx = Math.round((az % 360) / AZ_STEP_DEG) % AZ_COUNT;
-    ctx.lineTo(pad.l + (k / AZ_COUNT) * pw, Math.min(pad.t + ph, y(horizon.elevations[idx])));
+    ctx.lineTo(pad.l + (k / AZ_COUNT) * pw, Math.min(pad.t + ph, y(horizonAt(horizon, az % 360))));
   }
   ctx.lineTo(pad.l + pw, pad.t + ph);
   ctx.closePath();

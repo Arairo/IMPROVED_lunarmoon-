@@ -187,6 +187,10 @@ const sub = (page, k) => page.$eval(`[data-sub="${k}"]`, (e) => e.textContent);
     assert(json.spacecraft.comms.minClearanceDeg === 0, `0° clearance kept: ${json.spacecraft.comms.minClearanceDeg}`);
     assert(json.assumptions && json.assumptions.communications.notModelled.length > 3, 'radio assumptions');
     assert(json.flight.modelInfo && /preliminary/.test(json.flight.modelInfo.status), 'flight model status');
+    // Second audit: uncertainty kinds kept apart; the verdict is a labelled screening.
+    assert(json.uncertainty && json.uncertainty.terrain && json.uncertainty.model && json.uncertainty.input && json.uncertainty.referenceComparisons, 'uncertainty kinds');
+    assert(/landing approval/.test(json.verdictAtTouchdown.rules) && json.verdictAtTouchdown.meaning, 'verdict is a screening');
+    assert(/exact window length/.test(json.method.energySum), 'integration method stated');
     assert(Array.isArray(json.datasets) && json.datasets.some((d) => d.files.some((f) => /^[0-9a-f]{64}$/.test(f.sha256))), 'dataset checksums');
     assert(json.ephemerisCheck.status === 'checked', 'epoch label');
     const csv = await save('[data-r="csv"]');

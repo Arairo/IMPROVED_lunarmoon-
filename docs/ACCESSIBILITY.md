@@ -13,6 +13,12 @@ Beginner, Professional (Site and Check steps) and Terrain 3D (21 Nov 2026).
 | Button names didn't contain their visible text | Terrain 3D −1 d / −1 h / +1 h / +1 d | Names now start with the visible text |
 
 Before: 3–4 rules failing on every page. **After: 0 violations on all five.**
+
+Re-run 22 Nov 2026 (second audit) on eight views, adding the report column, the
+Flight view and Terrain 3D opened from Professional mode. Three new findings, all
+from that day's additions, fixed: the red NO GO pill (white on #ff453a) now uses
+#c62828; the report's scrolling area is focusable (`tabindex="0"`, labelled); the
+"Back to Professional" button uses #0071e3. **0 violations on all eight.**
 An automated check finds only some problems; it is not a substitute for testing
 with a screen reader.
 

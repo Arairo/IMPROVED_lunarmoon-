@@ -13,7 +13,8 @@ export function scanToCsv(scan, { site, config, provenance = [] } = {}) {
   const s = scan.series;
   const head = [
     `# Lunar Site Planner time series${site ? ` for ${site.name} (${site.lat.toFixed(5)}, ${site.lon.toFixed(5)})` : ''}`,
-    `# Step ${Math.round(scan.stepMs / 60000)} min. Angles in degrees from the local horizontal at a ${config?.mastHeightM ?? 2} m mast; azimuth clockwise from north.`,
+    `# Step ${Math.round(scan.stepMs / 60000)} min; each row stands for the time until the next row, the last only until the window end (${new Date(scan.endMs).toISOString()}).`,
+    `# Angles in degrees from the local horizontal at a ${config?.mastHeightM ?? 2} m mast; azimuth clockwise from north.`,
     '# Terrain: NASA LRO LOLA. Ephemeris: astronomy-engine (IAU lunar rotation), checked against JPL Horizons. link_margin_db is -99 when Earth is hidden.',
     '# Times are UTC. direct_to_earth_link = Earth in line of sight, a DSN complex sees the Moon, and the link budget closes on paper (not a DSN booking).',
     ...provenance.map((l) => `# ${String(l).replace(/[\r\n]+/g, ' ')}`),
