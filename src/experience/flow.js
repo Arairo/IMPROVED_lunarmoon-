@@ -14,7 +14,8 @@ import { scanToCsv } from '../core/exportCsv.js';
 import { addScenario } from '../ui/compare.js';
 import { groundSlope } from '../core/horizon.js';
 import { epochStatus } from '../core/ephemeris.js';
-import { matchScenario } from '../core/power.js';
+import { matchScenario, PANEL_MODES, POWER_SCENARIOS } from '../core/power.js';
+import { RADIO_PRESETS } from '../core/comms.js';
 import { terrainWarning, epochWarning } from '../ui/assessment.js';
 import { planFlight, ROUTES } from '../core/flight.js';
 import { linkAssumptions } from '../core/comms.js';
@@ -26,6 +27,12 @@ const pct = (f) => `${Math.round(f * 100)}%`;
 const when = (ms) => new Date(ms).toISOString().slice(0, 16).replace('T', ' ') + ' UTC';
 const day = (ms) => new Date(ms).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
 const LIGHT = { green: ['GO', '✓'], amber: ['GO WITH CARE', '!'], red: ['NO GO', '✕'] };
+// What each screening result means (second audit 8.3): a first look, not a decision.
+const SCREEN_MEANING = {
+  green: 'Favourable under these assumptions: power and Earth contact both look good at touchdown.',
+  amber: 'Possible, but limited: one of power or Earth contact is weak or short at touchdown. Further analysis needed.',
+  red: 'Not favourable in this scenario: no sunlight or no Earth contact at touchdown.',
+};
 
 const STEPS = [
   { key: 'site', title: 'Site', lead: 'Where do you want to land? Search, filter by mission, type coordinates, or click the Moon.' },
@@ -123,6 +130,7 @@ export function mountFlow({ app, setTime, switchMode, getBestSpots, actions }) {
   const assess = document.getElementById('assessmentRoot');
   if (assess) slot(2).querySelector('[data-assess]').appendChild(assess);
   slot(2).querySelector('[data-terrain]').addEventListener('click', () => actions.terrain());
+  slot(2).addEventListener('click', (e) => { if (e.target.closest('[data-assume]')) document.getElementById('settingsOpenBtn')?.click(); });
 
   // 4 · What if: the nudge card + comparison shortcuts.
   const planCard = document.querySelector('.xp-plan');
@@ -177,7 +185,7 @@ export function mountFlow({ app, setTime, switchMode, getBestSpots, actions }) {
   panel.innerHTML = `<header class="r-head"><h2 id="xp-report-title" tabindex="-1">Mission report</h2>
       <div class="r-tools"><button type="button" data-r="wide" aria-pressed="false" title="Make the report wider (the Moon view gets narrower)">Expand</button><button type="button" class="f-primary" data-r="print">Print / save as PDF</button><button type="button" data-r="json">JSON</button><button type="button" data-r="csv" title="Sun, power, Earth, DSN and link margin at every time step of the window">Time series (CSV)</button><button type="button" data-r="link">Copy link</button>
       <button type="button" class="r-close" data-r="close" aria-label="Close the report">${icon('x', 18)}</button></div></header>
-    <div class="f-report r-body" data-report></div>`;
+    <div class="f-report r-body" data-report tabindex="0" aria-label="Report contents"></div>`;
   (document.getElementById('explorerView') || document.body).appendChild(panel);
   let lastFocus = null;
   // The Moon, map and timeline redraw at their new size when the column opens or closes.
@@ -323,13 +331,33 @@ export function mountFlow({ app, setTime, switchMode, getBestSpots, actions }) {
     const line = (key, label, text) => `<div class="f-v ${v[key]}"><span class="f-light">${LIGHT[v[key]][1]}</span><div><b>${label}: ${LIGHT[v[key]][0]}</b><small>${text}</small></div></div>`;
     const sunTxt = v.power === 'red' ? `The Sun is down at touchdown${v.nextSunrise ? `; it rises ${day(v.nextSunrise)}` : ''}.` : v.sunSet ? `Sunset ${day(v.sunSet)}.` : 'The Sun stays up for this whole window.';
     const earthTxt = v.earth === 'red' ? (s.earthCentreFraction === 0 ? 'Earth never rises here: a relay satellite would be needed.' : `Earth is hidden at touchdown${v.nextEarthrise ? `; it returns ${day(v.nextEarthrise)}` : ''}.`) : v.earthSet ? `Earthset ${day(v.earthSet)}.` : 'Earth stays in view for this whole window.';
-    el.innerHTML = `<div class="f-overall ${v.overall}">${LIGHT[v.overall][0]}<small>at touchdown, ${when(app.windowStartMs)}</small></div>
+    el.innerHTML = `<div class="f-overall ${v.overall}" title="${SCREEN_MEANING[v.overall]}">${LIGHT[v.overall][0]}<small>screening at touchdown, ${when(app.windowStartMs)}, with your spacecraft settings</small></div>
       ${line('power', 'Power', `${sunTxt} Sunlight ${pct(s.litFraction)} of the window, longest night ${fmtHours(s.longestDarkH)}.`)}
       ${line('earth', 'Earth contact', `${earthTxt} Earth in view ${pct(s.earthCentreFraction)}; a direct link closes on paper ${pct(s.dteFraction)} of the time (DSN antenna time still has to be booked).`)}
       ${slopeLine()}
       ${terrainWarning(app.ctx?.horizon)}
       ${epochWarning(app.windowStartMs)}
-      <p class="f-note">Traffic lights use our own rules of thumb, not a NASA standard.</p>`;
+      ${assumptionsLine()}
+      ${methodDetails()}
+      <p class="f-note">A quick screen with this tool’s rules of thumb and your spacecraft settings: ${SCREEN_MEANING[v.overall].toLowerCase()} It is not a landing approval or a NASA standard.</p>`;
+  }
+  /** The settings these numbers rest on, next to the result (with a way to change them). */
+  function assumptionsLine() {
+    const p = app.config.power, c = app.config.comms;
+    const scen = matchScenario(p);
+    return `<p class="f-assume"><b>Assuming</b> ${esc((PANEL_MODES[p.mode]?.label || p.mode).toLowerCase())} solar array, ${p.areaM2} m² at ${Math.round(p.efficiency * 100)}%, a ${p.loadW} W load, battery ${Math.round((p.chargeEff ?? 0.95) * 100)}% efficient each way, ${app.config.mastHeightM} m mast; ${esc(RADIO_PRESETS[c.preset]?.label || c.preset)} at ${Math.round(c.dataRateBps / 1000)} kbps${scen !== 'custom' ? ` (${POWER_SCENARIOS[scen].label.toLowerCase()} example)` : ''}. <button type="button" class="f-linkbtn" data-assume>Change</button></p>`;
+  }
+  /** How the numbers were worked out, folded away for those who want it. */
+  function methodDetails() {
+    const q = app.ctx?.horizon?.quality;
+    const stepMin = app.scan ? Math.round(app.scan.stepMs / 60000) : null;
+    return `<details class="f-more"><summary>How this was worked out</summary><ul class="f-method">
+      <li><b>Terrain:</b> ${esc(q?.text || app.ctx?.horizon?.source || 'unknown')}</li>
+      <li><b>Time:</b> checked every ${stepMin} minutes over the ${app.windowDays}-day window; each check counts until the next one.</li>
+      <li><b>Sun and Earth positions:</b> astronomy-engine with the IAU lunar rotation model, within 0.007° of NASA JPL Horizons in 154 checks.</li>
+      <li><b>Power:</b> sunlight on the array × cell efficiency; battery = deepest shortfall against the load, with charge losses. An estimate, not a battery design.</li>
+      <li><b>Radio:</b> Earth's centre above the skyline, a DSN dish seeing the Moon and a link budget that closes on paper. Not a DSN booking.</li>
+      <li><b>Checks against NASA data</b> and what is not modelled: About → How we check the numbers, and docs/VALIDATION.md.</li></ul></details>`;
   }
   function slopeLine() {
     const sl = groundSlope(app.site.lat, app.site.lon);
@@ -346,7 +374,8 @@ export function mountFlow({ app, setTime, switchMode, getBestSpots, actions }) {
     const spots = getBestSpots().map((sp) => `<li>${esc(sp.title)}: ${esc(sp.r.site.name)} (${pct(sp.r.ops)} with Sun and Earth together)</li>`).join('');
     return `<div class="r-cols"><div class="r-main"><h3>${esc(app.site.name)}</h3>
       <p class="f-meta">${fmtLatLon(app.site.lat, app.site.lon)} · touchdown ${when(app.windowStartMs)} · ${app.windowDays}-day window</p>
-      <p class="f-rv"><span class="${v.overall}">${LIGHT[v.overall][0]}</span> Power ${LIGHT[v.power][0]} · Earth ${LIGHT[v.earth][0]}</p>
+      <p class="f-rv">Screening at touchdown: <span class="${v.overall}">${LIGHT[v.overall][0]}</span> Power ${LIGHT[v.power][0]} · Earth ${LIGHT[v.earth][0]}</p>
+      <p class="f-note">${SCREEN_MEANING[v.overall]} Preliminary, under the assumptions in this report; not a landing approval.</p>
       <table class="f-table">
         <tr><td>Sunlight</td><td>${pct(s.litFraction)}</td></tr>
         <tr><td>Earth in view (centre above terrain)</td><td>${pct(s.earthCentreFraction)}</td></tr>
@@ -410,7 +439,7 @@ export function mountFlow({ app, setTime, switchMode, getBestSpots, actions }) {
       datasets: datasetProvenance(),
       site: { name: app.site.name, latDeg: r2(app.site.lat), lonDeg: r2(app.site.lon), terrain: app.ctx?.horizon?.source || null, terrainQuality: app.ctx?.horizon?.quality || null },
       touchdownUtc: new Date(app.windowStartMs).toISOString(), windowDays: app.windowDays, ephemerisCheck: epochStatus(app.windowStartMs),
-      verdictAtTouchdown: v ? { overall: LIGHT[v.overall][0], power: LIGHT[v.power][0], earthContact: LIGHT[v.earth][0], rules: 'Lunar Site Planner rules of thumb, not a NASA standard' } : null,
+      verdictAtTouchdown: v ? { overall: LIGHT[v.overall][0], meaning: SCREEN_MEANING[v.overall], power: LIGHT[v.power][0], earthContact: LIGHT[v.earth][0], rules: 'preliminary screening with Lunar Site Planner rules of thumb, not a NASA standard or a landing approval' } : null,
       window: {
         sunlightFraction: r2(s.litFraction), earthInViewFraction: r2(s.earthCentreFraction), sunAndEarthTogetherFraction: r2(ws.both),
         directToEarthFraction: r2(s.dteFraction), longestNightHours: r2(s.longestDarkH), longestNightCutByWindow: !!s.longestDarkOpenEnded,
@@ -425,7 +454,7 @@ export function mountFlow({ app, setTime, switchMode, getBestSpots, actions }) {
         battery: 'Battery needed = deepest energy shortfall against the constant load, with charge and discharge efficiency from spacecraft.power. An energy estimate, not a battery design (no temperature, ageing or voltage limits).',
         communications: linkAssumptions(app.config.comms),
         directToEarth: 'directToEarthFraction counts times when Earth is in line of sight, a DSN complex sees the Moon above its mask, and the link budget closes on paper. It is not a DSN schedule.',
-        verdict: 'GO / GO WITH CARE / NO GO are this tool\u2019s rules of thumb, not a NASA standard or a mission approval.',
+        verdict: 'GO / GO WITH CARE / NO GO are a preliminary screening with this tool\u2019s rules of thumb under the settings above (GO = favourable under these assumptions; GO WITH CARE = possible but limited, further analysis needed; NO GO = not favourable in this scenario). Not a NASA standard or a landing approval.',
       },
       uncertainty: {
         positionalSensitivity: (() => { const r = app.lastRange; const k = `${app.site.lat},${app.site.lon}|${app.windowStartMs}|${JSON.stringify(app.config)}`; return r && r.key === k ? { what: 'Same 30 days at the site and 250 m N, S, E and W: how much the exact landing point matters. Not an error bar or confidence interval.', metres: r.metres, days: r.days, sunlightFraction: r.sun.map(r2), earthInViewFraction: r.earth.map(r2) } : 'not computed yet (open the What if step)'; })(),

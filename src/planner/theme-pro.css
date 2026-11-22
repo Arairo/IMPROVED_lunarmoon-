@@ -27,7 +27,7 @@ html[data-theme] .seg button { font-size: 12px; padding: 4px 10px; min-height: 2
 html[data-theme] .seg button.primary, html[data-theme] #playPause { background: var(--surface); color: var(--ink); border-color: var(--line-strong); font-weight: 700; }
 html[data-theme] .top-actions { margin-left: auto; gap: 8px; }
 html[data-theme] .top-actions button, html[data-theme] a.mode-link { min-height: 32px; padding: 5px 12px; font: 600 12.5px var(--font-sans); }
-html[data-theme] a.mode-link { display: inline-flex; align-items: center; gap: 6px; background: var(--action); color: #fff; border: 0; text-decoration: none; }
+html[data-theme] a.mode-link { display: inline-flex; align-items: center; gap: 6px; background: #0071e3; color: #fff; border: 0; text-decoration: none; } /* 4.6:1 with white */
 html[data-theme] a.mode-link:hover { filter: brightness(1.1); }
 
 /* Buttons and fields elsewhere: Pro's small pills. */
