@@ -93,6 +93,11 @@ const sub = (page, k) => page.$eval(`[data-sub="${k}"]`, (e) => e.textContent);
     // "See it up close" -> Terrain 3D, then its "Back to Professional" link.
     await Promise.all([page.waitForURL(/planner\.html/, { timeout: 60000 }), page.$eval('[data-terrain]', (b) => b.click())]);
     await page.waitForSelector('a.mode-link', { timeout: 60000 });
+    // Terrain 3D uses the Professional plan's spacecraft settings.
+    await page.$eval('#settingsBtn', (b) => b.click());
+    const t3dLoad = await page.$eval('#settingsForm', (f) => f.loadW.value);
+    await page.keyboard.press('Escape');
+    assert(t3dLoad === '250', `Terrain 3D load ${t3dLoad}`);
     await Promise.all([page.waitForURL(/#pro/, { timeout: 60000 }), page.$eval('a.mode-link', (a) => a.click())]);
     await page.waitForFunction(() => /15 Jun 2027/.test(document.querySelector('[data-sub="date"]')?.textContent || ''), null, { timeout: 60000 });
     const after = { site: await sub(page, 'site'), date: await sub(page, 'date'), compare: await page.$eval('#modeCompareBtn', (b) => b.textContent.replace(/\D+/g, '')) };

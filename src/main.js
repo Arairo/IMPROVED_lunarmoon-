@@ -5,6 +5,7 @@ import sitesData from './data/sites.js';
 import { clamp, SITE_GROUPS, SITE_BADGES, SYNODIC_MONTH_DAYS } from './core/constants.js';
 import { prepareSite, scanWindow, evaluate } from './core/analysis.js';
 import { DEFAULT_COMMS_CONFIG } from './core/comms.js';
+import { DEFAULT_POWER_CONFIG } from './core/power.js';
 import { esc, fmtLatLon, fmtUtc } from './ui/format.js';
 import { createGlobeRenderer } from './scene/globeRenderer.js';
 import { hasWebGL, showNoWebGL } from './ui/webgl.js';
@@ -39,7 +40,9 @@ export const app = {
   scenarios: [],
   config: {
     mastHeightM: 2.0,
-    power: { mode: 'vertical_tracking', areaM2: 2.0, efficiency: 0.29, fixedAzDeg: 0, loadW: 120 },
+    // Engine defaults (incl. battery charge/discharge efficiencies), so Terrain 3D and
+    // exported reports carry the full set.
+    power: { ...DEFAULT_POWER_CONFIG, mode: 'vertical_tracking', areaM2: 2.0, efficiency: 0.29, fixedAzDeg: 0, loadW: 120 },
     // Start from the engine defaults so the link budget has every term it needs
     // (losses, required Eb/N0, DSN minimum elevation).
     comms: { ...DEFAULT_COMMS_CONFIG, preset: 's_mga', minClearanceDeg: 2.0, targetMarginDb: 3.0, dataRateBps: 256000 },
