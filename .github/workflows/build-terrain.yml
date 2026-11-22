@@ -37,6 +37,8 @@ jobs:
         run: node tools/build_global_dem.mjs data-raw/ldem_16.img --ppd 8
       - name: Rebuild every site's horizon
         run: node tools/build_site_horizons.mjs data-raw/ldem_16.img | tee horizons.log
+      - name: Update the data manifest (the tests check every file's checksum)
+        run: node tools/build_manifest.mjs
       - run: npm test
       - name: Summary
         run: |

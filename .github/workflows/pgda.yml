@@ -38,6 +38,8 @@ jobs:
         run: node tools/build_hires_terrain.mjs data-raw/pgda 2>&1 | tee check.log
       - name: Rebuild skylines at the sites with 20 m terrain
         run: node tools/build_site_horizons.mjs --only-hires | tee horizons.log
+      - name: Update the data manifest (the tests check every file's checksum)
+        run: node tools/build_manifest.mjs
       - run: npm test
       - name: Summary
         if: always()
