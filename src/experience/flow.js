@@ -164,8 +164,9 @@ export function mountFlow({ app, setTime, switchMode, getBestSpots, actions }) {
   // 5 · Report
   slot(4).innerHTML = '<div class="f-report f-report-sum" data-report-sum></div><button type="button" class="f-primary f-openreport" data-r="open" aria-haspopup="dialog">Open the full report</button><div class="f-row f-wrap"><button type="button" data-r="print">Print / save as PDF</button><button type="button" data-r="json">Download JSON</button><button type="button" data-r="csv" title="Sun, power, Earth, DSN and link margin at every time step of the window">Time series (CSV)</button><button type="button" data-r="link">Copy link</button><button type="button" data-r="terrain">Terrain 3D ↗</button><button type="button" data-r="lumi">Ask Lumi</button></div><p class="f-note">For GIS and scripts: <a href="https://github.com/Arairo/IMPROVED_lunarmoon-/blob/main/docs/API.md" target="_blank" rel="noopener">GeoTIFF lighting maps, day-by-day tables, Artemis III region outlines and the engine as a JavaScript module</a>.</p>';
   const s5 = slot(4);
-  // The full report opens in a wide panel on the right (full screen on phones),
-  // over the Moon, with the same export buttons.
+  // The full report opens as a column on the right that the 3D Moon and timeline make
+  // room for (they shrink, nothing is covered); Expand widens it for reading or
+  // printing. Full screen on phones and small tablets.
   const panel = document.createElement('div');
   panel.className = 'xp-flow xp-report';
   panel.id = 'xp-report';
@@ -174,23 +175,36 @@ export function mountFlow({ app, setTime, switchMode, getBestSpots, actions }) {
   panel.setAttribute('aria-labelledby', 'xp-report-title');
   panel.hidden = true;
   panel.innerHTML = `<header class="r-head"><h2 id="xp-report-title" tabindex="-1">Mission report</h2>
-      <div class="r-tools"><button type="button" class="f-primary" data-r="print">Print / save as PDF</button><button type="button" data-r="json">JSON</button><button type="button" data-r="csv" title="Sun, power, Earth, DSN and link margin at every time step of the window">Time series (CSV)</button><button type="button" data-r="link">Copy link</button>
+      <div class="r-tools"><button type="button" data-r="wide" aria-pressed="false" title="Make the report wider (the Moon view gets narrower)">Expand</button><button type="button" class="f-primary" data-r="print">Print / save as PDF</button><button type="button" data-r="json">JSON</button><button type="button" data-r="csv" title="Sun, power, Earth, DSN and link margin at every time step of the window">Time series (CSV)</button><button type="button" data-r="link">Copy link</button>
       <button type="button" class="r-close" data-r="close" aria-label="Close the report">${icon('x', 18)}</button></div></header>
     <div class="f-report r-body" data-report></div>`;
-  document.body.appendChild(panel);
+  (document.getElementById('explorerView') || document.body).appendChild(panel);
   let lastFocus = null;
+  // The Moon, map and timeline redraw at their new size when the column opens or closes.
+  const relayout = () => { requestAnimationFrame(() => window.dispatchEvent(new Event('resize'))); setTimeout(() => window.dispatchEvent(new Event('resize')), 260); };
+  const setWide = (on) => {
+    panel.classList.toggle('is-wide', on);
+    const b = panel.querySelector('[data-r="wide"]');
+    b.setAttribute('aria-pressed', String(on));
+    b.textContent = on ? 'Narrower' : 'Expand';
+    try { localStorage.setItem('lsp.reportWide', on ? '1' : '0'); } catch {}
+    relayout();
+  };
+  try { if (localStorage.getItem('lsp.reportWide') === '1') setWide(true); } catch {}
+  panel.querySelector('[data-r="wide"]').addEventListener('click', () => setWide(!panel.classList.contains('is-wide')));
   const openReport = () => {
     lastFocus = document.activeElement;
     panel.querySelector('[data-report]').innerHTML = reportHtml();
     reportKey = '';
     panel.hidden = false;
     requestAnimationFrame(() => { panel.classList.add('is-open'); panel.querySelector('#xp-report-title').focus(); });
+    relayout();
     play('tick');
   };
   const closeReport = () => {
     if (panel.hidden) return;
     panel.classList.remove('is-open');
-    setTimeout(() => { panel.hidden = true; }, 220);
+    setTimeout(() => { panel.hidden = true; relayout(); }, 220);
     lastFocus?.focus?.();
   };
   panel.addEventListener('keydown', (e) => { if (e.key === 'Escape') { e.stopPropagation(); closeReport(); } });
