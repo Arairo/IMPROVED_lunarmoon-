@@ -61,7 +61,7 @@
     {
      "path": "data/global_dem.json",
      "bytes": 475,
-     "sha256": "e3094d62ae913e405aea8ebddf213a14d67a8fbb9e9120f46e6ca42d5fb76105"
+     "sha256": "4e32a3ba60e1173d88a97156b2f850e2cde78cbc88a0bef79a5fc150b32eb0d8"
     },
     {
      "path": "data/global_dem.bin",
@@ -341,8 +341,8 @@
    "files": [
     {
      "path": "data/precomputedHorizons.json",
-     "bytes": 40593,
-     "sha256": "8da271ebfd6a470a44dddd11e1345d9ca2bb31b556142c98686ffdf9fdd6ebad"
+     "bytes": 42370,
+     "sha256": "c97b9146fcd8e8fa1f736b0b87e4eac6b7c451b20387d1b88e1f64fe6b97614d"
     }
    ],
    "provider": "this project",
