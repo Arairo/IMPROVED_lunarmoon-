@@ -132,8 +132,14 @@ tools/                      data builders, Horizons validation, video pipeline (
 test/                       automated tests
 ```
 
+## How to cite
+
+Rasyid, A. (2026). *Lunar Site Planner: when a Moon lander gets sunlight and Earth contact* (Version 1.0.0) [Computer software]. https://github.com/Arairo/IMPROVED_lunarmoon-
+
+GitHub's "Cite this repository" button gives the same in other formats (from `CITATION.cff`). A DOI will be added here once the release is archived on Zenodo.
+
 ## Team Dell Monitors
 
-Ammar Rasyid Bin Remy Azrai · Ahmad Ibrahim Shahmi · Pratyush Kumar Biswal · Muhammad Nawfal Bin Khairul Azlan
+Built for the NASA Space Apps Challenge 2026, Kuala Lumpur. Developed and maintained by Ammar Rasyid bin Remy Azrai (Universiti Tenaga Nasional), with Ahmad Ibrahim Shahmi, Pratyush Kumar Biswal, Muhammad Nawfal bin Khairul Azlan and Kevin Yanlin Li Li. Software developed with AI coding assistance.
 
 Lunar data from NASA is in the public domain. This is not a NASA product and is not endorsed by NASA.

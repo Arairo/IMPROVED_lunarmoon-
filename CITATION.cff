@@ -1,14 +1,20 @@
 cff-version: 1.2.0
 message: "If you use Lunar Site Planner or its data, please cite it as below."
-title: "Lunar Site Planner: terrain-aware Sun, Earth, power and flight planning for lunar landing sites"
+title: "Lunar Site Planner: when a Moon lander gets sunlight and Earth contact"
 type: software
 authors:
-  # Add teammates the same way; affiliation and orcid ("https://orcid.org/…") are optional.
-  - given-names: "Ammar Rasyid"
-    family-names: "Bin Remy Azrai"
+  # Cited as "Rasyid, A." Full name: Ammar Rasyid bin Remy Azrai (Malay patronymic,
+  # no family name; also listed as "Ammar Remy" in some records).
+  # Add "orcid: https://orcid.org/xxxx-xxxx-xxxx-xxxx" here once registered.
+  - given-names: "Ammar"
+    family-names: "Rasyid"
+    alias: "Ammar Rasyid bin Remy Azrai"
+    affiliation: "Universiti Tenaga Nasional (UNITEN)"
+  # The NASA Space Apps Challenge team: Pratyush Kumar Biswal, Muhammad Nawfal bin
+  # Khairul Azlan, Ahmad Ibrahim Shahmi, Kevin Yanlin Li Li (listed by name in .zenodo.json).
   - name: "Team Dell Monitors (NASA Space Apps Challenge 2026, Kuala Lumpur)"
 version: "1.0.0"
-date-released: "2026-11-19"
+date-released: "2026-11-22"
 license: MIT
 repository-code: "https://github.com/Arairo/IMPROVED_lunarmoon-"
 url: "https://arairo.github.io/IMPROVED_lunarmoon-/"
@@ -20,7 +26,7 @@ keywords:
   - LOLA
   - Artemis
 abstract: >-
-  A browser tool that tells you, for a lander at a given site and window, when
+  A free browser tool that shows, for a lander at a given Moon site and date, when
   the Sun and Earth are above the real terrain skyline, how much power and
   radio contact that gives, and how to fly there. Skylines come from NASA LRO
   LOLA terrain (20 m PGDA tiles near the main south-polar sites), the Sun and

@@ -1,10 +1,11 @@
 {
-  "title": "Lunar Site Planner",
+  "title": "Lunar Site Planner: when a Moon lander gets sunlight and Earth contact",
   "upload_type": "software",
-  "description": "Terrain-aware Sun, Earth, power, radio and flight planning for lunar landing sites, built on NASA LRO LOLA terrain. Validation: docs/VALIDATION.md. Public API: docs/API.md.",
+  "description": "A free browser tool that shows, for a lander at a given Moon site and date, when the Sun and Earth are above the real terrain skyline (NASA LRO LOLA), how much solar power and radio contact that gives, and how to fly there. Checked against NASA JPL Horizons, NASA Goddard PGDA lighting maps, an LROC photo and Apollo landings. Validation: docs/VALIDATION.md. Public API: docs/API.md. Software developed with AI coding assistance.",
   "creators": [
     {
-      "name": "Bin Remy Azrai, Ammar Rasyid"
+      "name": "Rasyid, Ammar",
+      "affiliation": "Universiti Tenaga Nasional (UNITEN)"
     }
   ],
   "license": "MIT",
@@ -27,6 +28,28 @@
     {
       "name": "Team Dell Monitors (NASA Space Apps Challenge 2026, Kuala Lumpur)",
       "type": "ProjectMember"
+    },
+    {
+      "name": "Biswal, Pratyush Kumar",
+      "type": "ProjectMember",
+      "affiliation": "Team Dell Monitors (NASA Space Apps Challenge 2026, Kuala Lumpur)"
+    },
+    {
+      "name": "Khairul Azlan, Muhammad Nawfal bin",
+      "type": "ProjectMember",
+      "affiliation": "Team Dell Monitors (NASA Space Apps Challenge 2026, Kuala Lumpur)"
+    },
+    {
+      "name": "Shahmi, Ahmad Ibrahim",
+      "type": "ProjectMember",
+      "affiliation": "Team Dell Monitors (NASA Space Apps Challenge 2026, Kuala Lumpur)"
+    },
+    {
+      "name": "Li Li, Kevin Yanlin",
+      "type": "ProjectMember",
+      "affiliation": "Team Dell Monitors (NASA Space Apps Challenge 2026, Kuala Lumpur)"
     }
-  ]
+  ],
+  "version": "1.0.0",
+  "notes": "Full author name: Ammar Rasyid bin Remy Azrai (Malay patronymic). Add an ORCID to the creator once registered."
 }
