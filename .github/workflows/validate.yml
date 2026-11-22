@@ -34,4 +34,5 @@ jobs:
           node tools/build_manifest.mjs   # checksums of every data file (test/manifest.spec.js)
           git add public/data/validation.json public/data/manifest.json
           git commit -m "Update JPL Horizons validation scoreboard" || echo "Nothing changed"
+          git pull --rebase -q origin "$GITHUB_REF_NAME"   # someone may have pushed meanwhile
           git push

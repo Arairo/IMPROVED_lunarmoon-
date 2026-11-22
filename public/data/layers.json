@@ -34,5 +34,5 @@
     "projection": "north-polar stereographic: x = rho sin(lon), y = -rho cos(lon), row 0 at +y"
   },
   "terrain": "NASA LRO LOLA: 240 m / 1 km south-polar grids and the LDEM_16-based global grid (8 px/deg)",
-  "built": "2026-11-17T16:25:12.458Z"
+  "built": "2026-11-22T05:40:04.424Z"
 }

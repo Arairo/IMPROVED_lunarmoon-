@@ -61,7 +61,7 @@
     {
      "path": "data/global_dem.json",
      "bytes": 475,
-     "sha256": "e3094d62ae913e405aea8ebddf213a14d67a8fbb9e9120f46e6ca42d5fb76105"
+     "sha256": "4e32a3ba60e1173d88a97156b2f850e2cde78cbc88a0bef79a5fc150b32eb0d8"
     },
     {
      "path": "data/global_dem.bin",
@@ -341,8 +341,8 @@
    "files": [
     {
      "path": "data/precomputedHorizons.json",
-     "bytes": 40593,
-     "sha256": "8da271ebfd6a470a44dddd11e1345d9ca2bb31b556142c98686ffdf9fdd6ebad"
+     "bytes": 42365,
+     "sha256": "2a11c582c917e67e5771919e26ad0c5fdc0dac47a5dd771ea246d45ef4e68bea"
     }
    ],
    "provider": "this project",
@@ -362,12 +362,12 @@
     {
      "path": "data/layers.json",
      "bytes": 1069,
-     "sha256": "d05718483bf8d8f4edb03af24c14cf270274df4894f827f51880ad568df52691"
+     "sha256": "0f8d2fd5330a7cd57503982881ec8731031090bb1fbcce8be8122e2a1c2489ce"
     },
     {
      "path": "data/layers.bin",
      "bytes": 397536,
-     "sha256": "895a6328ac0e9042a57b7aa3a989ffb113be3cf762ababbfdd56b4064c0e1f58"
+     "sha256": "4121773be5305d5107dbdb893e89d1a9c7144ac488798fa2c599599b5baf767f"
     },
     {
      "path": "data/layer_skylines.json",
@@ -377,7 +377,7 @@
     {
      "path": "data/layer_skylines.bin",
      "bytes": 4770432,
-     "sha256": "30d1d98b6c0060f2857be0172352f15c1227a26cf8dfcba9efab694caffac89e"
+     "sha256": "179231bef3c34a9e7ab6de5e8efddbda9011af760767f5416fc94b84a729f2af"
     }
    ],
    "provider": "this project",
@@ -388,7 +388,7 @@
    "units": "uint8 = percent × 2; skylines int8 × 0.25°",
    "generator": "tools/build_map_layers.mjs",
    "licence": "MIT (this project), derived from NASA data",
-   "limitations": "Skyline in 72 directions; built before ridge-crest refinement (21 Nov 2026)."
+   "limitations": "Skyline in 72 directions (5° apart) with the app ray-caster; 6-hour sampling; disk centre, not disk fraction."
   },
   {
    "id": "sunlight-map-1km-2027",
@@ -396,8 +396,8 @@
    "files": [
     {
      "path": "data/sp_illum_2027.json",
-     "bytes": 251362,
-     "sha256": "a31c5da738228c079c7d36ed90cc2dd36ad774026bdb366c36f04595a8248ca7"
+     "bytes": 251281,
+     "sha256": "91d4f1d678ec23b624f7045d0bda00207b862c9603c6e5734c59020f59272655"
     }
    ],
    "provider": "this project",
@@ -408,7 +408,7 @@
    "units": "shares × 1000",
    "generator": "tools/illumination_map.mjs",
    "licence": "MIT (this project), derived from NASA data",
-   "limitations": "Built before ridge-crest refinement (21 Nov 2026); drives the best-spot search and the Beginner sunlight map."
+   "limitations": "Average visible fraction of the solar disk, 3-hour sampling; drives the best-spot search and the Beginner sunlight map."
   },
   {
    "id": "artemis-iii-regions",
@@ -441,8 +441,8 @@
     },
     {
      "path": "data/pgda_check.json",
-     "bytes": 6579,
-     "sha256": "e0dbda326b8fb108d57819639b783049a4861428cbee89229f90b665342167e3"
+     "bytes": 6419,
+     "sha256": "748aabe8ad2baae67f2bcb460e231fb3e72396296540edd67fbcf284b47782b9"
     },
     {
      "path": "data/lroc_check.json",

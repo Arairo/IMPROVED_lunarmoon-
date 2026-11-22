@@ -1,5 +1,5 @@
 {
- "generated": "2026-11-19T12:42:04.842Z",
+ "generated": "2026-11-22T05:51:55.962Z",
  "note": "PGDA \"average visibility\" (Mazarico et al. 2011 method; product 201608) is a multi-year average of the visible fraction of the Sun's / Earth's disk at the surface. Ours is the share of 2027 with the disk centre above the skyline from a 2 m mast. Expect differences of several points; the comparison is about the pattern.",
  "products": {
   "sun": "https://pgda.gsfc.nasa.gov/data/MoonIllumination/AVGVISIB_75S_120M_201608.TIF",
@@ -11,19 +11,19 @@
    "v": 0,
    "r": 0.918,
    "n": 24344,
-   "meanAbsDiff": 4.22,
-   "meanDiff": 2.888,
+   "meanAbsDiff": 3.993,
+   "meanDiff": 1.78,
    "pgdaMean": 31.539,
-   "oursMean": 34.427
+   "oursMean": 33.319
   },
   "earth": {
    "v": 0,
-   "r": 0.975,
+   "r": 0.971,
    "n": 24344,
-   "meanAbsDiff": 4.711,
-   "meanDiff": -0.789,
+   "meanAbsDiff": 5.006,
+   "meanDiff": -1.786,
    "pgdaMean": 31.349,
-   "oursMean": 30.56
+   "oursMean": 29.563
   }
  },
  "sites": [
@@ -68,7 +68,7 @@
     "sun": 21.6,
     "earth": 46
    },
-   "pgdaSun60": null,
+   "pgdaSun60": 28.2,
    "pgdaSun120": 38.1,
    "pgdaEarth120": 52.9
   },
@@ -83,7 +83,7 @@
     "sun": 23.6,
     "earth": 60.1
    },
-   "pgdaSun60": null,
+   "pgdaSun60": 25.6,
    "pgdaSun120": 26.2,
    "pgdaEarth120": 66.4
   },
@@ -98,7 +98,7 @@
     "sun": 21.6,
     "earth": 35.8
    },
-   "pgdaSun60": null,
+   "pgdaSun60": 20.4,
    "pgdaSun120": 18.8,
    "pgdaEarth120": 36.6
   },
@@ -113,7 +113,7 @@
     "sun": 29.5,
     "earth": 32.8
    },
-   "pgdaSun60": null,
+   "pgdaSun60": 27.9,
    "pgdaSun120": 30,
    "pgdaEarth120": 37
   },
@@ -143,7 +143,7 @@
     "sun": 36,
     "earth": 49.5
    },
-   "pgdaSun60": null,
+   "pgdaSun60": 37.3,
    "pgdaSun120": 37.1,
    "pgdaEarth120": 54.8
   },
@@ -155,7 +155,7 @@
     "earth": 35
    },
    "ours20": null,
-   "pgdaSun60": null,
+   "pgdaSun60": 2.9,
    "pgdaSun120": 3,
    "pgdaEarth120": 41.4
   },
@@ -170,7 +170,7 @@
     "sun": 63.6,
     "earth": 42.5
    },
-   "pgdaSun60": null,
+   "pgdaSun60": 0,
    "pgdaSun120": 67.7,
    "pgdaEarth120": 52.3
   },
@@ -185,7 +185,7 @@
     "sun": 63.6,
     "earth": 50.8
    },
-   "pgdaSun60": null,
+   "pgdaSun60": 70.2,
    "pgdaSun120": 72.3,
    "pgdaEarth120": 55.9
   },
@@ -221,7 +221,7 @@
   },
   {
    "id": "best-2",
-   "name": "Best-lit cell #3 (1 km map, 2027)",
+   "name": "Well-lit cell near the pole (1 km map, 2027)",
    "ours240": {
     "sun": 57.9,
     "earth": 49.6
@@ -245,7 +245,7 @@
     "sun": 0,
     "earth": 0
    },
-   "pgdaSun60": null,
+   "pgdaSun60": 0.1,
    "pgdaSun120": 0.1,
    "pgdaEarth120": 0
   },
@@ -260,7 +260,7 @@
     "sun": 0,
     "earth": 15.3
    },
-   "pgdaSun60": null,
+   "pgdaSun60": 0,
    "pgdaSun120": 0,
    "pgdaEarth120": 24.4
   },
@@ -354,13 +354,5 @@
    "pgdaSun120": 47,
    "pgdaEarth120": 93.6
   }
- ],
- "sitesRecomputed": {
-  "at": "2026-11-21T13:39:40.154Z",
-  "engine": {
-   "growth": 0.015,
-   "refine": true
-  },
-  "by": "tools/refresh_pgda_site_shares.mjs"
- }
+ ]
 }

@@ -37,6 +37,8 @@ jobs:
         run: node tools/build_global_dem.mjs data-raw/ldem_16.img --ppd 8
       - name: Rebuild every site's horizon
         run: node tools/build_site_horizons.mjs data-raw/ldem_16.img | tee horizons.log
+      - name: Update the data manifest (the tests check every file's checksum)
+        run: node tools/build_manifest.mjs
       - run: npm test
       - name: Summary
         run: |
@@ -48,4 +50,5 @@ jobs:
           node tools/build_manifest.mjs   # checksums of every data file (test/manifest.spec.js)
           git add public/data/global_dem.bin public/data/global_dem.json src/data/precomputedHorizons.js src/data/precomputedHorizons.json public/data/precomputedHorizons.json public/data/manifest.json
           git commit -m "Add LOLA global terrain and rebuild site horizons" || echo "Nothing changed"
+          git pull --rebase -q origin "$GITHUB_REF_NAME"   # someone may have pushed meanwhile
           git push

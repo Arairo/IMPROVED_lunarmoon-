@@ -37,7 +37,7 @@ export const SITE_BADGES = {
   'peak-shackleton': { text: 'High Massif', cls: 'bg-amber-100 text-amber-900 border-amber-300' },
   'best-0': { text: '#1 LOLA 2027', cls: 'bg-amber-100 text-amber-900 border-amber-300' },
   'best-1': { text: '#2 LOLA 2027', cls: 'bg-amber-100 text-amber-900 border-amber-300' },
-  'best-2': { text: '#3 LOLA 2027', cls: 'bg-amber-100 text-amber-900 border-amber-300' },
+  'best-2': { text: 'Well lit 2027', cls: 'bg-amber-100 text-amber-900 border-amber-300' },
   shackleton: { text: '0% Sun · Cold Trap', cls: 'bg-slate-200 text-slate-700 border-slate-300' },
   shoemaker: { text: 'Cold Trap', cls: 'bg-slate-200 text-slate-700 border-slate-300' },
   faustini: { text: 'Cold Trap', cls: 'bg-slate-200 text-slate-700 border-slate-300' },

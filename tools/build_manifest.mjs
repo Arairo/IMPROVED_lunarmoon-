@@ -68,13 +68,13 @@ const DATASETS = [
     id: 'map-layers-2027', title: 'Sunlight and Earth-visibility map layers, 2027', files: ['layers.json', 'layers.bin', 'layer_skylines.json', 'layer_skylines.bin'],
     provider: 'this project', source: read('layers.json').terrain || 'LOLA grids above', resolutionM: 5000, coverage: 'whole Moon (1°) and both polar caps (5 km)',
     frame: 'see layers.json', units: 'uint8 = percent × 2; skylines int8 × 0.25°', generator: 'tools/build_map_layers.mjs', licence: OURS,
-    limitations: 'Skyline in 72 directions; built before ridge-crest refinement (21 Nov 2026).',
+    limitations: 'Skyline in 72 directions (5° apart) with the app ray-caster; 6-hour sampling; disk centre, not disk fraction.',
   },
   {
     id: 'sunlight-map-1km-2027', title: 'South-pole sunlight and Earth-visibility map, 1 km, 2027', files: ['sp_illum_2027.json'],
     provider: 'this project', source: read('sp_illum_2027.json').description, resolutionM: 1000, coverage: '±75 km around the south pole',
     frame: POLAR, units: 'shares × 1000', generator: 'tools/illumination_map.mjs', licence: OURS,
-    limitations: 'Built before ridge-crest refinement (21 Nov 2026); drives the best-spot search and the Beginner sunlight map.',
+    limitations: 'Average visible fraction of the solar disk, 3-hour sampling; drives the best-spot search and the Beginner sunlight map.',
   },
   {
     id: 'artemis-iii-regions', title: 'Artemis III candidate landing regions', files: ['artemis_regions.geojson'],

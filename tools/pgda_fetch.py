@@ -148,6 +148,10 @@ for name, url in (('sun', SUN_URL), ('earth', EARTH_URL)):
     for s in POLAR:
         meta['sites'].setdefault(s['id'], {})[name + '120m'] = point(ds, m, *xy(s['lat'], s['lon']))
 
+# KNOWN ISSUE (22 Nov 2026): this 60 m point read gives 0% at the Shackleton connecting
+# ridge, where the 120 m map gives 67.7%, so the 85S product's coordinates or no-data
+# handling are probably read wrongly here. The app and docs use the 120 m values only
+# (pgdaSun120); check this before relying on sun60m.
 try:
     ds85 = gdal.Open(SUN85_URL)
     m85 = info(ds85)

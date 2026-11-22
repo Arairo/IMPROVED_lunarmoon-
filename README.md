@@ -77,7 +77,7 @@ Everything below is in the app under **Help → Accuracy, data and sources**, wr
 
 - **Checked against NASA JPL Horizons**: 154 Sun and Earth positions (11 sites including both poles' surroundings, the far side and the western limb × 7 dates from 1969 to 2030): worst elevation difference **0.007°**, median 0.001° (the Sun's disk is 0.53° wide). Re-run any time with the *Validate against JPL Horizons* workflow; the scoreboard is published in the app.
 - **Checked against what flew**: the Sun's height at the Apollo 11, 12, 14, 15 and 17 touchdowns is within **0.35°** of the mission reports, and our sunsets at Blue Ghost Mission 1, Chandrayaan-3 and SLIM fall on the days their teams reported.
-- **Checked against NASA Goddard's lighting maps**: our south-pole sunlight map matches NASA PGDA's average-illumination map with a correlation of **0.92** (Earth in view: **0.975**), average difference about 4 points, across 24,000 cells. At the Shackleton connecting ridge, 20 m terrain gives 64 % sunlight for 2027 (Sun's centre up); NASA's map, which counts a partly visible Sun over many years, says 68 %.
+- **Checked against NASA Goddard's lighting maps**: our south-pole sunlight map matches NASA PGDA's average-illumination map with a correlation of **0.92** (Earth in view: **0.97**), average difference about 4 points, across 24,000 cells. At the Shackleton connecting ridge, 20 m terrain gives 64 % sunlight for 2027 (Sun's centre up); NASA's map, which counts a partly visible Sun over many years, says 68 %.
 - **Real terrain at every site**: NASA LOLA **20 m** terrain (PGDA, Barker et al. 2023) around the main south-polar sites, 240 m and 1 km grids around the pole, and the global LDEM_16 map (~1.9 km) everywhere else, ray-cast 300 km out in every direction. Each 20 m tile is checked against our 240 m grid before use (2–4 m average difference). A test checks the horizon over a synthetic mountain against the exact geometric answer.
 - **One engine**: all the maths is in [`src/core/`](src/core): pure functions with tests. The 3D Moon, maps, charts, Lumi and Compare only show what `core/` returns.
 - **Known limits are stated**: terrain detail (boulders and the lander footprint are smaller than even a 20 m cell), the slope is a ~0.5 km average, and the GO / NO GO lights are our own rules of thumb, not a NASA standard.
@@ -132,8 +132,14 @@ tools/                      data builders, Horizons validation, video pipeline (
 test/                       automated tests
 ```
 
+## How to cite
+
+Rasyid, A. (2026). *Lunar Site Planner: when a Moon lander gets sunlight and Earth contact* (Version 1.0.0) [Computer software]. https://github.com/Arairo/IMPROVED_lunarmoon-
+
+GitHub's "Cite this repository" button gives the same in other formats (from `CITATION.cff`). A DOI will be added here once the release is archived on Zenodo.
+
 ## Team Dell Monitors
 
-Ammar Rasyid Bin Remy Azrai · Ahmad Ibrahim Shahmi · Pratyush Kumar Biswal · Muhammad Nawfal Bin Khairul Azlan
+Built for the NASA Space Apps Challenge 2026, Kuala Lumpur. Developed and maintained by Ammar Rasyid bin Remy Azrai (Universiti Tenaga Nasional), with Ahmad Ibrahim Shahmi, Pratyush Kumar Biswal, Muhammad Nawfal bin Khairul Azlan and Kevin Yanlin Li Li. Software developed with AI coding assistance.
 
 Lunar data from NASA is in the public domain. This is not a NASA product and is not endorsed by NASA.
