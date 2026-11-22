@@ -5,8 +5,12 @@ reach pgda.gsfc.nasa.gov; GDAL reads only the parts of the files it needs).
   python3 tools/pgda_fetch.py OUT_DIR
 
 Writes to OUT_DIR:
-  dem_<site>.f32 + dem_<site>.json   20 m LOLA terrain windows (Barker et al. 2023,
-                                      LDEM_80S_20MPP_ADJ) around each south-polar site
+  dem_<id>.f32 + dem_<id>.json       20 m LOLA terrain windows (Barker et al. 2023,
+                                      LDEM_80S_20MPP_ADJ): a 16 km grid of tiles covering
+                                      each Artemis III candidate region (id reg_<i>_<j>),
+                                      plus a window around each south-polar site that
+                                      those tiles do not already cover
+  windows.json                       the list of windows
   illum_sun.f32, illum_earth.f32     PGDA average Sun / Earth visibility resampled to
                                       the app's 184 x 184, 5 km south-cap grid (+-460 km)
   illum_meta.json                    file info, units and point values at each site
@@ -34,6 +38,10 @@ SUN_URL = '/vsicurl/https://pgda.gsfc.nasa.gov/data/MoonIllumination/AVGVISIB_75
 EARTH_URL = '/vsicurl/https://pgda.gsfc.nasa.gov/data/MoonIllumination/AVGVISIB_75S_120M_201608_EARTH.TIF'
 SUN85_URL = '/vsicurl/https://pgda.gsfc.nasa.gov/data/MoonIllumination/AVGVISIB_85S_060M_201608.TIF'
 HALF = 8000.0  # 20 m window: +-8 km around each site
+TILE = 16000.0  # region tiles: a fixed 16 km grid in polar stereographic metres
+OVERLAP = 40.0  # each region tile reads 2 extra cells per side so neighbours join up
+MARGIN = 1000.0  # region tiles cover each region's outline plus this margin
+REGIONS = json.load(open(os.path.join(os.path.dirname(__file__), '..', 'public', 'data', 'artemis_regions.geojson')))['features']
 
 
 def xy(lat, lon):
@@ -113,19 +121,57 @@ def point(ds, meta, x, y):
 dem = gdal.Open(DEM_URL)
 dmeta = info(dem)
 print('DEM', json.dumps(dmeta, default=str)[:900], flush=True)
+def tag(k):
+    return f"m{-k}" if k < 0 else str(k)
+
+
+def region_tiles():
+    """16 km grid cells touching each region's outline (+ MARGIN), shared between regions."""
+    tiles = {}
+    for f in REGIONS:
+        pts = [xy(lat, lon) for lon, lat in f['geometry']['coordinates'][0]]
+        xs, ys = [p[0] for p in pts], [p[1] for p in pts]
+        for i in range(math.floor((min(xs) - MARGIN) / TILE), math.floor((max(xs) + MARGIN) / TILE) + 1):
+            for j in range(math.floor((min(ys) - MARGIN) / TILE), math.floor((max(ys) + MARGIN) / TILE) + 1):
+                t = tiles.setdefault((i, j), {'id': f'reg_{tag(i)}_{tag(j)}', 'x': (i + 0.5) * TILE, 'y': (j + 0.5) * TILE, 'regions': []})
+                t['regions'].append(f['properties']['RegionCode'])
+    return list(tiles.values())
+
+
+REG = region_tiles()
+
+
+def covered(x, y, r=6000.0):
+    """True if the square +-r around (x, y) lies inside the region tiles."""
+    return all(any(abs(px - t['x']) <= TILE / 2 and abs(py - t['y']) <= TILE / 2 for t in REG)
+               for px in (x - r, x, x + r) for py in (y - r, y, y + r))
+
+
+windows = [{**t, 'kind': 'region', 'half': TILE / 2 + OVERLAP} for t in REG]
 for s in POLAR:
     x, y = xy(s['lat'], s['lon'])
+    if covered(x, y):
+        print(f"{s['id']}: inside the region tiles, no separate window", flush=True)
+        continue
+    windows.append({'id': s['id'], 'x': x, 'y': y, 'kind': 'site', 'half': HALF})
+print(f"{len(REG)} region tiles, {len(windows) - len(REG)} site windows", flush=True)
+
+done = []
+for w in windows:
     try:
-        a, n, cx, cy = window(dem, dmeta, x, y, HALF)
+        a, n, cx, cy = window(dem, dmeta, w['x'], w['y'], w['half'])
     except RuntimeError as e:
-        print(f"{s['id']}: SKIPPED, could not read the 20 m window ({e})", flush=True)
+        print(f"{w['id']}: SKIPPED, could not read the 20 m window ({e})", flush=True)
         continue
     good = np.isfinite(a)
-    print(f"{s['id']}: {n}x{n}, {good.mean() * 100:.1f}% data, median {np.nanmedian(a) if good.any() else float('nan'):.3f}", flush=True)
-    a.tofile(os.path.join(OUT, f"dem_{s['id']}.f32"))
-    json.dump({'id': s['id'], 'size': n, 'cellSize': abs(dmeta['geotransform'][1]) * dmeta['unitToMetres'],
+    print(f"{w['id']}: {n}x{n}, {good.mean() * 100:.1f}% data, median {np.nanmedian(a) if good.any() else float('nan'):.3f}", flush=True)
+    a.tofile(os.path.join(OUT, f"dem_{w['id']}.f32"))
+    json.dump({'id': w['id'], 'kind': w['kind'], 'regions': w.get('regions'), 'size': n,
+               'cellSize': abs(dmeta['geotransform'][1]) * dmeta['unitToMetres'],
                'centreX': cx, 'centreY': cy, 'coverage': float(good.mean()), 'file': dmeta},
-              open(os.path.join(OUT, f"dem_{s['id']}.json"), 'w'), default=str)
+              open(os.path.join(OUT, f"dem_{w['id']}.json"), 'w'), default=str)
+    done.append(w['id'])
+json.dump(done, open(os.path.join(OUT, 'windows.json'), 'w'))
 
 # --- PGDA illumination, resampled to the app's 5 km south cap --------------
 meta = {'products': {}, 'sites': {}}

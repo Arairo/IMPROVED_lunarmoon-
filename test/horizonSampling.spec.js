@@ -2,12 +2,11 @@
 // the quality record every horizon carries, and convergence on real LOLA terrain.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
-import { computeHorizon, rayHorizon, computeSiteHorizon, createGrid, createTerrain, RAY_REFINE } from '../src/core/horizon.js';
+import { computeHorizon, rayHorizon, computeSiteHorizon, createTerrain, RAY_REFINE } from '../src/core/horizon.js';
 import { MOON_RADIUS_M, RAD, sphereHorizonDip } from '../src/core/geo.js';
 import { moonFixedState } from '../src/core/ephemeris.js';
 import { loadTerrainSync } from './loadTerrain.js';
+import { readGrid, readHiresTiles } from '../tools/lib/grids.mjs';
 
 const DEG = Math.PI / 180;
 // Great-circle distance (m) from the site at 0°N 0°E.
@@ -95,9 +94,7 @@ test('Every horizon says how it was made: grid sizes, steps, azimuth spacing, ti
 // Convergence on real terrain (LOLA 20 m tile + 240 m / 1 km grids): the shipped
 // sampling (0.5° rays, refined, stored every 2°) against a 4x finer computation.
 test('Convergence: shipped skyline sampling is within 0.5 points of a 4x finer one (2027 sunlight)', () => {
-  const dir = fileURLToPath(new URL('../public/data/', import.meta.url));
-  const grid = (n) => { const b = readFileSync(`${dir}${n}.bin`); return createGrid(JSON.parse(readFileSync(`${dir}${n}.json`, 'utf8')), new Int16Array(b.buffer, b.byteOffset, b.byteLength / 2)); };
-  const T = createTerrain([grid('hires/ridge'), grid('hires/best-2'), grid('sp_fine'), grid('sp_coarse')]);
+  const T = createTerrain([...readHiresTiles(), readGrid('sp_fine'), readGrid('sp_coarse')]);
   const states = [];
   for (let t = Date.UTC(2027, 0, 1); t < Date.UTC(2028, 0, 1); t += 12 * 3600000) states.push(moonFixedState(t));
   const share = (prof, stepDeg, lat, lon, g) => {

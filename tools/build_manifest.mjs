@@ -24,6 +24,14 @@ const NASA = 'NASA data: no US copyright (public domain); credit the source';
 const OURS = 'MIT (this project), derived from NASA data';
 
 const hires = read('hires/index.json');
+function hiresCoverage(tiles) {
+  const region = tiles.filter((t) => t.kind === 'region');
+  const codes = [...new Set(region.flatMap((t) => t.regions ?? []))].sort();
+  const site = tiles.length - region.length;
+  return region.length
+    ? `${region.length} tiles of 16 × 16 km covering the Artemis III candidate regions ${codes.join(', ')}; ${site} more around other south-polar sites`
+    : `${tiles.length} tiles of 16 × 16 km around south-polar sites`;
+}
 const DATASETS = [
   {
     id: 'lola-sp-240m', title: 'LOLA south-polar terrain, 240 m', files: ['sp_fine.json', 'sp_fine.bin'],
@@ -46,11 +54,11 @@ const DATASETS = [
     limitations: 'Block-averaged; site skylines north of 80° S are built from the full LDEM_16 (1.9 km) in CI instead.',
   },
   {
-    id: 'lola-pgda-20m-tiles', title: 'LOLA 20 m tiles around south-polar sites', files: ['hires/index.json', ...hires.tiles.flatMap((t) => [`hires/${t.id}.json`, `hires/${t.id}.bin`])],
-    provider: 'NASA GSFC PGDA', source: `${hires.source} (${hires.url})`, resolutionM: 20, coverage: `${hires.tiles.length} tiles of 16 × 16 km`,
-    frame: POLAR, units: `int16 little-endian, ${SPHERE}`, noData: -32768,
+    id: 'lola-pgda-20m-tiles', title: 'LOLA 20 m tiles: Artemis III candidate regions and south-polar sites', files: ['hires/index.json', ...hires.tiles.flatMap((t) => [`hires/${t.id}.json`, `hires/${read(`hires/${t.id}.json`).file ?? `${t.id}.bin`}`])],
+    provider: 'NASA GSFC PGDA', source: `${hires.source} (${hires.url})`, resolutionM: 20, coverage: hiresCoverage(hires.tiles),
+    frame: POLAR, units: `int16, ${SPHERE}; packed losslessly (src/core/tileCodec.js: difference from the row above, gzip)`, noData: -32768,
     generator: 'tools/build_hires_terrain.mjs (Add 20 m terrain and check against NASA PGDA workflow)', licence: NASA,
-    limitations: `Each tile checked against the 240 m grid: mean height difference ${Math.min(...hires.tiles.map((t) => t.meanAbsDiffM))}–${Math.max(...hires.tiles.map((t) => t.meanAbsDiffM))} m; tiles failing a 60 m check are rejected (Slater Plain has none).`,
+    limitations: `Each tile checked against the 240 m grid: mean height difference ${Math.min(...hires.tiles.map((t) => t.meanAbsDiffM))}–${Math.max(...hires.tiles.map((t) => t.meanAbsDiffM))} m; tiles failing a 60 m check (100 m against the 1 km grid) are rejected.`,
   },
   {
     id: 'compact-south-pole', title: 'Compact south-polar terrain and lighting (5 km / 2 km)', files: ['compactDem.json', 'compactIllum.json'],

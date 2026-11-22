@@ -3,7 +3,8 @@ name: Add 20 m terrain and check against NASA PGDA
 # Run from the Actions tab ("Run workflow"). Uses GDAL to read just the needed
 # parts of two NASA Goddard PGDA products:
 #   - LOLA 20 m south-pole terrain (LDEM_80S_20MPP_ADJ, Barker et al. 2023):
-#     a 16 km x 16 km tile around every south-polar site, checked against our
+#     16 km x 16 km tiles covering the nine Artemis III candidate regions, plus one
+#     around each south-polar site outside them, packed losslessly, checked against our
 #     240 m LOLA grid before it is used, then the sites' skylines are rebuilt.
 #   - Lunar polar illumination (average Sun / Earth visibility, Mazarico et al.):
 #     compared with our own sunlight and Earth-in-view map layers.
@@ -22,7 +23,7 @@ defaults:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 150
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0

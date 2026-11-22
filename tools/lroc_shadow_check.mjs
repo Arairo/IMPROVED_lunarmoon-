@@ -15,6 +15,7 @@ import path from 'node:path';
 import { createGrid, createTerrain, rayHorizon } from '../src/core/horizon.js';
 import { createGlobalGrid } from '../src/core/globalDem.js';
 import { moonFixedState, topocentric } from '../src/core/ephemeris.js';
+import { readHiresTiles } from './lib/grids.mjs';
 
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
 const dir = process.argv[2] || 'data-raw/lroc';
@@ -24,10 +25,11 @@ const data = path.join(root, 'public/data');
 const grid = (n) => createGrid(rj(path.join(data, `${n}.json`)), i16(path.join(data, `${n}.bin`)));
 const meta = rj(path.join(dir, 'lroc.json'));
 const img = new Float32Array(fs.readFileSync(path.join(dir, 'lroc.f32')).buffer.slice(0));
-const tile = createGrid(rj(path.join(data, `hires/${meta.site}.json`)), i16(path.join(data, `hires/${meta.site}.bin`)));
+// All 20 m tiles (the photo's site may sit on a site tile or a region tile).
+const hires = readHiresTiles(data);
 const global = createGlobalGrid(rj(path.join(data, 'global_dem.json')), i16(path.join(data, 'global_dem.bin')));
 const fine = grid('sp_fine'), coarse = grid('sp_coarse');
-const terrains = { m20: createTerrain([tile, fine, coarse], global), m240: createTerrain([fine, coarse], global) };
+const terrains = { m20: createTerrain([...hires, fine, coarse], global), m240: createTerrain([fine, coarse], global) };
 const R = 1737400, DEG = Math.PI / 180, SUN_R = 0.267;
 const n20 = meta.size, n = n20 / 2, cell = 40, half = meta.halfExtent;
 const states = meta.imageTimes.map((t) => moonFixedState(Date.parse(t)));

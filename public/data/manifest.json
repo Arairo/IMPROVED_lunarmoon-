@@ -81,7 +81,7 @@
   },
   {
    "id": "lola-pgda-20m-tiles",
-   "title": "LOLA 20 m tiles around south-polar sites",
+   "title": "LOLA 20 m tiles: Artemis III candidate regions and south-polar sites",
    "files": [
     {
      "path": "data/hires/index.json",
@@ -90,225 +90,225 @@
     },
     {
      "path": "data/hires/a3-cb.json",
-     "bytes": 629,
-     "sha256": "274f8c0274584a1ec33bb7597263619c13fb30ce20bd091713e6b1a78a285db7"
+     "bytes": 750,
+     "sha256": "6f8d1ddba880320770f5e3545fbbb9ee33d79cf3e596f746358702dba81c991c"
     },
     {
-     "path": "data/hires/a3-cb.bin",
-     "bytes": 1280000,
-     "sha256": "1613b1a2225043db5550d81f1f97fcc69842adfdaf82f4f10f5deb8e131f742d"
+     "path": "data/hires/a3-cb.i16z",
+     "bytes": 190115,
+     "sha256": "589b79b086d61ec04318e173caadb4e5e52808bcd8af5f0679c39783d97e0ebf"
     },
     {
      "path": "data/hires/a3-hw.json",
-     "bytes": 630,
-     "sha256": "42363cddeb4f49e9734df0e0d4af2ade20801cebd921e1a2080ce79a6f21f4a2"
+     "bytes": 751,
+     "sha256": "881d81effd24f82bc713bbab7efcbfdcc0ad2ce67d03cf7ce22c0960abd65b58"
     },
     {
-     "path": "data/hires/a3-hw.bin",
-     "bytes": 1280000,
-     "sha256": "8f665f5a0f713d87013bf753041bd8a7f3eb3fa49b35358f2a250053fd99d9ba"
+     "path": "data/hires/a3-hw.i16z",
+     "bytes": 215191,
+     "sha256": "c05439af21988619c67a90154abc0b2c9fb16c5fee57ffdd7c91b7e0395b7d7d"
     },
     {
      "path": "data/hires/a3-ma.json",
-     "bytes": 629,
-     "sha256": "6b112fc602345000403959398a29b3625ed07eaa7b44c7553addcc4ca122e57d"
+     "bytes": 750,
+     "sha256": "328f78162b52bf98f04fcab4ccf5d97b4e5633466fb1213a8b280a38fd677adc"
     },
     {
-     "path": "data/hires/a3-ma.bin",
-     "bytes": 1280000,
-     "sha256": "801c9330cd5fcadeedfddd702f6f3ad7fb0f0ff519e6fa96b80cf59f4a8e4e3b"
+     "path": "data/hires/a3-ma.i16z",
+     "bytes": 216753,
+     "sha256": "4eae88b6cb53383e3f066fe09a4df360fb5a1ff357cca291a34d7a56e7d145f9"
     },
     {
      "path": "data/hires/a3-mp.json",
-     "bytes": 631,
-     "sha256": "8b3657d644894a66850e93bd4e2e7584b32acbb86dad9691597cc2f05d4bec86"
+     "bytes": 752,
+     "sha256": "309759d85754bef5d7b539ed432ba7d7ecd366ecf068dc6b130dc1ff86f27ea1"
     },
     {
-     "path": "data/hires/a3-mp.bin",
-     "bytes": 1280000,
-     "sha256": "4ea5b1d47d60beae499a75d3026501423d21c3d5e68e2646fe5851c5133d83db"
+     "path": "data/hires/a3-mp.i16z",
+     "bytes": 190431,
+     "sha256": "9b7866aa2281323261414df24ddcc755a2d58e7db89d255bc223072f7e4eb8ca"
     },
     {
      "path": "data/hires/a3-mm.json",
-     "bytes": 630,
-     "sha256": "ac8b961f013587e7093b00fc69f1a5cc7d91b5b9dc1986506ec093789206cf78"
+     "bytes": 751,
+     "sha256": "8cab75e8ce4d732e30cbd5601c433ce73edf512bbb8bdc18ad3fdb8c0ee39aa8"
     },
     {
-     "path": "data/hires/a3-mm.bin",
-     "bytes": 1280000,
-     "sha256": "0e0cf98592e31ab075c5962186dcbc6a0974a779abe1ed0009f886e5dc043b70"
+     "path": "data/hires/a3-mm.i16z",
+     "bytes": 206286,
+     "sha256": "cb8b51f1795e73d0a5bf98e738ceabb4eff8bb7e8a816f00ff8de2d052028e96"
     },
     {
      "path": "data/hires/a3-n1.json",
-     "bytes": 630,
-     "sha256": "8b58252398df89b235468104093b051b1b816f3cb87f7bc52e84eb74a292e6f6"
+     "bytes": 751,
+     "sha256": "fd95408be2c26bebb04080e4fc53ab65b3c48f9d39f2dfaa934cdf2713a22f97"
     },
     {
-     "path": "data/hires/a3-n1.bin",
-     "bytes": 1280000,
-     "sha256": "0c6dfe556c63be8fd0bd342cb6733358283b64827de4640ef93940b1854aad90"
+     "path": "data/hires/a3-n1.i16z",
+     "bytes": 207412,
+     "sha256": "e454a6c9812ff0ede7967f40f5987531588f008532a9d781d6256ddf2a73f12c"
     },
     {
      "path": "data/hires/a3-n2.json",
-     "bytes": 630,
-     "sha256": "0bc9d42b56007b0bd348c694232b87a0fb1eb41b52eed3767af18d5dbf097338"
+     "bytes": 751,
+     "sha256": "1b4be2c78648d6bf3df6f0fcad473d92f69971817fd2858ea2cca0b8e76d6dc8"
     },
     {
-     "path": "data/hires/a3-n2.bin",
-     "bytes": 1280000,
-     "sha256": "4d1d2b1af56a6700995c33c7084a20ee708131d82466bfea1693ee816366eea4"
+     "path": "data/hires/a3-n2.i16z",
+     "bytes": 179341,
+     "sha256": "813c1271b376b13fdefcf3f51a37689b76935cca4712b9e64359238c9cda9a4b"
     },
     {
      "path": "data/hires/a3-g2.json",
-     "bytes": 630,
-     "sha256": "a121aa37cb6c3cc71a90c19084352c2f12c21e5473271d76a2e57d02c8eec0d6"
+     "bytes": 751,
+     "sha256": "0756f5955c4ff640f49ebd6a9838e80cd7d7dbb476bc658bbc4a04c4052e8a7c"
     },
     {
-     "path": "data/hires/a3-g2.bin",
-     "bytes": 1280000,
-     "sha256": "32a7955bec9b75942130307b4ae1c84da058d2139a180c2a9df866527d6214cf"
+     "path": "data/hires/a3-g2.i16z",
+     "bytes": 206327,
+     "sha256": "3fa40273c68feb9d5ac3666ad2518e676103972f875c1d95d03596f6ff67e160"
     },
     {
      "path": "data/hires/ridge.json",
-     "bytes": 631,
-     "sha256": "21b1dfd65acfea61580af2e43a58715e86ce1bc66f74b5af1ebead34d45c9806"
+     "bytes": 752,
+     "sha256": "21ec19d9aeb20ddc7a5b700caffe79c89d9b47d1e842d22d28e621e56a481945"
     },
     {
-     "path": "data/hires/ridge.bin",
-     "bytes": 1280000,
-     "sha256": "4b48c788cb9f255fb07270040544f6862845fa84b1adc0588dc0f45ae3183c14"
+     "path": "data/hires/ridge.i16z",
+     "bytes": 221329,
+     "sha256": "6947d6738ec5850ffcc83f073a20c678e00568ff1d65ad57277c7e315ce79273"
     },
     {
      "path": "data/hires/peak-shackleton.json",
-     "bytes": 640,
-     "sha256": "b5b84bdef34ba709ba50980e347b0448d816d165cfb778b9f930d00a5f1b96af"
+     "bytes": 771,
+     "sha256": "b4c7af5436289b16e6b2425cf37c119c73fa7aae09612a0d7bae838b6afa4e85"
     },
     {
-     "path": "data/hires/peak-shackleton.bin",
-     "bytes": 1280000,
-     "sha256": "2c8a6711f13cfd9bd749884b04f0de593537a78a78606b08599550df0a1b1e5c"
+     "path": "data/hires/peak-shackleton.i16z",
+     "bytes": 206279,
+     "sha256": "4c999753648b1598fa9d1dad3b886be64003c295a1a425eb0a642020de668c7c"
     },
     {
      "path": "data/hires/shackleton.json",
-     "bytes": 634,
-     "sha256": "9c1b5c5fbf69d19193afb39f7d1e537f0893c0ce1aa76470a952c71a9f81727a"
+     "bytes": 760,
+     "sha256": "17190a134c3cd40be591d674d2ae767fd5d6b4d7d7cbc7b0e4b7ee527531b66d"
     },
     {
-     "path": "data/hires/shackleton.bin",
-     "bytes": 1280000,
-     "sha256": "e3a6879f43902dd2206c85db0d0c7a4884ed6dbd2b17dcb4762c5b489c42b4a5"
+     "path": "data/hires/shackleton.i16z",
+     "bytes": 222902,
+     "sha256": "57c57633b40f5612c71e8cd691c2c358ea3e7142f07712917b63285d953557ad"
     },
     {
      "path": "data/hires/best-1.json",
-     "bytes": 629,
-     "sha256": "8afffcea4323c1613c41fd494103de6b7268c2305d66de314ef48f2a8a128dc2"
+     "bytes": 751,
+     "sha256": "c7e9a8ed5f8912e16694cf812bb5c9c9bdc07d269053636c95b1f7c643530599"
     },
     {
-     "path": "data/hires/best-1.bin",
-     "bytes": 1280000,
-     "sha256": "01db4a2842c541b94510989fe705564e9ea4bdbe29fd26c6047a34a24acb0899"
+     "path": "data/hires/best-1.i16z",
+     "bytes": 220901,
+     "sha256": "abbbe7f6e5b49085ddbb393d86cbc5f9442135d7b05e0e496c959d1da0be6aa5"
     },
     {
      "path": "data/hires/best-2.json",
-     "bytes": 630,
-     "sha256": "b48b42c9ae653b8929bbf19a1eb4da68a2fbf9dfa1c7a17cfee9630b860859a3"
+     "bytes": 752,
+     "sha256": "a2fcfa8587554638d4502ca87e831359b5828b037ce6d0d05ed7c0a0edc885b4"
     },
     {
-     "path": "data/hires/best-2.bin",
-     "bytes": 1280000,
-     "sha256": "1131cb9f8789b1ceb1dcee6968f686e4595198e487aa08bf9c360bf79894efa2"
+     "path": "data/hires/best-2.i16z",
+     "bytes": 227763,
+     "sha256": "dc6a88cf1ccacf4c7bb7032a43d65304fd30baddb87e33b289c083a78cf79222"
     },
     {
      "path": "data/hires/degerlache.json",
-     "bytes": 635,
-     "sha256": "8481a8a5a39303999d8cc872c4fb3091e4bc9b086922598ea2e3a25d87a078cb"
+     "bytes": 761,
+     "sha256": "061e45cee9dff4e024ce00082182c91f04beb1694717ad29f2db76c9e2b3c5d4"
     },
     {
-     "path": "data/hires/degerlache.bin",
-     "bytes": 1280000,
-     "sha256": "108c47415b4c1192d9be5635f11dc48d8ac6e2fccaf60a76bdec60ca6233accf"
+     "path": "data/hires/degerlache.i16z",
+     "bytes": 202332,
+     "sha256": "6902546eb3cb2cc136ef60aad1885eaac2648fdbc2229e6dab4265120e160846"
     },
     {
      "path": "data/hires/shoemaker.json",
-     "bytes": 631,
-     "sha256": "803fab3fc1dd0b95779a3096e9a3b9debd134803d46784c84d605873dcd34343"
+     "bytes": 756,
+     "sha256": "fd26cae459f5c611c869ba2a8bdc44a91ab388e82d4fba6b4a0357c7d014ad7f"
     },
     {
-     "path": "data/hires/shoemaker.bin",
-     "bytes": 1280000,
-     "sha256": "c35028fab81f516a81b634ab5b7013a59f8239b2a4b2801fa001a78230d51e80"
+     "path": "data/hires/shoemaker.i16z",
+     "bytes": 192336,
+     "sha256": "a00304a2a9eac0a4ff09e1f7ebd652bc18b4dabbf348435dcf918e5d110c5e8b"
     },
     {
      "path": "data/hires/haworth.json",
-     "bytes": 632,
-     "sha256": "5571b677ab9e268a97a524ad6a5a0210b7f5c01eab3de0580a46a43517cbdcd9"
+     "bytes": 755,
+     "sha256": "ce50bfb30155db1164bb127dda23797bbe5899b17ead30cb71c08bc5c7942fdc"
     },
     {
-     "path": "data/hires/haworth.bin",
-     "bytes": 1280000,
-     "sha256": "7edd2819aca33315a61cf0aaac4fc0ab05d62677c6488a205bfc17445f50db8d"
+     "path": "data/hires/haworth.i16z",
+     "bytes": 197668,
+     "sha256": "70f92ad851a21ae169aa79f4c07c0060d9e5a83e076a6498fe09d968f9789305"
     },
     {
      "path": "data/hires/faustini.json",
-     "bytes": 632,
-     "sha256": "8ba167ce908b8a87e0ad20a1e7bad46bbc9dc971d031592c99daa7b1694ad795"
+     "bytes": 756,
+     "sha256": "9d5b2f76c0dae4543d6d037001f1088b71b56451315251a14a20f8477d50a66f"
     },
     {
-     "path": "data/hires/faustini.bin",
-     "bytes": 1280000,
-     "sha256": "a1da33b6ff20a1e079770f0f33fe8d5709f1020c7fb82825cd11fb1f57ecacf9"
+     "path": "data/hires/faustini.i16z",
+     "bytes": 194130,
+     "sha256": "dc685100d93b6cab86b568151bfbb836927d53d5c83dbcabe831e51868dbd4c7"
     },
     {
      "path": "data/hires/nobile.json",
-     "bytes": 631,
-     "sha256": "0d7d0a1e979a4780c9bdab747509b6e046cb451b03083f1f212962431626e14d"
+     "bytes": 753,
+     "sha256": "1cb14ff79a06e9162a17febd18f6e96e9e8daed7e7c580f089298bf7ee339a91"
     },
     {
-     "path": "data/hires/nobile.bin",
-     "bytes": 1280000,
-     "sha256": "c3d037fd1e9a81d9a0aa6637f7d726101dc573a7926a5228b3571ba30b2da737"
+     "path": "data/hires/nobile.i16z",
+     "bytes": 188572,
+     "sha256": "39f4ae89374b818bfa7fca516844e67d9690e75272d6a1e090933f0c2cc389dc"
     },
     {
      "path": "data/hires/lcross.json",
-     "bytes": 632,
-     "sha256": "7a09fdc6e0b11de243c5de2bd46dc7372ee668b4b8b650d5f93126f929ca7380"
+     "bytes": 754,
+     "sha256": "23681deed9365a40165458880ecbcf86462eb1cb72d7e652f778c7a67f454cee"
     },
     {
-     "path": "data/hires/lcross.bin",
-     "bytes": 1280000,
-     "sha256": "11377ca21813794ab58c3ed4ec5a3d7a363f774bde4d46ebb47e8468605ebac8"
+     "path": "data/hires/lcross.i16z",
+     "bytes": 166128,
+     "sha256": "549944e91ab7348f8fdaa911537a9dc4a6e56349384e16917b88c78e081504ed"
     },
     {
      "path": "data/hires/im1.json",
-     "bytes": 631,
-     "sha256": "7826f181dacbafa06ee2277077d434a20ed3290316568f0e6c2e43fa62cfbc85"
+     "bytes": 750,
+     "sha256": "81a18ccea4bb14bcda8c85fe49c3ab97ea20bfe539909d1395619d60743ee0a9"
     },
     {
-     "path": "data/hires/im1.bin",
-     "bytes": 1280000,
-     "sha256": "40af33751488bde861a9444b4b0c2c2aa77adab54d0a37914b1d1c8c2aaebe03"
+     "path": "data/hires/im1.i16z",
+     "bytes": 159361,
+     "sha256": "4affc265898d8c114d190a4ec5ae29e179b3880195899c8b2377382419883175"
     },
     {
      "path": "data/hires/im2.json",
-     "bytes": 629,
-     "sha256": "0a5d9ef856cb9f8438edd30ed40153d6158719ac25eff99c3d94d89e416feed0"
+     "bytes": 748,
+     "sha256": "6a7dcc2ea9d9977fd6c3cb8d4ff53fd7d7b98a541b3efe663ad22bd75b2593a1"
     },
     {
-     "path": "data/hires/im2.bin",
-     "bytes": 1280000,
-     "sha256": "c57537b9049322c4e37c0dce78cbadc3235b5786cbb7202c70f53cc2da63de79"
+     "path": "data/hires/im2.i16z",
+     "bytes": 185311,
+     "sha256": "3934be6437baa9781f0e58c8444a1a0ffb6346bb8965459e4c7b1a3800c3ba6d"
     }
    ],
    "provider": "NASA GSFC PGDA",
    "source": "NASA GSFC PGDA LDEM_80S_20MPP_ADJ (Barker et al. 2023) (https://pgda.gsfc.nasa.gov/products/90)",
    "resolutionM": 20,
-   "coverage": "21 tiles of 16 × 16 km",
+   "coverage": "21 tiles of 16 × 16 km around south-polar sites",
    "frame": "south-polar stereographic on the 1737.4 km sphere, metres",
-   "units": "int16 little-endian, heights in metres above the 1737.4 km LOLA reference sphere",
+   "units": "int16, heights in metres above the 1737.4 km LOLA reference sphere; packed losslessly (src/core/tileCodec.js: difference from the row above, gzip)",
    "noData": -32768,
    "generator": "tools/build_hires_terrain.mjs (Add 20 m terrain and check against NASA PGDA workflow)",
    "licence": "NASA data: no US copyright (public domain); credit the source",
-   "limitations": "Each tile checked against the 240 m grid: mean height difference 2–19.6 m; tiles failing a 60 m check are rejected (Slater Plain has none)."
+   "limitations": "Each tile checked against the 240 m grid: mean height difference 2–19.6 m; tiles failing a 60 m check (100 m against the 1 km grid) are rejected."
   },
   {
    "id": "compact-south-pole",

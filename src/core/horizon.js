@@ -9,6 +9,7 @@ import precomputedData from '../data/precomputedHorizons.js';
 import { sampleDemHeight } from './dem.js';
 import { MOON_RADIUS_M, RAD, destination, sphereHorizonDip, toSouthPolar } from './geo.js';
 import { getGlobalDem } from './globalDem.js';
+import { decodeTile } from './tileCodec.js';
 
 export const AZ_STEP_DEG = 0.5;
 /** Ray step = max(half the local grid cell, this fraction of the distance). */
@@ -63,6 +64,32 @@ export function createGrid(meta, heights) {
  */
 export function createTerrain(grids, global = null) {
   const ordered = [...grids].sort((a, b) => a.meta.cellSize - b.meta.cellSize);
+  // With dozens of 20 m tiles, look tiles up by position instead of trying each one.
+  // Rebuilt whenever tiles are added (addHiresTileTo pushes onto `grids`).
+  let lookup = null, lookupLen = -1;
+  const BUCKET = 8000;
+  const key = (i, j) => `${i},${j}`;
+  const buildLookup = () => {
+    const buckets = new Map(), rest = [];
+    for (const g of ordered) {
+      if (g.meta.centreX == null) { rest.push(g); continue; }
+      const h = g.meta.halfExtent, cx = g.meta.centreX, cy = g.meta.centreY;
+      for (let i = Math.floor((cx - h) / BUCKET); i <= Math.floor((cx + h) / BUCKET); i++) {
+        for (let j = Math.floor((cy - h) / BUCKET); j <= Math.floor((cy + h) / BUCKET); j++) {
+          const k = key(i, j);
+          if (!buckets.has(k)) buckets.set(k, []);
+          buckets.get(k).push(g);
+        }
+      }
+    }
+    lookupLen = ordered.length;
+    return { buckets, rest, local: ordered.length - rest.length };
+  };
+  const trySample = (g, x, y) => {
+    if (!g.covers(x, y)) return null;
+    const height = g.sample(x, y);
+    return Number.isNaN(height) ? null : { height, cell: g.meta.cellSize };
+  };
   return {
     grids: ordered,
     global,
@@ -70,10 +97,22 @@ export function createTerrain(grids, global = null) {
     heightAt(lat, lon) {
       if (lat <= -60) {
         const { x, y } = toSouthPolar(lat, lon);
-        for (const g of ordered) {
-          if (!g.covers(x, y)) continue;
-          const height = g.sample(x, y);
-          if (!Number.isNaN(height)) return { height, cell: g.meta.cellSize };
+        if (lookupLen !== ordered.length) lookup = buildLookup();
+        if (lookup.local > 4) {
+          // Local tiles are finer than the polar grids, so they are tried first.
+          for (const g of lookup.buckets.get(key(Math.floor(x / BUCKET), Math.floor(y / BUCKET))) ?? []) {
+            const r = trySample(g, x, y);
+            if (r) return r;
+          }
+          for (const g of lookup.rest) {
+            const r = trySample(g, x, y);
+            if (r) return r;
+          }
+        } else {
+          for (const g of ordered) {
+            const r = trySample(g, x, y);
+            if (r) return r;
+          }
         }
       }
       const gl = this.global || getGlobalDem();
@@ -335,38 +374,51 @@ export function horizonAt(horizon, azDeg) {
   return 0;
 }
 
-// ---- 20 m LOLA tiles (PGDA LDEM_80S_20MPP_ADJ) around south-polar sites ----
-// Loaded one at a time, only when a site inside a tile is in use, and added to
-// the shared terrain so nudges and the landing-area check see 20 m detail.
-let hiresIndex;
+// ---- 20 m LOLA tiles (PGDA LDEM_80S_20MPP_ADJ): around south-polar sites and ----
+// covering the Artemis III candidate regions. Packed files (src/core/tileCodec.js),
+// loaded only when a site near them is in use and added to the shared terrain, so
+// nudges and the landing-area check see 20 m detail. Neighbouring tiles within
+// HIRES_REACH_M are loaded too, so a site near a tile edge has 20 m terrain all round.
+export const HIRES_REACH_M = 3000;
+let hiresIndex = null; // promise of hires/index.json (or null when it is missing)
 const hiresLoaded = new Map();
-async function hiresTileFor(lat, lon, baseUrl) {
-  if (lat > -80) return null;
-  if (hiresIndex === undefined) {
-    try { const r = await fetch(`${baseUrl}/hires/index.json`); hiresIndex = r.ok ? await r.json() : null; } catch { hiresIndex = null; }
-  }
-  if (!hiresIndex) return null;
-  const { x, y } = toSouthPolar(lat, lon);
-  const tile = hiresIndex.tiles.find((t) => Math.abs(x - t.centreX) < t.halfExtent - 2000 && Math.abs(y - t.centreY) < t.halfExtent - 2000);
-  if (!tile) return null;
+async function hiresIndexFor(baseUrl) {
+  hiresIndex ??= fetch(`${baseUrl}/hires/index.json`).then((r) => (r.ok ? r.json() : null)).catch(() => null);
+  return hiresIndex;
+}
+/** Index entries of the tiles that cover (x, y) or come within `reach` metres of it. */
+export function tilesNear(tiles, x, y, reach = HIRES_REACH_M) {
+  return tiles.filter((t) => Math.abs(x - t.centreX) < t.halfExtent + reach && Math.abs(y - t.centreY) < t.halfExtent + reach);
+}
+function loadHiresTile(tile, baseUrl) {
   if (!hiresLoaded.has(tile.id)) {
     hiresLoaded.set(tile.id, (async () => {
-      const [meta, buf] = await Promise.all([
-        fetch(`${baseUrl}/hires/${tile.id}.json`).then((r) => r.json()),
-        fetch(`${baseUrl}/hires/${tile.id}.bin`).then((r) => r.arrayBuffer()),
-      ]);
-      return createGrid(meta, new Int16Array(buf));
+      const meta = await fetch(`${baseUrl}/hires/${tile.id}.json`).then((r) => r.json());
+      const file = meta.file ?? `${tile.id}.bin`;
+      const buf = await fetch(`${baseUrl}/hires/${file}`).then((r) => { if (!r.ok) throw new Error(`${file} ${r.status}`); return r.arrayBuffer(); });
+      return createGrid(meta, meta.encoding ? await decodeTile(buf, meta.size) : new Int16Array(buf));
     })().catch(() => { hiresLoaded.delete(tile.id); return null; }));
   }
   return hiresLoaded.get(tile.id);
 }
+async function hiresTilesFor(lat, lon, baseUrl) {
+  if (lat > -78) return [];
+  const index = await hiresIndexFor(baseUrl);
+  if (!index) return [];
+  const { x, y } = toSouthPolar(lat, lon);
+  // Only when the site itself is on 20 m terrain (not just near the edge of a tile).
+  if (!tilesNear(index.tiles, x, y, -500).length) return [];
+  const grids = await Promise.all(tilesNear(index.tiles, x, y).map((t) => loadHiresTile(t, baseUrl)));
+  return grids.filter(Boolean);
+}
 
-/** Add the 20 m tile around (lat, lon), if there is one, to a terrain object in place. True if it was added. */
+/** Add the 20 m tiles around (lat, lon), if any, to a terrain object in place. True if any was added. */
 export async function addHiresTileTo(terrain, lat, lon, baseUrl) {
   if (!terrain) return false;
-  const grid = await hiresTileFor(lat, lon, baseUrl);
-  if (!grid || terrain.grids.includes(grid)) return false;
-  terrain.grids.push(grid);
+  const grids = await hiresTilesFor(lat, lon, baseUrl);
+  const fresh = grids.filter((g) => !terrain.grids.includes(g));
+  if (!fresh.length) return false;
+  terrain.grids.push(...fresh);
   terrain.grids.sort((a, b) => a.meta.cellSize - b.meta.cellSize);
   return true;
 }

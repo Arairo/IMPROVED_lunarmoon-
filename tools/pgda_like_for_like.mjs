@@ -19,6 +19,7 @@ import { createGrid, createTerrain, computeHorizon } from '../src/core/horizon.j
 import { createGlobalGrid } from '../src/core/globalDem.js';
 import { moonFixedState } from '../src/core/ephemeris.js';
 import { visibleDiskFraction } from '../src/core/power.js';
+import { readGrid, readHiresTiles } from './lib/grids.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const dataDir = path.join(root, 'public/data');
@@ -26,7 +27,7 @@ const inDir = process.argv[2] || 'data-raw/pgda';
 const R = 1737400, DEG = Math.PI / 180, N = 184;
 const readJson = (p) => JSON.parse(fs.readFileSync(p, 'utf8'));
 const f32 = (p) => new Float32Array(fs.readFileSync(p).buffer.slice(0));
-const grid = (name) => createGrid(readJson(path.join(dataDir, `${name}.json`)), new Int16Array(fs.readFileSync(path.join(dataDir, `${name}.bin`)).buffer.slice(0)));
+const grid = (name) => readGrid(name, dataDir);
 
 /** Element (r, c) of an n x n array read through one of 8 flips/transposes (as in build_hires_terrain.mjs). */
 function variant(arr, n, v) {
@@ -77,7 +78,7 @@ if (fs.existsSync(oursFile)) {
 const fine = grid('sp_fine'), coarse = grid('sp_coarse');
 const gm = readJson(path.join(dataDir, 'global_dem.json'));
 const global = createGlobalGrid(gm, new Int16Array(fs.readFileSync(path.join(dataDir, 'global_dem.bin')).buffer.slice(0)));
-const tiles = readJson(path.join(dataDir, 'hires/index.json')).tiles.map((t) => grid(`hires/${t.id}`));
+const tiles = readHiresTiles(dataDir);
 const terrain = createTerrain([...tiles, fine, coarse], global);
 const check = readJson(path.join(dataDir, 'pgda_check.json'));
 const sitesById = Object.fromEntries(readJson(path.join(root, 'src/data/sites.json')).map((s) => [s.id, s]));

@@ -18,6 +18,8 @@ import path from 'node:path';
 import { createGrid, createTerrain, computeHorizon } from '../src/core/horizon.js';
 import { createGlobalGrid } from '../src/core/globalDem.js';
 import { loadLdem } from './build_global_dem.mjs';
+import { toSouthPolar } from '../src/core/geo.js';
+import { readHiresTiles } from './lib/grids.mjs';
 
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
 const dataDir = path.join(root, 'public/data');
@@ -38,15 +40,14 @@ const onlyHires = args.includes('--only-hires');
 const polarOnly = args.includes('--polar');
 const imgArg = args.find((a) => !a.startsWith('--'));
 const hiresIndex = path.join(dataDir, 'hires/index.json');
-const tiles = fs.existsSync(hiresIndex)
-  ? JSON.parse(fs.readFileSync(hiresIndex, 'utf8')).tiles.map((t) => grid(`hires/${t.id}`))
-  : [];
-const hiresIds = new Set(tiles.map((t) => t.meta.name.replace(/^hires_/, '')));
+const tiles = fs.existsSync(hiresIndex) ? readHiresTiles(dataDir) : [];
+/** True if the site stands on one of the 20 m tiles. */
+const onHires = (s) => { const { x, y } = toSouthPolar(s.lat, s.lon); return tiles.some((t) => t.covers(x, y)); };
 const sites = JSON.parse(fs.readFileSync(path.join(root, 'src/data/sites.json'), 'utf8'));
 const terrain = createTerrain([...tiles, grid('sp_fine'), grid('sp_coarse')], globalGrid(imgArg));
 const out = onlyHires || polarOnly ? JSON.parse(fs.readFileSync(path.join(root, 'src/data/precomputedHorizons.json'), 'utf8')) : {};
 for (const s of sites) {
-  if (onlyHires && !hiresIds.has(s.id)) continue;
+  if (onlyHires && !onHires(s)) continue;
   if (polarOnly && s.lat > -80) continue;
   const h = computeHorizon(terrain, s.lat, s.lon, { mastHeight: 2 });
   const q = h.quality;

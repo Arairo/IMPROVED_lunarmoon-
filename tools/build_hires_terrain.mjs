@@ -4,17 +4,20 @@
 //
 //   node tools/build_hires_terrain.mjs data-raw/pgda
 //
-// 1. 20 m terrain tiles (PGDA LDEM_80S_20MPP_ADJ, Barker et al. 2023) around each
-//    south-polar site. Units and orientation are not assumed: every flip/transpose
+// 1. 20 m terrain tiles (PGDA LDEM_80S_20MPP_ADJ, Barker et al. 2023): a 16 km grid
+//    covering the Artemis III candidate regions, plus one around each south-polar site
+//    outside them (tools/pgda_fetch.py picks the windows). Units and orientation are not assumed: every flip/transpose
 //    is tried and the one that matches our 240 m LOLA grid best is kept; a tile
 //    that does not match within 60 m (mean absolute difference) is rejected.
-//    -> public/data/hires/<id>.{bin,json} and public/data/hires/index.json
+//    -> public/data/hires/<id>.{i16z,json} (packed, src/core/tileCodec.js) and hires/index.json
 // 2. PGDA average Sun / Earth visibility maps vs our own 2027 map layers (5 km south
 //    cap), and at each site vs our 2027 sunlight share with and without the 20 m tiles.
 //    -> public/data/pgda_check.json
 import fs from 'node:fs';
 import path from 'node:path';
 import { createGrid, createTerrain, computeHorizon } from '../src/core/horizon.js';
+import { toSouthPolar } from '../src/core/geo.js';
+import { readGrid, writeTile } from './lib/grids.mjs';
 import { createGlobalGrid } from '../src/core/globalDem.js';
 import { moonFixedState } from '../src/core/ephemeris.js';
 
@@ -24,7 +27,7 @@ const inDir = process.argv[2] || 'data-raw/pgda';
 const R = 1737400;
 const DEG = Math.PI / 180;
 const readJson = (p) => JSON.parse(fs.readFileSync(p, 'utf8'));
-const grid = (name) => createGrid(readJson(path.join(dataDir, `${name}.json`)), new Int16Array(fs.readFileSync(path.join(dataDir, `${name}.bin`)).buffer.slice(0)));
+const grid = (name) => readGrid(name, dataDir);
 const f32 = (p) => new Float32Array(fs.readFileSync(p).buffer.slice(0));
 
 const fine = grid('sp_fine');
@@ -64,13 +67,18 @@ const hiresDir = path.join(dataDir, 'hires');
 fs.mkdirSync(hiresDir, { recursive: true });
 const index = [];
 const tiles = [];
-for (const s of polar) {
+const windowsFile = path.join(inDir, 'windows.json');
+const windowIds = fs.existsSync(windowsFile) ? readJson(windowsFile) : polar.map((s) => s.id);
+// Tiles are replaced as a set: clear the old ones so none is left over.
+for (const f of fs.readdirSync(hiresDir)) if (/\.(bin|i16z|json)$/.test(f)) fs.rmSync(path.join(hiresDir, f));
+for (const id of windowIds) {
+  const s = { id };
   const mp = path.join(inDir, `dem_${s.id}.json`);
   if (!fs.existsSync(mp)) { console.log(`${s.id}: no 20 m window`); continue; }
   const meta = readJson(mp);
   const n = meta.size, cell = meta.cellSize, half = (n * cell) / 2;
   const { data: raw, unit } = toMetres(f32(path.join(inDir, `dem_${s.id}.f32`)));
-  let best = null;
+  let best = null, v0 = null;
   for (let v = 0; v < 8; v++) {
     const a = variant(raw, n, v);
     let sum = 0, bias = 0, k = 0, refCoarse = 0;
@@ -87,8 +95,13 @@ for (const s of polar) {
       if (!Number.isFinite(ref)) continue;
       sum += Math.abs(h - ref); bias += h - ref; k++;
     }
-    if (k > 100 && (!best || sum / k < best.mae)) best = { v, a, mae: sum / k, bias: bias / k, k, ref: refCoarse > k / 2 ? '1 km' : '240 m' };
+    const cand = { v, a, mae: sum / k, bias: bias / k, k, ref: refCoarse > k / 2 ? '1 km' : '240 m' };
+    if (v === 0) v0 = cand;
+    if (k > 100 && (!best || cand.mae < best.mae)) best = cand;
   }
+  // The file's own orientation (variant 0) matched on every tile so far. On flat ground
+  // the variants differ little, so only accept another one if it is clearly better.
+  if (best && best.v !== 0 && v0?.k > 100 && v0.mae < 2 * best.mae) best = v0;
   const limit = best?.ref === '1 km' ? 100 : 60; // 1 km cells smooth out slopes, so allow more
   if (!best || best.mae > limit) { console.log(`${s.id}: REJECTED (best mean abs difference vs ${best?.ref ?? 'LOLA'} grid ${best?.mae?.toFixed(1)} m)`); continue; }
   const out = new Int16Array(n * n);
@@ -102,8 +115,8 @@ for (const s of polar) {
     }
     out[r * n + c] = Number.isFinite(h) ? Math.round(h) : -32768;
   }
-  const gmetaOut = {
-    name: `hires_${s.id}`, projection: 'south-polar-stereographic', radius: R,
+  let gmetaOut = {
+    name: `hires_${s.id}`, kind: meta.kind ?? 'site', ...(meta.regions ? { regions: meta.regions } : {}), projection: 'south-polar-stereographic', radius: R,
     halfExtent: half, cellSize: cell, size: n, centreX: meta.centreX, centreY: meta.centreY,
     dtype: 'int16-le', noData: -32768, units: 'metres above 1737.4 km sphere',
     rowOrder: 'row 0 at +y, column 0 at -x (relative to centreX/centreY)',
@@ -112,13 +125,12 @@ for (const s of polar) {
     checkVs240m: { meanAbsDiffM: Math.round(best.mae * 10) / 10, biasM: Math.round(best.bias * 10) / 10, points: best.k, against: best.ref },
     gapsFilledFrom240m: filled,
   };
-  fs.writeFileSync(path.join(hiresDir, `${s.id}.bin`), Buffer.from(out.buffer));
-  fs.writeFileSync(path.join(hiresDir, `${s.id}.json`), JSON.stringify(gmetaOut, null, 1));
-  index.push({ id: s.id, centreX: meta.centreX, centreY: meta.centreY, halfExtent: half, cellSize: cell, size: n, meanAbsDiffM: gmetaOut.checkVs240m.meanAbsDiffM });
+  gmetaOut = writeTile(hiresDir, s.id, gmetaOut, out).meta;
+  index.push({ id: s.id, kind: gmetaOut.kind, ...(meta.regions ? { regions: meta.regions } : {}), centreX: meta.centreX, centreY: meta.centreY, halfExtent: half, cellSize: cell, size: n, meanAbsDiffM: gmetaOut.checkVs240m.meanAbsDiffM });
   tiles.push(createGrid(gmetaOut, out));
   console.log(`${s.id.padEnd(16)} 20 m tile ${n}x${n} (${unit}, variant ${best.v}): vs ${best.ref} grid mean |diff| ${best.mae.toFixed(1)} m, bias ${best.bias.toFixed(1)} m, ${filled} gaps filled`);
 }
-fs.writeFileSync(path.join(hiresDir, 'index.json'), JSON.stringify({ source: 'NASA GSFC PGDA LDEM_80S_20MPP_ADJ (Barker et al. 2023)', url: 'https://pgda.gsfc.nasa.gov/products/90', tiles: index }, null, 1));
+fs.writeFileSync(path.join(hiresDir, 'index.json'), JSON.stringify({ note: 'kind "region": 16 km grid over the Artemis III candidate regions (regions = their codes); kind "site": around a south-polar site outside them. Packed: see src/core/tileCodec.js.', source: 'NASA GSFC PGDA LDEM_80S_20MPP_ADJ (Barker et al. 2023)', url: 'https://pgda.gsfc.nasa.gov/products/90', tiles: index }, null, 1));
 
 // ---- 2. Sunlight per site with and without the 20 m tiles -----------------
 const t0 = Date.UTC(2027, 0, 1), t1 = Date.UTC(2028, 0, 1);
@@ -149,7 +161,8 @@ const pct = (v) => (v == null ? null : Math.round((v <= 1.0001 ? v * 100 : v) * 
 const siteRows = [];
 for (const s of polar) {
   const a = share(computeHorizon(base, s.lat, s.lon, { mastHeight: 2, azStepDeg: 2 }), s.lat, s.lon);
-  const hasTile = index.some((t) => t.id === s.id);
+  const { x, y } = toSouthPolar(s.lat, s.lon);
+  const hasTile = tiles.some((t) => t.covers(x, y));
   const b = hasTile ? share(computeHorizon(withHires, s.lat, s.lon, { mastHeight: 2, azStepDeg: 2 }), s.lat, s.lon) : null;
   const p = illumMeta?.sites?.[s.id] ?? {};
   const row = { id: s.id, name: s.name, ours240: a, ours20: b, pgdaSun60: pct(p.sun60m), pgdaSun60Detail: p.sun60mDetail ?? null, pgdaSun120: pct(p.sun120m), pgdaEarth120: pct(p.earth120m) };

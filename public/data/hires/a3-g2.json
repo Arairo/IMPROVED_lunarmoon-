@@ -20,5 +20,7 @@
   "points": 10000,
   "against": "240 m"
  },
- "gapsFilledFrom240m": 0
+ "gapsFilledFrom240m": 0,
+ "encoding": "int16-le, each value minus the one above (row 0: minus the one to the left), gzip",
+ "file": "a3-g2.i16z"
 }

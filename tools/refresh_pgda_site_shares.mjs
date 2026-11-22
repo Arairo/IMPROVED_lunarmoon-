@@ -15,18 +15,18 @@ import { fileURLToPath } from 'node:url';
 import { createGrid, createTerrain, computeHorizon, RAY_REFINE, RAY_GROWTH } from '../src/core/horizon.js';
 import { createGlobalGrid } from '../src/core/globalDem.js';
 import { moonFixedState } from '../src/core/ephemeris.js';
+import { readGrid, readHiresTiles } from './lib/grids.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const dataDir = path.join(root, 'public/data');
 const R = 1737400, DEG = Math.PI / 180;
 const readJson = (p) => JSON.parse(fs.readFileSync(p, 'utf8'));
-const grid = (name) => createGrid(readJson(path.join(dataDir, `${name}.json`)), new Int16Array(fs.readFileSync(path.join(dataDir, `${name}.bin`)).buffer.slice(0)));
+const grid = (name) => readGrid(name, dataDir);
 
 const fine = grid('sp_fine'), coarse = grid('sp_coarse');
 const gmeta = readJson(path.join(dataDir, 'global_dem.json'));
 const global = createGlobalGrid(gmeta, new Int16Array(fs.readFileSync(path.join(dataDir, 'global_dem.bin')).buffer.slice(0)));
-const index = readJson(path.join(dataDir, 'hires/index.json')).tiles;
-const tiles = index.map((t) => grid(`hires/${t.id}`));
+const tiles = readHiresTiles(dataDir);
 const base = createTerrain([fine, coarse], global);
 const withHires = createTerrain([...tiles, fine, coarse], global);
 
