@@ -5,11 +5,11 @@ type: software
 authors:
   # Cited as "Rasyid, A." Full name: Ammar Rasyid bin Remy Azrai (Malay patronymic,
   # no family name; also listed as "Ammar Remy" in some records).
-  # Add "orcid: https://orcid.org/xxxx-xxxx-xxxx-xxxx" here once registered.
   - given-names: "Ammar"
     family-names: "Rasyid"
     alias: "Ammar Rasyid bin Remy Azrai"
     affiliation: "Universiti Tenaga Nasional (UNITEN)"
+    orcid: "https://orcid.org/0009-0003-0437-2119"
   # The NASA Space Apps Challenge team: Pratyush Kumar Biswal, Muhammad Nawfal bin
   # Khairul Azlan, Ahmad Ibrahim Shahmi, Kevin Yanlin Li Li (listed by name in .zenodo.json).
   - name: "Team Dell Monitors (NASA Space Apps Challenge 2026, Kuala Lumpur)"
