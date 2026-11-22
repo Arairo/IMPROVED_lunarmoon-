@@ -1,5 +1,6 @@
 {
  "name": "hires_best-2",
+ "kind": "site",
  "projection": "south-polar-stereographic",
  "radius": 1737400,
  "halfExtent": 8000,

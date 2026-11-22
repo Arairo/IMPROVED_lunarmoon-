@@ -1,5 +1,5 @@
 {
- "generated": "2026-11-22T07:15:51.750Z",
+ "generated": "2026-11-22T07:34:55.926Z",
  "note": "PGDA \"average visibility\" (Mazarico et al. 2011 method; product 201608) is a multi-year average of the visible fraction of the Sun's / Earth's disk at the surface. Ours is the share of 2027 with the disk centre above the skyline from a 2 m mast. Expect differences of several points; the comparison is about the pattern.",
  "products": {
   "sun": "https://pgda.gsfc.nasa.gov/data/MoonIllumination/AVGVISIB_75S_120M_201608.TIF",
@@ -39,7 +39,15 @@
     "earth": 26.2
    },
    "pgdaSun60": null,
-   "pgdaSun60Detail": null,
+   "pgdaSun60Detail": {
+    "error": "outside the product",
+    "px": -470,
+    "py": 1362,
+    "size": [
+     5058,
+     5058
+    ]
+   },
    "pgdaSun120": 38.4,
    "pgdaEarth120": 44.1
   },
@@ -52,7 +60,7 @@
    },
    "ours20": {
     "sun": 9,
-    "earth": 36.9
+    "earth": 37.2
    },
    "pgdaSun60": 9.1,
    "pgdaSun60Detail": {
@@ -75,8 +83,13 @@
     "sun": 21.6,
     "earth": 46
    },
-   "pgdaSun60": null,
-   "pgdaSun60Detail": null,
+   "pgdaSun60": 27.9,
+   "pgdaSun60Detail": {
+    "centre": 0.2816,
+    "median": 0.27868000000000004,
+    "zeros": 0,
+    "n": 9
+   },
    "pgdaSun120": 38.1,
    "pgdaEarth120": 52.9
   },
@@ -91,8 +104,13 @@
     "sun": 23.6,
     "earth": 60.1
    },
-   "pgdaSun60": null,
-   "pgdaSun60Detail": null,
+   "pgdaSun60": 25.6,
+   "pgdaSun60Detail": {
+    "centre": 0.25572,
+    "median": 0.25568,
+    "zeros": 0,
+    "n": 9
+   },
    "pgdaSun120": 26.2,
    "pgdaEarth120": 66.4
   },
@@ -107,8 +125,13 @@
     "sun": 21.6,
     "earth": 35.8
    },
-   "pgdaSun60": null,
-   "pgdaSun60Detail": null,
+   "pgdaSun60": 21.7,
+   "pgdaSun60Detail": {
+    "centre": 0.20424,
+    "median": 0.21660000000000001,
+    "zeros": 0,
+    "n": 9
+   },
    "pgdaSun120": 18.8,
    "pgdaEarth120": 36.6
   },
@@ -123,8 +146,13 @@
     "sun": 29.5,
     "earth": 32.8
    },
-   "pgdaSun60": null,
-   "pgdaSun60Detail": null,
+   "pgdaSun60": 28.6,
+   "pgdaSun60Detail": {
+    "centre": 0.27936,
+    "median": 0.2856,
+    "zeros": 0,
+    "n": 9
+   },
    "pgdaSun120": 30,
    "pgdaEarth120": 37
   },
@@ -137,10 +165,18 @@
    },
    "ours20": {
     "sun": 39.9,
-    "earth": 63.2
+    "earth": 63
    },
    "pgdaSun60": null,
-   "pgdaSun60Detail": null,
+   "pgdaSun60Detail": {
+    "error": "outside the product",
+    "px": 5145,
+    "py": 945,
+    "size": [
+     5058,
+     5058
+    ]
+   },
    "pgdaSun120": 41.6,
    "pgdaEarth120": 68.8
   },
@@ -155,8 +191,13 @@
     "sun": 36,
     "earth": 49.5
    },
-   "pgdaSun60": null,
-   "pgdaSun60Detail": null,
+   "pgdaSun60": 37.2,
+   "pgdaSun60Detail": {
+    "centre": 0.37296,
+    "median": 0.37248000000000003,
+    "zeros": 0,
+    "n": 9
+   },
    "pgdaSun120": 37.1,
    "pgdaEarth120": 54.8
   },
@@ -167,9 +208,17 @@
     "sun": 2.1,
     "earth": 35
    },
-   "ours20": null,
-   "pgdaSun60": null,
-   "pgdaSun60Detail": null,
+   "ours20": {
+    "sun": 1.7,
+    "earth": 34.9
+   },
+   "pgdaSun60": 2.9,
+   "pgdaSun60Detail": {
+    "centre": 0.029480000000000003,
+    "median": 0.029480000000000003,
+    "zeros": 0,
+    "n": 9
+   },
    "pgdaSun120": 3,
    "pgdaEarth120": 41.4
   },
@@ -184,8 +233,13 @@
     "sun": 63.6,
     "earth": 42.5
    },
-   "pgdaSun60": null,
-   "pgdaSun60Detail": null,
+   "pgdaSun60": 55.5,
+   "pgdaSun60Detail": {
+    "centre": 0,
+    "median": 0.55532,
+    "zeros": 1,
+    "n": 9
+   },
    "pgdaSun120": 67.7,
    "pgdaEarth120": 52.3
   },
@@ -200,8 +254,13 @@
     "sun": 63.6,
     "earth": 50.8
    },
-   "pgdaSun60": null,
-   "pgdaSun60Detail": null,
+   "pgdaSun60": 55.6,
+   "pgdaSun60Detail": {
+    "centre": 0.70176,
+    "median": 0.55632,
+    "zeros": 0,
+    "n": 9
+   },
    "pgdaSun120": 72.3,
    "pgdaEarth120": 55.9
   },
@@ -300,8 +359,13 @@
     "sun": 0,
     "earth": 15.3
    },
-   "pgdaSun60": null,
-   "pgdaSun60Detail": null,
+   "pgdaSun60": 0,
+   "pgdaSun60Detail": {
+    "centre": 0,
+    "median": 0,
+    "zeros": 9,
+    "n": 9
+   },
    "pgdaSun120": 0,
    "pgdaEarth120": 24.4
   },
@@ -316,8 +380,13 @@
     "sun": 0,
     "earth": 0
    },
-   "pgdaSun60": null,
-   "pgdaSun60Detail": null,
+   "pgdaSun60": 0,
+   "pgdaSun60Detail": {
+    "centre": 0,
+    "median": 0,
+    "zeros": 9,
+    "n": 9
+   },
    "pgdaSun120": 0,
    "pgdaEarth120": 0.9
   },
@@ -332,8 +401,13 @@
     "sun": 0,
     "earth": 0
    },
-   "pgdaSun60": null,
-   "pgdaSun60Detail": null,
+   "pgdaSun60": 0,
+   "pgdaSun60Detail": {
+    "centre": 0,
+    "median": 0,
+    "zeros": 9,
+    "n": 9
+   },
    "pgdaSun120": 0,
    "pgdaEarth120": 1.2
   },
@@ -348,8 +422,13 @@
     "sun": 34.4,
     "earth": 21
    },
-   "pgdaSun60": null,
-   "pgdaSun60Detail": null,
+   "pgdaSun60": 35.7,
+   "pgdaSun60Detail": {
+    "centre": 0.35752,
+    "median": 0.35740000000000005,
+    "zeros": 0,
+    "n": 9
+   },
    "pgdaSun120": 35.8,
    "pgdaEarth120": 29.9
   },
@@ -364,8 +443,13 @@
     "sun": 0,
     "earth": 15.5
    },
-   "pgdaSun60": null,
-   "pgdaSun60Detail": null,
+   "pgdaSun60": 0,
+   "pgdaSun60Detail": {
+    "centre": 0,
+    "median": 0,
+    "zeros": 9,
+    "n": 9
+   },
    "pgdaSun120": 0,
    "pgdaEarth120": 18.6
   },
@@ -381,7 +465,15 @@
     "earth": 100
    },
    "pgdaSun60": null,
-   "pgdaSun60Detail": null,
+   "pgdaSun60Detail": {
+    "error": "outside the product",
+    "px": 2654,
+    "py": -2469,
+    "size": [
+     5058,
+     5058
+    ]
+   },
    "pgdaSun120": 35.6,
    "pgdaEarth120": 100
   },
@@ -393,17 +485,22 @@
     "earth": 80.9
    },
    "ours20": {
-    "sun": 43.9,
-    "earth": 80.9
+    "sun": 43.8,
+    "earth": 80.8
    },
-   "pgdaSun60": null,
-   "pgdaSun60Detail": null,
+   "pgdaSun60": 46.4,
+   "pgdaSun60Detail": {
+    "centre": 0.46412000000000003,
+    "median": 0.46412000000000003,
+    "zeros": 0,
+    "n": 9
+   },
    "pgdaSun120": 47,
    "pgdaEarth120": 93.6
   }
  ],
  "likeForLike": {
-  "generated": "2026-11-22T07:17:10.080Z",
+  "generated": "2026-11-22T07:36:24.774Z",
   "method": "Same quantities as PGDA AVGVISIB: visible fraction of the solar disk; Earth counted when any part of its disk is above the terrain; averaged over an 18.6-year nutation cycle from 2009 (12-hour steps for the 5 km map, 3-hour steps at sites); 2 m mast. PGDA uses hourly steps and its own LOLA terrain at 60-240 m.",
   "maps": {
    "sun": {
@@ -439,7 +536,7 @@
     "id": "a3-hw",
     "terrain": "LOLA 20 m grid",
     "oursSun": 9.5,
-    "oursEarth": 44.1,
+    "oursEarth": 44.3,
     "pgdaSun120": 10.3,
     "pgdaSun60": 9.1,
     "pgdaEarth120": 43.9
@@ -450,7 +547,7 @@
     "oursSun": 19.9,
     "oursEarth": 52.2,
     "pgdaSun120": 38.1,
-    "pgdaSun60": null,
+    "pgdaSun60": 27.9,
     "pgdaEarth120": 52.9
    },
    {
@@ -459,7 +556,7 @@
     "oursSun": 24.3,
     "oursEarth": 65.8,
     "pgdaSun120": 26.2,
-    "pgdaSun60": null,
+    "pgdaSun60": 25.6,
     "pgdaEarth120": 66.4
    },
    {
@@ -468,7 +565,7 @@
     "oursSun": 20.2,
     "oursEarth": 41.9,
     "pgdaSun120": 18.8,
-    "pgdaSun60": null,
+    "pgdaSun60": 21.7,
     "pgdaEarth120": 36.6
    },
    {
@@ -477,14 +574,14 @@
     "oursSun": 30,
     "oursEarth": 35.8,
     "pgdaSun120": 30,
-    "pgdaSun60": null,
+    "pgdaSun60": 28.6,
     "pgdaEarth120": 37
    },
    {
     "id": "a3-n2",
     "terrain": "LOLA 20 m grid",
     "oursSun": 40.9,
-    "oursEarth": 69,
+    "oursEarth": 68.9,
     "pgdaSun120": 41.6,
     "pgdaSun60": null,
     "pgdaEarth120": 68.8
@@ -495,16 +592,16 @@
     "oursSun": 36.1,
     "oursEarth": 54.9,
     "pgdaSun120": 37.1,
-    "pgdaSun60": null,
+    "pgdaSun60": 37.2,
     "pgdaEarth120": 54.8
    },
    {
     "id": "a3-sp",
-    "terrain": "LOLA 240 m grid",
-    "oursSun": 2.2,
-    "oursEarth": 41.6,
+    "terrain": "LOLA 20 m grid",
+    "oursSun": 1.9,
+    "oursEarth": 41.5,
     "pgdaSun120": 3,
-    "pgdaSun60": null,
+    "pgdaSun60": 2.9,
     "pgdaEarth120": 41.4
    },
    {
@@ -513,7 +610,7 @@
     "oursSun": 61.4,
     "oursEarth": 48.8,
     "pgdaSun120": 67.7,
-    "pgdaSun60": null,
+    "pgdaSun60": 55.5,
     "pgdaEarth120": 52.3
    },
    {
@@ -522,7 +619,7 @@
     "oursSun": 61.5,
     "oursEarth": 56.8,
     "pgdaSun120": 72.3,
-    "pgdaSun60": null,
+    "pgdaSun60": 55.6,
     "pgdaEarth120": 55.9
    },
    {
@@ -567,16 +664,16 @@
     "oursSun": 0,
     "oursEarth": 24.4,
     "pgdaSun120": 0,
-    "pgdaSun60": null,
+    "pgdaSun60": 0,
     "pgdaEarth120": 24.4
    },
    {
     "id": "haworth",
     "terrain": "LOLA 20 m grid",
     "oursSun": 0,
-    "oursEarth": 0.9,
+    "oursEarth": 0.8,
     "pgdaSun120": 0,
-    "pgdaSun60": null,
+    "pgdaSun60": 0,
     "pgdaEarth120": 0.9
    },
    {
@@ -585,16 +682,16 @@
     "oursSun": 0,
     "oursEarth": 1.7,
     "pgdaSun120": 0,
-    "pgdaSun60": null,
+    "pgdaSun60": 0,
     "pgdaEarth120": 1.2
    },
    {
     "id": "nobile",
     "terrain": "LOLA 20 m grid",
     "oursSun": 34.5,
-    "oursEarth": 29.9,
+    "oursEarth": 29.8,
     "pgdaSun120": 35.8,
-    "pgdaSun60": null,
+    "pgdaSun60": 35.7,
     "pgdaEarth120": 29.9
    },
    {
@@ -603,7 +700,7 @@
     "oursSun": 0,
     "oursEarth": 18.7,
     "pgdaSun120": 0,
-    "pgdaSun60": null,
+    "pgdaSun60": 0,
     "pgdaEarth120": 18.6
    },
    {
@@ -619,9 +716,9 @@
     "id": "im2",
     "terrain": "LOLA 20 m grid",
     "oursSun": 45.3,
-    "oursEarth": 93.9,
+    "oursEarth": 93.5,
     "pgdaSun120": 47,
-    "pgdaSun60": null,
+    "pgdaSun60": 46.4,
     "pgdaEarth120": 93.6
    }
   ]

@@ -1,81 +1,850 @@
 {
+ "note": "kind \"region\": 16 km grid over the Artemis III candidate regions (regions = their codes); kind \"site\": around a south-polar site outside them. Packed: see src/core/tileCodec.js.",
  "source": "NASA GSFC PGDA LDEM_80S_20MPP_ADJ (Barker et al. 2023)",
  "url": "https://pgda.gsfc.nasa.gov/products/90",
  "tiles": [
   {
-   "id": "a3-cb",
-   "centreX": -180000,
-   "centreY": 70000,
-   "halfExtent": 8000,
+   "id": "reg_9_5",
+   "kind": "region",
+   "regions": [
+    "N2"
+   ],
+   "centreX": 152000,
+   "centreY": 88000,
+   "halfExtent": 8040,
    "cellSize": 20,
-   "size": 800,
-   "meanAbsDiffM": 11
+   "size": 804,
+   "meanAbsDiffM": 3.4
   },
   {
-   "id": "a3-hw",
-   "centreX": -38000,
-   "centreY": 90500,
-   "halfExtent": 8000,
+   "id": "reg_9_6",
+   "kind": "region",
+   "regions": [
+    "N2"
+   ],
+   "centreX": 152000,
+   "centreY": 104000,
+   "halfExtent": 8040,
    "cellSize": 20,
-   "size": 800,
+   "size": 804,
+   "meanAbsDiffM": 2.7
+  },
+  {
+   "id": "reg_10_5",
+   "kind": "region",
+   "regions": [
+    "N2"
+   ],
+   "centreX": 168000,
+   "centreY": 88000,
+   "halfExtent": 8040,
+   "cellSize": 20,
+   "size": 804,
+   "meanAbsDiffM": 3.4
+  },
+  {
+   "id": "reg_10_6",
+   "kind": "region",
+   "regions": [
+    "N2"
+   ],
+   "centreX": 168000,
+   "centreY": 104000,
+   "halfExtent": 8040,
+   "cellSize": 20,
+   "size": 804,
+   "meanAbsDiffM": 2.5
+  },
+  {
+   "id": "reg_3_6",
+   "kind": "region",
+   "regions": [
+    "MM"
+   ],
+   "centreX": 56000,
+   "centreY": 104000,
+   "halfExtent": 8040,
+   "cellSize": 20,
+   "size": 804,
+   "meanAbsDiffM": 2.5
+  },
+  {
+   "id": "reg_3_7",
+   "kind": "region",
+   "regions": [
+    "MM",
+    "MP"
+   ],
+   "centreX": 56000,
+   "centreY": 120000,
+   "halfExtent": 8040,
+   "cellSize": 20,
+   "size": 804,
+   "meanAbsDiffM": 3.3
+  },
+  {
+   "id": "reg_4_6",
+   "kind": "region",
+   "regions": [
+    "MM",
+    "N1"
+   ],
+   "centreX": 72000,
+   "centreY": 104000,
+   "halfExtent": 8040,
+   "cellSize": 20,
+   "size": 804,
    "meanAbsDiffM": 2.6
   },
   {
-   "id": "a3-ma",
-   "centreX": -500,
-   "centreY": 121500,
-   "halfExtent": 8000,
+   "id": "reg_4_7",
+   "kind": "region",
+   "regions": [
+    "MM",
+    "MP",
+    "N1"
+   ],
+   "centreX": 72000,
+   "centreY": 120000,
+   "halfExtent": 8040,
    "cellSize": 20,
-   "size": 800,
-   "meanAbsDiffM": 2.7
-  },
-  {
-   "id": "a3-mp",
-   "centreX": 87500,
-   "centreY": 148000,
-   "halfExtent": 8000,
-   "cellSize": 20,
-   "size": 800,
+   "size": 804,
    "meanAbsDiffM": 2.8
   },
   {
-   "id": "a3-mm",
-   "centreX": 73000,
-   "centreY": 118000,
-   "halfExtent": 8000,
+   "id": "reg_5_6",
+   "kind": "region",
+   "regions": [
+    "MM",
+    "N1"
+   ],
+   "centreX": 88000,
+   "centreY": 104000,
+   "halfExtent": 8040,
    "cellSize": 20,
-   "size": 800,
+   "size": 804,
+   "meanAbsDiffM": 3.7
+  },
+  {
+   "id": "reg_5_7",
+   "kind": "region",
+   "regions": [
+    "MM",
+    "MP",
+    "N1"
+   ],
+   "centreX": 88000,
+   "centreY": 120000,
+   "halfExtent": 8040,
+   "cellSize": 20,
+   "size": 804,
+   "meanAbsDiffM": 3
+  },
+  {
+   "id": "reg_m1_6",
+   "kind": "region",
+   "regions": [
+    "MA"
+   ],
+   "centreX": -8000,
+   "centreY": 104000,
+   "halfExtent": 8040,
+   "cellSize": 20,
+   "size": 804,
+   "meanAbsDiffM": 2.6
+  },
+  {
+   "id": "reg_m1_7",
+   "kind": "region",
+   "regions": [
+    "MA"
+   ],
+   "centreX": -8000,
+   "centreY": 120000,
+   "halfExtent": 8040,
+   "cellSize": 20,
+   "size": 804,
+   "meanAbsDiffM": 2.6
+  },
+  {
+   "id": "reg_m1_8",
+   "kind": "region",
+   "regions": [
+    "MA"
+   ],
+   "centreX": -8000,
+   "centreY": 136000,
+   "halfExtent": 8040,
+   "cellSize": 20,
+   "size": 804,
+   "meanAbsDiffM": 2.1
+  },
+  {
+   "id": "reg_0_6",
+   "kind": "region",
+   "regions": [
+    "MA"
+   ],
+   "centreX": 8000,
+   "centreY": 104000,
+   "halfExtent": 8040,
+   "cellSize": 20,
+   "size": 804,
+   "meanAbsDiffM": 2.3
+  },
+  {
+   "id": "reg_0_7",
+   "kind": "region",
+   "regions": [
+    "MA"
+   ],
+   "centreX": 8000,
+   "centreY": 120000,
+   "halfExtent": 8040,
+   "cellSize": 20,
+   "size": 804,
    "meanAbsDiffM": 2.9
   },
   {
-   "id": "a3-n1",
-   "centreX": 84000,
-   "centreY": 110060,
-   "halfExtent": 8000,
+   "id": "reg_0_8",
+   "kind": "region",
+   "regions": [
+    "MA"
+   ],
+   "centreX": 8000,
+   "centreY": 136000,
+   "halfExtent": 8040,
    "cellSize": 20,
-   "size": 800,
-   "meanAbsDiffM": 3.5
+   "size": 804,
+   "meanAbsDiffM": 3
   },
   {
-   "id": "a3-n2",
-   "centreX": 157000,
-   "centreY": 95000,
-   "halfExtent": 8000,
+   "id": "reg_m4_0",
+   "kind": "region",
+   "regions": [
+    "G2"
+   ],
+   "centreX": -56000,
+   "centreY": 8000,
+   "halfExtent": 8040,
    "cellSize": 20,
-   "size": 800,
-   "meanAbsDiffM": 3.2
-  },
-  {
-   "id": "a3-g2",
-   "centreX": -48500,
-   "centreY": 23000,
-   "halfExtent": 8000,
-   "cellSize": 20,
-   "size": 800,
+   "size": 804,
    "meanAbsDiffM": 2.7
   },
   {
+   "id": "reg_m4_1",
+   "kind": "region",
+   "regions": [
+    "G2"
+   ],
+   "centreX": -56000,
+   "centreY": 24000,
+   "halfExtent": 8040,
+   "cellSize": 20,
+   "size": 804,
+   "meanAbsDiffM": 2.6
+  },
+  {
+   "id": "reg_m4_2",
+   "kind": "region",
+   "regions": [
+    "G2"
+   ],
+   "centreX": -56000,
+   "centreY": 40000,
+   "halfExtent": 8040,
+   "cellSize": 20,
+   "size": 804,
+   "meanAbsDiffM": 2.7
+  },
+  {
+   "id": "reg_m3_0",
+   "kind": "region",
+   "regions": [
+    "G2"
+   ],
+   "centreX": -40000,
+   "centreY": 8000,
+   "halfExtent": 8040,
+   "cellSize": 20,
+   "size": 804,
+   "meanAbsDiffM": 2.9
+  },
+  {
+   "id": "reg_m3_1",
+   "kind": "region",
+   "regions": [
+    "G2"
+   ],
+   "centreX": -40000,
+   "centreY": 24000,
+   "halfExtent": 8040,
+   "cellSize": 20,
+   "size": 804,
+   "meanAbsDiffM": 2.7
+  },
+  {
+   "id": "reg_m3_2",
+   "kind": "region",
+   "regions": [
+    "G2"
+   ],
+   "centreX": -40000,
+   "centreY": 40000,
+   "halfExtent": 8040,
+   "cellSize": 20,
+   "size": 804,
+   "meanAbsDiffM": 2.4
+  },
+  {
+   "id": "reg_3_8",
+   "kind": "region",
+   "regions": [
+    "MP"
+   ],
+   "centreX": 56000,
+   "centreY": 136000,
+   "halfExtent": 8040,
+   "cellSize": 20,
+   "size": 804,
+   "meanAbsDiffM": 3.3
+  },
+  {
+   "id": "reg_3_9",
+   "kind": "region",
+   "regions": [
+    "MP"
+   ],
+   "centreX": 56000,
+   "centreY": 152000,
+   "halfExtent": 8040,
+   "cellSize": 20,
+   "size": 804,
+   "meanAbsDiffM": 3.4
+  },
+  {
+   "id": "reg_3_10",
+   "kind": "region",
+   "regions": [
+    "MP"
+   ],
+   "centreX": 56000,
+   "centreY": 168000,
+   "halfExtent": 8040,
+   "cellSize": 20,
+   "size": 804,
+   "meanAbsDiffM": 3.5
+  },
+  {
+   "id": "reg_3_11",
+   "kind": "region",
+   "regions": [
+    "MP"
+   ],
+   "centreX": 56000,
+   "centreY": 184000,
+   "halfExtent": 8040,
+   "cellSize": 20,
+   "size": 804,
+   "meanAbsDiffM": 23.9
+  },
+  {
+   "id": "reg_4_8",
+   "kind": "region",
+   "regions": [
+    "MP"
+   ],
+   "centreX": 72000,
+   "centreY": 136000,
+   "halfExtent": 8040,
+   "cellSize": 20,
+   "size": 804,
+   "meanAbsDiffM": 2.6
+  },
+  {
+   "id": "reg_4_9",
+   "kind": "region",
+   "regions": [
+    "MP"
+   ],
+   "centreX": 72000,
+   "centreY": 152000,
+   "halfExtent": 8040,
+   "cellSize": 20,
+   "size": 804,
+   "meanAbsDiffM": 2.9
+  },
+  {
+   "id": "reg_4_10",
+   "kind": "region",
+   "regions": [
+    "MP"
+   ],
+   "centreX": 72000,
+   "centreY": 168000,
+   "halfExtent": 8040,
+   "cellSize": 20,
+   "size": 804,
+   "meanAbsDiffM": 3.5
+  },
+  {
+   "id": "reg_4_11",
+   "kind": "region",
+   "regions": [
+    "MP"
+   ],
+   "centreX": 72000,
+   "centreY": 184000,
+   "halfExtent": 8040,
+   "cellSize": 20,
+   "size": 804,
+   "meanAbsDiffM": 12.8
+  },
+  {
+   "id": "reg_5_8",
+   "kind": "region",
+   "regions": [
+    "MP"
+   ],
+   "centreX": 88000,
+   "centreY": 136000,
+   "halfExtent": 8040,
+   "cellSize": 20,
+   "size": 804,
+   "meanAbsDiffM": 2.7
+  },
+  {
+   "id": "reg_5_9",
+   "kind": "region",
+   "regions": [
+    "MP"
+   ],
+   "centreX": 88000,
+   "centreY": 152000,
+   "halfExtent": 8040,
+   "cellSize": 20,
+   "size": 804,
+   "meanAbsDiffM": 2.8
+  },
+  {
+   "id": "reg_5_10",
+   "kind": "region",
+   "regions": [
+    "MP"
+   ],
+   "centreX": 88000,
+   "centreY": 168000,
+   "halfExtent": 8040,
+   "cellSize": 20,
+   "size": 804,
+   "meanAbsDiffM": 2.8
+  },
+  {
+   "id": "reg_5_11",
+   "kind": "region",
+   "regions": [
+    "MP"
+   ],
+   "centreX": 88000,
+   "centreY": 184000,
+   "halfExtent": 8040,
+   "cellSize": 20,
+   "size": 804,
+   "meanAbsDiffM": 15.8
+  },
+  {
+   "id": "reg_6_7",
+   "kind": "region",
+   "regions": [
+    "MP"
+   ],
+   "centreX": 104000,
+   "centreY": 120000,
+   "halfExtent": 8040,
+   "cellSize": 20,
+   "size": 804,
+   "meanAbsDiffM": 3.3
+  },
+  {
+   "id": "reg_6_8",
+   "kind": "region",
+   "regions": [
+    "MP"
+   ],
+   "centreX": 104000,
+   "centreY": 136000,
+   "halfExtent": 8040,
+   "cellSize": 20,
+   "size": 804,
+   "meanAbsDiffM": 2.4
+  },
+  {
+   "id": "reg_6_9",
+   "kind": "region",
+   "regions": [
+    "MP"
+   ],
+   "centreX": 104000,
+   "centreY": 152000,
+   "halfExtent": 8040,
+   "cellSize": 20,
+   "size": 804,
+   "meanAbsDiffM": 3
+  },
+  {
+   "id": "reg_6_10",
+   "kind": "region",
+   "regions": [
+    "MP"
+   ],
+   "centreX": 104000,
+   "centreY": 168000,
+   "halfExtent": 8040,
+   "cellSize": 20,
+   "size": 804,
+   "meanAbsDiffM": 2.7
+  },
+  {
+   "id": "reg_6_11",
+   "kind": "region",
+   "regions": [
+    "MP"
+   ],
+   "centreX": 104000,
+   "centreY": 184000,
+   "halfExtent": 8040,
+   "cellSize": 20,
+   "size": 804,
+   "meanAbsDiffM": 11.3
+  },
+  {
+   "id": "reg_7_7",
+   "kind": "region",
+   "regions": [
+    "MP"
+   ],
+   "centreX": 120000,
+   "centreY": 120000,
+   "halfExtent": 8040,
+   "cellSize": 20,
+   "size": 804,
+   "meanAbsDiffM": 3.6
+  },
+  {
+   "id": "reg_7_8",
+   "kind": "region",
+   "regions": [
+    "MP"
+   ],
+   "centreX": 120000,
+   "centreY": 136000,
+   "halfExtent": 8040,
+   "cellSize": 20,
+   "size": 804,
+   "meanAbsDiffM": 2.8
+  },
+  {
+   "id": "reg_7_9",
+   "kind": "region",
+   "regions": [
+    "MP"
+   ],
+   "centreX": 120000,
+   "centreY": 152000,
+   "halfExtent": 8040,
+   "cellSize": 20,
+   "size": 804,
+   "meanAbsDiffM": 3.2
+  },
+  {
+   "id": "reg_7_10",
+   "kind": "region",
+   "regions": [
+    "MP"
+   ],
+   "centreX": 120000,
+   "centreY": 168000,
+   "halfExtent": 8040,
+   "cellSize": 20,
+   "size": 804,
+   "meanAbsDiffM": 3.2
+  },
+  {
+   "id": "reg_7_11",
+   "kind": "region",
+   "regions": [
+    "MP"
+   ],
+   "centreX": 120000,
+   "centreY": 184000,
+   "halfExtent": 8040,
+   "cellSize": 20,
+   "size": 804,
+   "meanAbsDiffM": 9.4
+  },
+  {
+   "id": "reg_3_m4",
+   "kind": "region",
+   "regions": [
+    "SP"
+   ],
+   "centreX": 56000,
+   "centreY": -56000,
+   "halfExtent": 8040,
+   "cellSize": 20,
+   "size": 804,
+   "meanAbsDiffM": 2.5
+  },
+  {
+   "id": "reg_3_m3",
+   "kind": "region",
+   "regions": [
+    "SP"
+   ],
+   "centreX": 56000,
+   "centreY": -40000,
+   "halfExtent": 8040,
+   "cellSize": 20,
+   "size": 804,
+   "meanAbsDiffM": 2.4
+  },
+  {
+   "id": "reg_4_m4",
+   "kind": "region",
+   "regions": [
+    "SP"
+   ],
+   "centreX": 72000,
+   "centreY": -56000,
+   "halfExtent": 8040,
+   "cellSize": 20,
+   "size": 804,
+   "meanAbsDiffM": 2.6
+  },
+  {
+   "id": "reg_4_m3",
+   "kind": "region",
+   "regions": [
+    "SP"
+   ],
+   "centreX": 72000,
+   "centreY": -40000,
+   "halfExtent": 8040,
+   "cellSize": 20,
+   "size": 804,
+   "meanAbsDiffM": 2.5
+  },
+  {
+   "id": "reg_5_m4",
+   "kind": "region",
+   "regions": [
+    "SP"
+   ],
+   "centreX": 88000,
+   "centreY": -56000,
+   "halfExtent": 8040,
+   "cellSize": 20,
+   "size": 804,
+   "meanAbsDiffM": 2.5
+  },
+  {
+   "id": "reg_5_m3",
+   "kind": "region",
+   "regions": [
+    "SP"
+   ],
+   "centreX": 88000,
+   "centreY": -40000,
+   "halfExtent": 8040,
+   "cellSize": 20,
+   "size": 804,
+   "meanAbsDiffM": 2.7
+  },
+  {
+   "id": "reg_m12_3",
+   "kind": "region",
+   "regions": [
+    "CB"
+   ],
+   "centreX": -184000,
+   "centreY": 56000,
+   "halfExtent": 8040,
+   "cellSize": 20,
+   "size": 804,
+   "meanAbsDiffM": 16.5
+  },
+  {
+   "id": "reg_m12_4",
+   "kind": "region",
+   "regions": [
+    "CB"
+   ],
+   "centreX": -184000,
+   "centreY": 72000,
+   "halfExtent": 8040,
+   "cellSize": 20,
+   "size": 804,
+   "meanAbsDiffM": 13.6
+  },
+  {
+   "id": "reg_m12_5",
+   "kind": "region",
+   "regions": [
+    "CB"
+   ],
+   "centreX": -184000,
+   "centreY": 88000,
+   "halfExtent": 8040,
+   "cellSize": 20,
+   "size": 804,
+   "meanAbsDiffM": 11.4
+  },
+  {
+   "id": "reg_m11_3",
+   "kind": "region",
+   "regions": [
+    "CB"
+   ],
+   "centreX": -168000,
+   "centreY": 56000,
+   "halfExtent": 8040,
+   "cellSize": 20,
+   "size": 804,
+   "meanAbsDiffM": 3.3
+  },
+  {
+   "id": "reg_m11_4",
+   "kind": "region",
+   "regions": [
+    "CB"
+   ],
+   "centreX": -168000,
+   "centreY": 72000,
+   "halfExtent": 8040,
+   "cellSize": 20,
+   "size": 804,
+   "meanAbsDiffM": 3.5
+  },
+  {
+   "id": "reg_m11_5",
+   "kind": "region",
+   "regions": [
+    "CB"
+   ],
+   "centreX": -168000,
+   "centreY": 88000,
+   "halfExtent": 8040,
+   "cellSize": 20,
+   "size": 804,
+   "meanAbsDiffM": 3.4
+  },
+  {
+   "id": "reg_m4_4",
+   "kind": "region",
+   "regions": [
+    "HW"
+   ],
+   "centreX": -56000,
+   "centreY": 72000,
+   "halfExtent": 8040,
+   "cellSize": 20,
+   "size": 804,
+   "meanAbsDiffM": 2.3
+  },
+  {
+   "id": "reg_m4_5",
+   "kind": "region",
+   "regions": [
+    "HW"
+   ],
+   "centreX": -56000,
+   "centreY": 88000,
+   "halfExtent": 8040,
+   "cellSize": 20,
+   "size": 804,
+   "meanAbsDiffM": 2.1
+  },
+  {
+   "id": "reg_m4_6",
+   "kind": "region",
+   "regions": [
+    "HW"
+   ],
+   "centreX": -56000,
+   "centreY": 104000,
+   "halfExtent": 8040,
+   "cellSize": 20,
+   "size": 804,
+   "meanAbsDiffM": 2.4
+  },
+  {
+   "id": "reg_m3_4",
+   "kind": "region",
+   "regions": [
+    "HW"
+   ],
+   "centreX": -40000,
+   "centreY": 72000,
+   "halfExtent": 8040,
+   "cellSize": 20,
+   "size": 804,
+   "meanAbsDiffM": 2.5
+  },
+  {
+   "id": "reg_m3_5",
+   "kind": "region",
+   "regions": [
+    "HW"
+   ],
+   "centreX": -40000,
+   "centreY": 88000,
+   "halfExtent": 8040,
+   "cellSize": 20,
+   "size": 804,
+   "meanAbsDiffM": 2.4
+  },
+  {
+   "id": "reg_m2_4",
+   "kind": "region",
+   "regions": [
+    "HW"
+   ],
+   "centreX": -24000,
+   "centreY": 72000,
+   "halfExtent": 8040,
+   "cellSize": 20,
+   "size": 804,
+   "meanAbsDiffM": 2.4
+  },
+  {
+   "id": "reg_m2_5",
+   "kind": "region",
+   "regions": [
+    "HW"
+   ],
+   "centreX": -24000,
+   "centreY": 88000,
+   "halfExtent": 8040,
+   "cellSize": 20,
+   "size": 804,
+   "meanAbsDiffM": 2.7
+  },
+  {
+   "id": "reg_m2_6",
+   "kind": "region",
+   "regions": [
+    "HW"
+   ],
+   "centreX": -24000,
+   "centreY": 104000,
+   "halfExtent": 8040,
+   "cellSize": 20,
+   "size": 804,
+   "meanAbsDiffM": 2.2
+  },
+  {
    "id": "ridge",
+   "kind": "site",
    "centreX": -11300,
    "centreY": -12260,
    "halfExtent": 8000,
@@ -85,6 +854,7 @@
   },
   {
    "id": "peak-shackleton",
+   "kind": "site",
    "centreX": 30040,
    "centreY": -20000,
    "halfExtent": 8000,
@@ -94,6 +864,7 @@
   },
   {
    "id": "shackleton",
+   "kind": "site",
    "centreX": 7700,
    "centreY": -6400,
    "halfExtent": 8000,
@@ -103,6 +874,7 @@
   },
   {
    "id": "best-1",
+   "kind": "site",
    "centreX": -36500,
    "centreY": 14500,
    "halfExtent": 8000,
@@ -112,6 +884,7 @@
   },
   {
    "id": "best-2",
+   "kind": "site",
    "centreX": -2500,
    "centreY": -5500,
    "halfExtent": 8000,
@@ -121,6 +894,7 @@
   },
   {
    "id": "degerlache",
+   "kind": "site",
    "centreX": -45420,
    "centreY": 2300,
    "halfExtent": 8000,
@@ -130,6 +904,7 @@
   },
   {
    "id": "shoemaker",
+   "kind": "site",
    "centreX": 39820,
    "centreY": 39960,
    "halfExtent": 8000,
@@ -139,6 +914,7 @@
   },
   {
    "id": "haworth",
+   "kind": "site",
    "centreX": -5400,
    "centreY": 77140,
    "halfExtent": 8000,
@@ -148,6 +924,7 @@
   },
   {
    "id": "faustini",
+   "kind": "site",
    "centreX": 85100,
    "centreY": 8480,
    "halfExtent": 8000,
@@ -157,6 +934,7 @@
   },
   {
    "id": "nobile",
+   "kind": "site",
    "centreX": 114800,
    "centreY": 85600,
    "halfExtent": 8000,
@@ -166,6 +944,7 @@
   },
   {
    "id": "lcross",
+   "kind": "site",
    "centreX": -121440,
    "centreY": 106600,
    "halfExtent": 8000,
@@ -175,21 +954,13 @@
   },
   {
    "id": "im1",
+   "kind": "site",
    "centreX": 7540,
    "centreY": 299940,
    "halfExtent": 8000,
    "cellSize": 20,
    "size": 800,
    "meanAbsDiffM": 19.6
-  },
-  {
-   "id": "im2",
-   "centreX": 76980,
-   "centreY": 137740,
-   "halfExtent": 8000,
-   "cellSize": 20,
-   "size": 800,
-   "meanAbsDiffM": 2.6
   }
  ]
 }
