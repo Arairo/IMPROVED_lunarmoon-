@@ -36,8 +36,11 @@ if '--png' in sys.argv:
     print('wrote public/data/lroc_check.png', w, h)
     sys.exit(0)
 
-tile = json.load(open(os.path.join(ROOT, 'public', 'data', 'hires', f'{SITE}.json')))
-cx, cy, half = tile['centreX'], tile['centreY'], tile['halfExtent']
+# The 16 km x 16 km box compared (south-polar stereographic metres), centred on the
+# Peak Near Cabeus B region centre. Fixed here (it used to come from the site's 20 m
+# tile, which the region tiles replaced on 22 Nov 2026) so runs stay comparable;
+# tools/lroc_shadow_check.mjs uses whichever 20 m tiles cover it.
+cx, cy, half = -180000.0, 70000.0, 8000.0
 src = gdal.Open('/vsicurl/' + URL)
 if src is None:
     sys.exit('could not open ' + URL)
