@@ -1296,13 +1296,15 @@ html[data-theme='dark'] .cc-badge.amber { color: var(--xp-warn); }
 .xp-flight .fl-caption button { margin-top: 6px; display: inline-flex; gap: 6px; align-items: center; border: 0; border-radius: 999px; padding: 6px 12px; background: #2997ff; color: #fff; font: 600 12px var(--xp-font); cursor: pointer; }
 .xp-flight .fl-bar { position: absolute; left: 12px; right: 12px; bottom: 12px; z-index: 3; display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 16px; background: rgba(10,14,26,.9); border: 1px solid rgba(148,163,184,.22); }
 .xp-flight .fl-play { flex: none; width: 40px; height: 40px; border-radius: 50%; border: 0; background: #fbbf24; color: #1c1917; display: grid; place-items: center; cursor: pointer; box-shadow: 0 4px 14px rgba(251,191,36,.35); }
-.xp-flight .fl-track { position: relative; flex: 1; padding-bottom: 16px; }
+.xp-flight .fl-track { position: relative; flex: 1; padding: 6px 0 22px; }
 .xp-flight .fl-phases { display: flex; height: 6px; border-radius: 999px; overflow: hidden; }
 .xp-flight .fl-phases span { position: relative; height: 6px; }
 .xp-flight .fl-phases span i { position: absolute; inset: 0 1px; background: var(--c); opacity: .8; }
-.xp-flight .fl-phases span em { position: absolute; top: 9px; left: 2px; right: 2px; font: 600 10px var(--xp-font); font-style: normal; color: #94a3b8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.xp-flight .fl-phases span em { position: absolute; top: 14px; left: 2px; right: 2px; font: 600 10.5px/1.2 var(--xp-font); font-style: normal; color: #a8b3c4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none; }
 .xp-flight .fl-phases { overflow: visible; }
-.xp-flight .fl-track input { position: absolute; left: 0; right: 0; top: -7px; width: 100%; margin: 0; background: transparent; -webkit-appearance: none; appearance: none; height: 20px; cursor: pointer; }
+.xp-flight .fl-track input { position: absolute; left: 0; right: 0; top: -1px; width: 100%; margin: 0; background: transparent; -webkit-appearance: none; appearance: none; height: 20px; cursor: pointer; }
+/* The slider sits on the coloured bar only; phase names are in their own row below it. */
+.xp-flight .fl-track input:focus-visible { outline: 2px solid #2997ff; outline-offset: 2px; border-radius: 999px; }
 .xp-flight .fl-track input::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: #fff; border: 3px solid #fbbf24; box-shadow: 0 2px 6px rgba(0,0,0,.4); }
 .xp-flight .fl-track input::-moz-range-thumb { width: 12px; height: 12px; border-radius: 50%; background: #fff; border: 3px solid #fbbf24; }
 .xp-flight .fl-ctrl { display: flex; gap: 6px; }
