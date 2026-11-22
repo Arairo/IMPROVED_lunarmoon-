@@ -96,8 +96,10 @@ async function assessmentClean() {
     await wait(3000);
     const t = await assessmentClean();
     assert(t.includes('Shackleton connecting ridge'), 'default site not shown');
-    assert(t.includes('LOLA 240 m grid'), 'terrain not loaded');
-    return 'default site = connecting ridge, LOLA 240 m terrain';
+    // The ridge has a 20 m PGDA tile; 240 m shows only if that tile has not arrived yet.
+    const m = t.match(/LOLA (20|240) m grid/);
+    assert(m, 'terrain not loaded');
+    return `default site = connecting ridge, LOLA ${m[1]} m terrain`;
   });
   await check('3D Cesium scene renders (WebGL pixels drawn)', async () => {
     await page.click('#viewSystem'); await wait(3500);
