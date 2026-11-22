@@ -69,7 +69,7 @@ function lolaTerrainProvider(terrain) {
     width: size,
     height: size,
     tilingScheme,
-    credit: 'Terrain: LRO LOLA (NASA/GSFC): 20 m tiles near the main south-polar sites, 240 m and 1 km grids',
+    credit: 'Terrain: LRO LOLA (NASA/GSFC): 20 m tiles over the Artemis III candidate regions and other main south-polar sites, 240 m and 1 km grids',
     callback(x, y, level) {
       const rect = tilingScheme.tileXYToRectangle(x, y, level);
       const heights = new Float32Array(size * size);

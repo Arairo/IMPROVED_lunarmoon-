@@ -42,6 +42,20 @@ How big each source of error is, and what it does to the answers.
 | Region centres | Artemis III regions are 20 × 20 km (Mons Mouton Plateau ~66 km) | A centre is one point. Lighting changes a lot within a region; test spots inside the outline. Example: the Malapert Massif centre sits on a ~4° slope, so with 20 m terrain it sees the Sun 22% of 2027, against 38% in NASA's 120 m map and 43% with our coarser grid, which both smooth the slope away. |
 | Flight model (patched conics) | Δv within ~0.05–0.1 km/s of Apollo 11; launch time within a few hours | Good for comparing routes and dates; not for navigation. The low-energy route is a typical transfer, not an optimised trajectory. Each burn is labelled *computed* (orbital mechanics), *assumed* (a fixed allowance: course corrections; low-energy launch energy and arrival speed) or *rule of thumb* (powered descent = perilune speed × 1.12 + 0.1 km/s, calibrated to Apollo 11). |
 
+### Kinds of uncertainty (and which ones the app reports)
+
+These are different things and the app keeps them apart:
+
+| Kind | What it means | Reported? |
+|---|---|---|
+| Positional sensitivity | How much the answer changes if the lander sets down a little elsewhere: the What if step and the report show the same 30 days at the site and 250 m north, south, east and west | Yes, as a range. It is **not** an error bar or a confidence interval |
+| Terrain uncertainty | Errors in LOLA heights, grid size and interpolation | Not quantified per site. Grid size at the site is shown (terrain quality); sampling effects are measured (section 3) |
+| Model uncertainty | Simplifications: Sun's centre vs disk, no thermal or dust model, simple link budget, patched-conic flights | Not quantified; listed in the table above and in exported assumptions |
+| Input uncertainty | Your spacecraft settings (array, load, battery efficiency, radio) | Not quantified; change the settings to see the effect |
+| Reference / validation error | Observed differences against independent data (JPL, PGDA, LROC) | Yes, in section 1 and `docs/validation/`, for the sites and dates tested only |
+
+The JSON report carries the same split under `uncertainty`.
+
 ## 3. Horizon sampling convergence
 
 The skyline is found by marching rays outward over the LOLA grids. Steps start at

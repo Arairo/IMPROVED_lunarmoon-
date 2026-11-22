@@ -14,6 +14,7 @@ import { scanToCsv } from '../core/exportCsv.js';
 import { addScenario } from '../ui/compare.js';
 import { groundSlope } from '../core/horizon.js';
 import { epochStatus } from '../core/ephemeris.js';
+import { matchScenario } from '../core/power.js';
 import { terrainWarning, epochWarning } from '../ui/assessment.js';
 import { planFlight, ROUTES } from '../core/flight.js';
 import { linkAssumptions } from '../core/comms.js';
@@ -343,7 +344,8 @@ export function mountFlow({ app, setTime, switchMode, getBestSpots, actions }) {
         ${(() => { const sl = groundSlope(app.site.lat, app.site.lon); return sl && sl.cell <= 1000 ? `<tr><td>Ground slope (over ~${Math.round(sl.baselineM)} m)</td><td>${sl.slopeDeg.toFixed(1)}°</td></tr>` : ''; })()}
         ${(() => { const d = app.lastDispersion; return d && d.siteId === app.site.id && d.start === app.windowStartMs ? `<tr><td>Landing anywhere within ${d.radiusM >= 1000 ? `${d.radiusM / 1000} km` : `${d.radiusM} m`}: worst / typical</td><td>${pct(d.min)} / ${pct(d.p50)}</td></tr>` : ''; })()}
       </table>
-      ${range ? `<p class="f-note">${esc(range)} (how much the answer changes within one terrain cell).</p>` : ''}
+      ${range ? `<p class="f-note">${esc(range)}: how much the exact landing point matters (positional sensitivity), not an error bar.</p>` : ''}
+      <p class="f-note"><b>Not included in these numbers:</b> terrain error (LOLA heights and grid size), model simplifications (no thermal, dust or detailed radio losses) and your spacecraft assumptions. Checks against NASA data are in docs/VALIDATION.md (e.g. sunlight within a median 1.2 points of NASA Goddard's maps at the south-polar sites).</p>
       </div><div class="r-side">
       ${spots ? `<p class="f-meta">Best spots for the 30 days from touchdown:</p><ul>${spots}</ul>` : ''}
       ${(() => { const f = flightNow(); return `<p class="f-meta">Getting there (${esc(ROUTES[f.route].label)} route, ${esc(f.lander.label.toLowerCase())}):</p>
@@ -388,7 +390,7 @@ export function mountFlow({ app, setTime, switchMode, getBestSpots, actions }) {
         timeScale: 'UTC (astronomy-engine converts to TT internally)',
         frames: 'Moon body-fixed (IAU rotation model), planetocentric latitude, east-positive longitude, heights above the 1737.4 km sphere; see docs/FRAMES.md',
         scanStepMinutes: app.scan ? Math.round(app.scan.stepMs / 60000) : null,
-        energySum: 'rectangle sums at the scan step',
+        energySum: 'each sample counts until the next one; the last only until the window end (left-point sums, exact window length)',
         mastHeightM: app.config.mastHeightM,
       },
       datasets: datasetProvenance(),
@@ -404,13 +406,21 @@ export function mountFlow({ app, setTime, switchMode, getBestSpots, actions }) {
       landingDispersion: d ? { radiusM: d.radiusM, samples: d.points.length, sunAndEarthTogether: { worst: r2(d.min), p10: r2(d.p10), median: r2(d.p50), best: r2(d.max) } } : null,
       flight: (() => { const f = flightNow(); return { route: f.route, model: 'patched conics planning model', launchSite: f.launchSite.name, launchUtc: new Date(f.launchMs).toISOString(), leaveEarthOrbitUtc: new Date(f.tliMs).toISOString(), lunarOrbitArrivalUtc: new Date(f.loiMs).toISOString(), doorToDoorDays: r2(f.doorToDoorDays), landerDeltaVKmS: r2(f.landerDv), landerDryKg: f.lander.dryKg, propellantKg: Math.round(f.propKg), burns: f.burns.map((b) => ({ burn: b.label, utc: new Date(b.t).toISOString(), deltaVKmS: r2(b.dv), by: b.byLander ? 'lander' : 'rocket', basis: b.basis })), modelInfo: f.model }; })(),
       spacecraft: app.config,
+      spacecraftScenario: { matches: matchScenario(app.config.power), note: 'Nominal / Conservative / Degraded are illustrative settings for seeing how sensitive a plan is, not validated hardware profiles.' },
       assumptions: {
         battery: 'Battery needed = deepest energy shortfall against the constant load, with charge and discharge efficiency from spacecraft.power. An energy estimate, not a battery design (no temperature, ageing or voltage limits).',
         communications: linkAssumptions(app.config.comms),
         directToEarth: 'directToEarthFraction counts times when Earth is in line of sight, a DSN complex sees the Moon above its mask, and the link budget closes on paper. It is not a DSN schedule.',
         verdict: 'GO / GO WITH CARE / NO GO are this tool\u2019s rules of thumb, not a NASA standard or a mission approval.',
       },
-      provenance: { terrain: 'NASA LRO LOLA (20 m PGDA tiles near the main south-polar sites, 240 m / 1 km south-polar grids, LDEM_16 elsewhere)', ephemeris: 'astronomy-engine with the IAU lunar rotation model, checked against NASA JPL Horizons' },
+      uncertainty: {
+        positionalSensitivity: (() => { const r = app.lastRange; const k = `${app.site.lat},${app.site.lon}|${app.windowStartMs}|${JSON.stringify(app.config)}`; return r && r.key === k ? { what: 'Same 30 days at the site and 250 m N, S, E and W: how much the exact landing point matters. Not an error bar or confidence interval.', metres: r.metres, days: r.days, sunlightFraction: r.sun.map(r2), earthInViewFraction: r.earth.map(r2) } : 'not computed yet (open the What if step)'; })(),
+        terrain: 'Not quantified per site. LOLA heights are interpolated between laser tracks; grid size at the site is in site.terrainQuality. Sampling effect on yearly sunlight: at most 0.2 points at 19 south-polar sites (docs/validation/azimuth-resolution.json).',
+        model: 'Not quantified. Simplifications are listed in assumptions and docs/VALIDATION.md (error budget).',
+        input: 'Not quantified. Results depend on the spacecraft settings above (array, load, battery efficiency, radio); change them to see the effect.',
+        referenceComparisons: 'Observed differences against independent data, not error bounds for every site and date: Sun/Earth positions vs JPL Horizons (worst 0.007°), sunlight vs NASA PGDA (site median 1.2 points, worst 8.1), shadows vs LROC photos (93% of pixels). Records in docs/validation/.',
+      },
+      provenance: { terrain: 'NASA LRO LOLA (20 m PGDA tiles over the nine Artemis III candidate regions and other main south-polar sites, 240 m / 1 km south-polar grids, LDEM_16 elsewhere)', ephemeris: 'astronomy-engine with the IAU lunar rotation model, checked against NASA JPL Horizons' },
     };
   }
   function printReport() {

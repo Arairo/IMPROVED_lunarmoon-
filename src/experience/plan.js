@@ -51,7 +51,7 @@ export function mountPlanCard({ app, selectSite, setTime, getGlobe }) {
     </div>
     <div class="p-disp" data-disp-out hidden aria-live="polite"></div>
     <p class="p-out" aria-live="polite"></p>
-    <div class="p-foot"><button type="button" class="p-undo" data-undo hidden>Undo</button><span class="p-range" title="How much the next 30 days change within one terrain cell (about 250 m) of this point"></span></div>`;
+    <div class="p-foot"><button type="button" class="p-undo" data-undo hidden>Undo</button><span class="p-range" title="Positional sensitivity: the same 30 days at this point and 250 m north, south, east and west (about one 240 m terrain cell). It shows how much the exact landing point matters; it is not an error bar and does not include terrain or model uncertainty."></span></div>`;
   host.prepend(card);
 
   const out = card.querySelector('.p-out');
@@ -182,11 +182,12 @@ export function mountPlanCard({ app, selectSite, setTime, getGlobe }) {
     if (k === key) return;
     key = k;
     clearTimeout(timer);
-    rangeEl.textContent = 'Checking ±250 m…';
+    rangeEl.textContent = 'Checking 250 m around…';
     timer = setTimeout(() => {
       try {
         const r = positionRange(app.site, app.windowStartMs, app.config);
-        rangeEl.textContent = `Within ±250 m: sunlight ${span(r.sun)}, Earth ${span(r.earth)}`;
+        rangeEl.textContent = `Landing up to 250 m away: sunlight ${span(r.sun)}, Earth ${span(r.earth)}`;
+        app.lastRange = { key: k, metres: 250, days: 30, sun: r.sun, earth: r.earth };
         window.dispatchEvent(new Event('lsp-range')); // the report quotes this line
       } catch {
         rangeEl.textContent = '';

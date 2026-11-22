@@ -5,7 +5,7 @@ import sitesData from './data/sites.js';
 import { clamp, SITE_GROUPS, SITE_BADGES, SYNODIC_MONTH_DAYS } from './core/constants.js';
 import { prepareSite, scanWindow, evaluate } from './core/analysis.js';
 import { DEFAULT_COMMS_CONFIG } from './core/comms.js';
-import { DEFAULT_POWER_CONFIG } from './core/power.js';
+import { DEFAULT_POWER_CONFIG, POWER_SCENARIOS, matchScenario } from './core/power.js';
 import { esc, fmtLatLon, fmtUtc } from './ui/format.js';
 import { createGlobeRenderer } from './scene/globeRenderer.js';
 import { hasWebGL, showNoWebGL } from './ui/webgl.js';
@@ -610,6 +610,9 @@ function boot() {
       f.areaM2.value = app.config.power.areaM2;
       f.efficiency.value = +(app.config.power.efficiency * 100).toFixed(1);
       f.loadW.value = app.config.power.loadW;
+      f.batteryEffPct.value = Math.round((app.config.power.chargeEff ?? 0.95) * 100);
+      f.scenario.value = matchScenario(app.config.power);
+      f.querySelector('[data-scenario-note]').textContent = POWER_SCENARIOS[f.scenario.value]?.note || '';
       f.mastHeightM.value = app.config.mastHeightM;
       f.preset.value = app.config.comms.preset;
       f.dataRateKbps.value = Math.round(app.config.comms.dataRateBps / 1000);
@@ -626,6 +629,17 @@ function boot() {
       if (m && !m.classList.contains('hidden')) { m.classList.add('hidden'); e.stopPropagation(); }
     }
   });
+  // Example scenarios fill the fields they change; editing a field returns to "My own settings".
+  const sf = document.getElementById('settingsForm');
+  sf?.scenario?.addEventListener('change', () => {
+    const s = POWER_SCENARIOS[sf.scenario.value];
+    sf.querySelector('[data-scenario-note]').textContent = s?.note || '';
+    if (!s) return;
+    sf.efficiency.value = +(s.efficiency * 100).toFixed(1);
+    sf.loadW.value = s.loadW;
+    sf.batteryEffPct.value = Math.round(s.chargeEff * 100);
+  });
+  for (const n of ['efficiency', 'loadW', 'batteryEffPct']) sf?.[n]?.addEventListener('input', () => { sf.scenario.value = 'custom'; sf.querySelector('[data-scenario-note]').textContent = ''; });
   document.getElementById('settingsCloseX')?.addEventListener('click', () => document.getElementById('settingsModal')?.classList.add('hidden'));
   document.getElementById('settingsCancelBtn')?.addEventListener('click', () => document.getElementById('settingsModal')?.classList.add('hidden'));
   document.getElementById('settingsForm')?.addEventListener('submit', (e) => {
@@ -635,6 +649,9 @@ function boot() {
     app.config.power.areaM2 = Math.max(0.1, Number.isFinite(Number(f.areaM2.value)) ? Number(f.areaM2.value) : 2);
     app.config.power.efficiency = clamp((Number(f.efficiency.value) || 29) / 100, 0.05, 0.45);
     app.config.power.loadW = Math.max(5, Number(f.loadW.value) || 120);
+    const be = clamp((Number(f.batteryEffPct.value) || 95) / 100, 0.5, 1);
+    app.config.power.chargeEff = be;
+    app.config.power.dischargeEff = be;
     app.config.mastHeightM = clamp(Number(f.mastHeightM.value) || 2, 0.5, 50);
     app.config.comms.preset = f.preset.value;
     app.config.comms.dataRateBps = Math.max(1, Number(f.dataRateKbps.value) || 256) * 1000;

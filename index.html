@@ -274,6 +274,16 @@
         <button type="button" id="settingsCloseX" class="text-slate-400 hover:text-slate-700 font-bold text-lg">✕</button>
       </div>
       <form id="settingsForm" class="space-y-3 text-xs">
+        <label class="flex flex-col gap-1">
+          <span class="text-slate-600 font-medium">Example scenario <span class="font-normal text-slate-500">(illustrative settings, not real hardware)</span></span>
+          <select name="scenario" class="border border-slate-300 rounded-lg px-2 py-1.5 bg-white">
+            <option value="custom">My own settings</option>
+            <option value="nominal">Nominal</option>
+            <option value="conservative">Conservative</option>
+            <option value="degraded">Degraded</option>
+          </select>
+          <span class="text-slate-500" data-scenario-note></span>
+        </label>
         <fieldset class="border border-slate-200 rounded-xl p-3 grid grid-cols-2 gap-3">
           <legend class="font-bold text-slate-700 px-1">Solar Array &amp; Mast</legend>
           <label class="col-span-2 flex flex-col gap-1">
@@ -296,6 +306,10 @@
           <label class="flex flex-col gap-1">
             <span class="text-slate-600 font-medium">Continuous load (W)</span>
             <input name="loadW" type="number" min="10" step="5" value="120" class="border border-slate-300 rounded-lg px-2 py-1" />
+          </label>
+          <label class="flex flex-col gap-1">
+            <span class="text-slate-600 font-medium">Battery efficiency, each way (%)</span>
+            <input name="batteryEffPct" type="number" min="50" max="100" step="1" value="95" class="border border-slate-300 rounded-lg px-2 py-1" />
           </label>
           <label class="flex flex-col gap-1">
             <span class="text-slate-600 font-medium">Solar/antenna mast height (m)</span>
