@@ -157,23 +157,30 @@ def neighbourhood(ds, meta, x, y, r=1):
     px = int((x / u - gt[0]) / gt[1]); py = int((y / u - gt[3]) / gt[5])
     x0, y0 = px - r, py - r
     if x0 < 0 or y0 < 0 or x0 + 2 * r + 1 > ds.RasterXSize or y0 + 2 * r + 1 > ds.RasterYSize:
-        return None
-    for attempt in range(3):
+        return {'error': 'outside the product', 'px': px, 'py': py, 'size': [ds.RasterXSize, ds.RasterYSize]}
+    a, last = None, None
+    # NASA's server sometimes returns an empty range read: retry with a growing pause.
+    for attempt in range(6):
         try:
-            a = ds.GetRasterBand(1).ReadAsArray(x0, y0, 2 * r + 1, 2 * r + 1).astype(np.float64)
-            break
+            a = ds.GetRasterBand(1).ReadAsArray(x0, y0, 2 * r + 1, 2 * r + 1)
+            if a is not None:
+                break
+            last = 'empty read'
         except RuntimeError as e:
-            print('neighbourhood read failed, retrying:', str(e)[:120], flush=True)
-            time.sleep(2)
-    else:
-        return None
+            last = str(e)[:160]
+        print(f'neighbourhood read failed (try {attempt + 1}/6): {last}', flush=True)
+        time.sleep(2 * (attempt + 1))
+    if a is None:
+        v = point(ds, meta, x, y)  # last resort: the single pixel, as before
+        return {'error': f'3x3 read failed: {last}', 'centre': v, 'median': v, 'zeros': None, 'n': 1 if v is not None else 0} if v is not None else {'error': f'read failed: {last}'}
+    a = a.astype(np.float64)
     nd = meta['noData']
     if nd is not None and nd != 'nan':
         a[a == nd] = np.nan
     a = a * (meta['scale'] or 1) + (meta['offset'] or 0)
     good = a[np.isfinite(a)]
     if not good.size:
-        return None
+        return {'error': 'all no-data'}
     return {'centre': float(a[r, r]), 'median': float(np.median(good)), 'zeros': int((good == 0).sum()), 'n': int(good.size)}
 
 
@@ -184,7 +191,7 @@ try:
     print('sun85', json.dumps(m85, default=str)[:900], flush=True)
     for s in POLAR:
         nb = neighbourhood(ds85, m85, *xy(s['lat'], s['lon']))
-        meta['sites'][s['id']]['sun60m'] = nb['median'] if nb else None
+        meta['sites'][s['id']]['sun60m'] = nb.get('median') if nb else None
         meta['sites'][s['id']]['sun60mDetail'] = nb
         print(f"{s['id']}: 60 m 3x3 {nb}", flush=True)
 except RuntimeError as e:
