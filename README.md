@@ -1,5 +1,7 @@
 # Lunar Site Planner
 
+[![DOI](https://zenodo.org/badge/1459117597.svg)](https://doi.org/10.5281/zenodo.24435109)
+
 **Where and when should we land on the Moon, so the lander has sunlight for power and Earth in view to call home?**
 
 Lunar Site Planner answers that for any site and any date, against the real terrain skyline from NASA's LRO LOLA laser altimeter. It runs in any browser, on a phone too, with no install, no account and no API key.
@@ -134,9 +136,9 @@ test/                       automated tests
 
 ## How to cite
 
-Rasyid, A. (2026). *Lunar Site Planner: when a Moon lander gets sunlight and Earth contact* (Version 1.0.0) [Computer software]. https://github.com/Arairo/IMPROVED_lunarmoon-
+Rasyid, A. (2026). *Lunar Site Planner: when a Moon lander gets sunlight and Earth contact* (Version 1.0.0) [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.24435110
 
-GitHub's "Cite this repository" button gives the same in other formats (from `CITATION.cff`). A DOI will be added here once the release is archived on Zenodo.
+To cite the software in general (all versions, always the latest): https://doi.org/10.5281/zenodo.24435109. GitHub's "Cite this repository" button gives the same in other formats (from `CITATION.cff`).
 
 ## Team Dell Monitors
 
