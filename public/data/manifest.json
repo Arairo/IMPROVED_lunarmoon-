@@ -441,8 +441,8 @@
     },
     {
      "path": "data/pgda_check.json",
-     "bytes": 6419,
-     "sha256": "748aabe8ad2baae67f2bcb460e231fb3e72396296540edd67fbcf284b47782b9"
+     "bytes": 12122,
+     "sha256": "0c1f63535104d1606e6e17e02287efc8d961d6d635c69385e793fb7f8d9467bc"
     },
     {
      "path": "data/lroc_check.json",
