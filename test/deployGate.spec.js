@@ -17,7 +17,7 @@ const flat = (s) => s.replace(/\s+/g, ' ');
 
 test('Deploy workflow: data-workflow runs only continue on success, on main', () => {
   assert.match(yml, /workflow_run:\s*\n\s*workflows: \[[^\]]+\]\s*\n\s*types: \[completed\]/);
-  for (const name of ['build', 'browser']) {
+  for (const name of ['build']) {
     const cond = flat(job(name).match(/if: >-([\s\S]*?)\n    [a-z-]+:/)?.[1] || '');
     assert.ok(cond.includes("github.event_name != 'workflow_run'"), `${name}: other events pass`);
     assert.ok(cond.includes("github.event.workflow_run.conclusion == 'success'"), `${name}: requires upstream success`);
@@ -27,18 +27,22 @@ test('Deploy workflow: data-workflow runs only continue on success, on main', ()
 
 test('Deploy workflow: publishing needs the build and browser jobs, never runs for pull requests, only from main', () => {
   const d = job('deploy');
-  assert.match(d, /needs: \[build, browser\]/);
+  assert.match(d, /needs: \[build\]/);
   assert.match(flat(d), /if: github\.event_name != 'pull_request' && github\.ref == 'refs\/heads\/main'/);
   assert.match(d, /pages: write/);
   assert.match(yml, /^permissions:\s*\n\s*contents: read/m, 'workflow default is read-only');
 });
 
-test('Deploy workflow: CI runs the unit tests, the audit and the browser smoke test on the production build', () => {
+test('Deploy workflow: CI audits all dependencies, runs the unit tests, and browser-tests the exact build it deploys', () => {
   const b = job('build');
   assert.match(b, /npm audit --omit=dev --audit-level=high/);
+  assert.match(b, /npm audit --audit-level=high/);
   assert.match(b, /npm test/);
-  const br = job('browser');
-  assert.match(br, /npm run build/);
-  assert.match(br, /vite preview/);
-  assert.match(br, /node test\/smoke-e2e\.cjs/);
+  assert.match(b, /BASE_PATH: \/\$\{\{ github\.event\.repository\.name \}\}\//, 'build and test use the Pages base path');
+  assert.match(b, /npm run build/);
+  assert.match(b, /vite preview/);
+  assert.match(b, /node test\/smoke-e2e\.cjs "http:\/\/localhost:4174\$\{BASE_PATH\}"/);
+  // The smoke test comes before the upload, in the same job: the files tested are the files deployed.
+  assert.ok(b.indexOf('smoke-e2e.cjs') < b.indexOf('upload-pages-artifact'), 'test before upload');
+  assert.doesNotMatch(yml, /\n  browser:\n/, 'no separate browser job building its own copy');
 });

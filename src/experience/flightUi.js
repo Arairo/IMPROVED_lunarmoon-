@@ -133,7 +133,7 @@ export function mountFlight({ app, viewTabs, switchSubView, setTime }) {
       ${stats(plan)}
       <div class="fl-tabs" role="tablist">${[['timeline', 'Timeline'], ['burns', 'Burns and fuel'], ['compare', 'Compare routes'], ['checks', 'At touchdown']].map(([k, t]) => `<button type="button" role="tab" data-tab="${k}" aria-selected="${k === tab}" class="${k === tab ? 'is-on' : ''}">${t}</button>`).join('')}</div>
       <div class="fl-body">${tabBody()}</div>
-      <p class="fl-note">${icon('info', 13)} A planning model (two-body “patched conics”), good to hours and tens of m/s, not for navigation. The launch site sets where the flight starts on the globe; it does not change the numbers. Checked against Apollo 11’s burns and ${FLOWN_FLIGHTS.length} flown timelines in the automated tests.</p>`;
+      <p class="fl-note">${icon('info', 13)} A planning model (two-body “patched conics”), not for navigation. Given Apollo 11’s own coast and orbit times it reproduces its burns within 50 m/s and its launch time within about 2 hours; with the default settings, trip lengths differ from ${FLOWN_FLIGHTS.length} flown missions by 0.2–10 days (tested automatically). The launch site moves the launch time by hours and changes the trip and fuel slightly.${opts.route === 'lowenergy' ? ' <b>The low-energy path on screen is a sketch:</b> the real route is shaped by the Sun’s pull and is not computed here.' : ''}</p>`;
     side.querySelectorAll('[data-route]').forEach((b) => b.addEventListener('click', () => { opts.route = b.dataset.route; delete opts.coastDays; delete opts.earthDays; delete opts.transferDays; delete opts.lunarOrbitDays; refresh(true); }));
     side.querySelectorAll('select[data-o]').forEach((s) => s.addEventListener('change', () => { opts[s.dataset.o] = s.value; refresh(true); }));
     side.querySelectorAll('input[data-o]').forEach((s) => {
@@ -166,7 +166,7 @@ export function mountFlight({ app, viewTabs, switchSubView, setTime }) {
     const done = idx >= path.length - 1;
     cap.innerHTML = done
       ? `<b>Touchdown at ${esc(plan.site.name)}</b><span>${when(plan.touchdownMs)} UTC · ${dur(plan.touchdownMs - plan.launchMs)} after launch</span><button type="button" data-f="site">${icon('globe', 14)} See the landing site</button>`
-      : `<b>${esc(ph.label)}${fast ? ' · fast-forward' : ''}</b><span>Day ${elapsed.toFixed(elapsed < 2 ? 2 : 1)} · ${when(s.t)} UTC · ${where}</span>`;
+      : `<b>${esc(ph.label)}${fast ? ' · fast-forward' : ''}</b><span>Day ${elapsed.toFixed(elapsed < 2 ? 2 : 1)} · ${when(s.t)} UTC · ${where}</span>${plan.route === 'lowenergy' && ph.id === 'coast' ? '<em class="fl-schematic">Schematic path: the real low-energy route is shaped by the Sun’s pull</em>' : ''}`;
     cap.querySelector('[data-f="site"]')?.addEventListener('click', () => {
       setTime(plan.touchdownMs, false);
       switchSubView('globe');
@@ -222,9 +222,12 @@ export function mountFlight({ app, viewTabs, switchSubView, setTime }) {
   }
   const playBtn = pane.querySelector('[data-f="play"]');
   function start() { if (u >= 1) goto(0); playing = true; last = 0; playBtn.innerHTML = icon('pause', 18); playBtn.setAttribute('aria-label', 'Pause'); requestAnimationFrame(loop); }
-  function stop() { playing = false; if (path) goto(u); playBtn.innerHTML = icon('play', 18); playBtn.setAttribute('aria-label', 'Play'); }
+  // Re-draw only if it was playing (to show the craft again after fast-forward); when
+  // paused, a stop must not move anything (it used to reset the slider before a drag
+  // could read it, so dragging always jumped back to the start).
+  function stop() { const was = playing; playing = false; if (was && path) goto(u); playBtn.innerHTML = icon('play', 18); playBtn.setAttribute('aria-label', 'Play'); }
   playBtn.addEventListener('click', () => (playing ? stop() : start()));
-  scrub.addEventListener('input', () => { stop(); goto(Number(scrub.value) / 1000); });
+  scrub.addEventListener('input', () => { const x = Number(scrub.value) / 1000; stop(); goto(x); });
   pane.querySelector('[data-f="speed"]').addEventListener('click', (e) => { speed = speed === 1 ? 3 : speed === 3 ? 0.4 : 1; e.currentTarget.textContent = `${speed}×`; });
   pane.querySelector('[data-f="follow"]').addEventListener('click', (e) => { const on = !e.currentTarget.classList.contains('is-on'); e.currentTarget.classList.toggle('is-on', on); scene?.setFollow(on); });
 

@@ -104,3 +104,12 @@ test('windowStats: "Sun and Earth together" is weighted by time too', () => {
   assert.ok(ws.both >= 0 && ws.both <= 1);
   assert.ok(ws.both <= Math.min(ws.sun, ws.earth) + 1e-9);
 });
+
+test('scanWindow: a custom window that is not a whole number of steps (7.3 days at 20-minute steps) covers exactly 7.3 days', () => {
+  const sc = scanWindow(ctx, T0, 7.3, DEFAULT_CONFIG);
+  assert.equal(sc.stepMs, 20 * 60000);
+  close(sc.stats.integratedHours, 7.3 * 24, 1e-9, 'hours covered');
+  const last = sc.series.dtH.at(-1);
+  assert.ok(last > 0 && last < 1 / 3, `last step is partial: ${last} h`);
+  close(sc.stats.energyKWh * 1000, sc.series.watts.reduce((a, w, i) => a + w * sc.series.dtH[i], 0), 1e-6, 'energy = sum of power x duration');
+});

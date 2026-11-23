@@ -174,6 +174,11 @@ const sub = (page, k) => page.$eval(`[data-sub="${k}"]`, (e) => e.textContent);
     await page.$eval('[data-tab="burns"]', (b) => b.click());
     const burns = await page.$$eval('.fl-table tr', (r) => r.length);
     assert(burns >= 6, `burn rows ${burns}`);
+    // Dragging the timeline moves the flight (it used to jump back to the start).
+    await page.locator('[data-f="scrub"]').fill('500');
+    await page.waitForTimeout(600);
+    const scrubbed = { value: await page.$eval('[data-f="scrub"]', (i) => i.value), caption: await page.$eval('.fl-caption', (e) => e.innerText) };
+    assert(scrubbed.value === '500' && !/Day 0\.00/.test(scrubbed.caption), `scrub: ${JSON.stringify(scrubbed)}`);
     await page.$eval('#tabGlobeBtn, [data-x="globe"]', (b) => b.click()).catch(() => {});
     // Report: JSON and CSV downloads carry provenance and assumptions.
     await goStep(page, 4);

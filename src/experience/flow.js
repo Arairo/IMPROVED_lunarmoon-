@@ -335,11 +335,46 @@ export function mountFlow({ app, setTime, switchMode, getBestSpots, actions }) {
       ${line('power', 'Power', `${sunTxt} Sunlight ${pct(s.litFraction)} of the window, longest night ${fmtHours(s.longestDarkH)}.`)}
       ${line('earth', 'Earth contact', `${earthTxt} Earth in view ${pct(s.earthCentreFraction)}; a direct link closes on paper ${pct(s.dteFraction)} of the time (DSN antenna time still has to be booked).`)}
       ${slopeLine()}
+      ${borderlineLine(v)}
       ${terrainWarning(app.ctx?.horizon)}
       ${epochWarning(app.windowStartMs)}
+      <p class="f-terrain">${esc(terrainSummary())}</p>
       ${assumptionsLine()}
       ${methodDetails()}
       <p class="f-note">A quick screen with this tool’s rules of thumb and your spacecraft settings: ${SCREEN_MEANING[v.overall].toLowerCase()} It is not a landing approval or a NASA standard.</p>`;
+  }
+  /**
+   * Reasons the screening result sits close to one of its thresholds, where small
+   * terrain or timing errors could flip it (third audit P2). 0.5° is about the size of
+   * the skyline differences measured between sampling settings and terrain grids
+   * (docs/VALIDATION.md section 3); 12 h is a quarter of a typical terrain-shadow edge.
+   */
+  function borderline(v) {
+    const s = app.scan?.series;
+    if (!s || !v) return [];
+    const out = [];
+    const sunClr = s.sunEl[0] - s.sunHorizon[0];
+    if (Math.abs(sunClr) < 0.5) out.push(`the Sun's centre is only ${Math.abs(sunClr).toFixed(2)}° ${sunClr >= 0 ? 'above' : 'below'} the skyline at touchdown`);
+    const ec = s.earthClear[0];
+    if (Math.abs(ec) < 0.5) out.push(`Earth's centre is only ${Math.abs(ec).toFixed(2)}° ${ec >= 0 ? 'above' : 'below'} the skyline`);
+    else if (Math.abs(ec - app.config.comms.minClearanceDeg) < 0.5) out.push(`Earth is ${ec.toFixed(1)}° above the skyline, close to the ${app.config.comms.minClearanceDeg}° wanted for a clean link`);
+    const H12 = 12 * 3600000;
+    if (v.sunSet && Math.abs(v.sunSet - v.t0 - 7 * 86400000) < H12) out.push('sunset falls within half a day of the 7-day rule');
+    if (v.earthSet && Math.abs(v.earthSet - v.t0 - 3 * 86400000) < H12) out.push('Earth sets within half a day of the 3-day rule');
+    return out;
+  }
+  function borderlineLine(v) {
+    const b = borderline(v);
+    if (!b.length) return '';
+    return `<div class="f-v amber f-borderline"><span class="f-light">≈</span><div><b>Close to the line</b><small>${esc(b.join('; '))}. Small terrain or timing errors could change this result: try a few hours either side (Date step) and look at the 250 m range in What if.</small></div></div>`;
+  }
+  /** Terrain resolution at the site, in one line (third audit P2). */
+  function terrainSummary() {
+    const q = app.ctx?.horizon?.quality;
+    if (!q) return 'Terrain: unknown';
+    const size = (m) => (m == null ? '?' : m >= 1000 ? `${+(m / 1000).toFixed(1)} km` : `${Math.round(m)} m`);
+    const tier = { fine: 'finest available', standard: 'standard', coarse: 'approximate until the detailed terrain loads', none: 'no terrain data' }[q.tier] || q.tier;
+    return q.tier === 'none' ? 'Terrain: none here (smooth sphere)' : `Terrain at the site: NASA LOLA ${size(q.siteCellM)} (${tier}); farther out ${size(q.coarsestCellM)}; skyline every ${q.azStepDeg}°.`;
   }
   /** The settings these numbers rest on, next to the result (with a way to change them). */
   function assumptionsLine() {
@@ -377,6 +412,7 @@ export function mountFlow({ app, setTime, switchMode, getBestSpots, actions }) {
       <p class="f-rv">Screening at touchdown: <span class="${v.overall}">${LIGHT[v.overall][0]}</span> Power ${LIGHT[v.power][0]} · Earth ${LIGHT[v.earth][0]}</p>
       <p class="f-note">${SCREEN_MEANING[v.overall]} Preliminary, under the assumptions in this report; not a landing approval.</p>
       <table class="f-table">
+        <tr><td>Terrain at the site</td><td>${esc((() => { const q = app.ctx?.horizon?.quality; return q?.siteCellM ? (q.siteCellM >= 1000 ? `${+(q.siteCellM / 1000).toFixed(1)} km` : `${Math.round(q.siteCellM)} m`) + ' LOLA' : '—'; })())}</td></tr>
         <tr><td>Sunlight</td><td>${pct(s.litFraction)}</td></tr>
         <tr><td>Earth in view (centre above terrain)</td><td>${pct(s.earthCentreFraction)}</td></tr>
         <tr><td>Sun and Earth together</td><td>${pct(ws.both)}</td></tr>
@@ -388,6 +424,7 @@ export function mountFlow({ app, setTime, switchMode, getBestSpots, actions }) {
         ${(() => { const d = app.lastDispersion; return d && d.siteId === app.site.id && d.start === app.windowStartMs ? `<tr><td>Landing anywhere within ${d.radiusM >= 1000 ? `${d.radiusM / 1000} km` : `${d.radiusM} m`}: worst / typical</td><td>${pct(d.min)} / ${pct(d.p50)}</td></tr>` : ''; })()}
       </table>
       ${range ? `<p class="f-note">${esc(range)}: how much the exact landing point matters (positional sensitivity), not an error bar.</p>` : ''}
+      ${borderline(v).length ? `<p class="f-note"><b>Close to the line:</b> ${esc(borderline(v).join('; '))}. Small terrain or timing errors could change the screening result.</p>` : ''}
       <p class="f-note"><b>Not included in these numbers:</b> terrain error (LOLA heights and grid size), model simplifications (no thermal, dust or detailed radio losses) and your spacecraft assumptions. Checks against NASA data are in docs/VALIDATION.md (e.g. sunlight within a median 1.2 points of NASA Goddard's maps at the south-polar sites).</p>
       </div><div class="r-side">
       ${spots ? `<p class="f-meta">Best spots for the 30 days from touchdown:</p><ul>${spots}</ul>` : ''}
@@ -439,7 +476,7 @@ export function mountFlow({ app, setTime, switchMode, getBestSpots, actions }) {
       datasets: datasetProvenance(),
       site: { name: app.site.name, latDeg: r2(app.site.lat), lonDeg: r2(app.site.lon), terrain: app.ctx?.horizon?.source || null, terrainQuality: app.ctx?.horizon?.quality || null },
       touchdownUtc: new Date(app.windowStartMs).toISOString(), windowDays: app.windowDays, ephemerisCheck: epochStatus(app.windowStartMs),
-      verdictAtTouchdown: v ? { overall: LIGHT[v.overall][0], meaning: SCREEN_MEANING[v.overall], power: LIGHT[v.power][0], earthContact: LIGHT[v.earth][0], rules: 'preliminary screening with Lunar Site Planner rules of thumb, not a NASA standard or a landing approval' } : null,
+      verdictAtTouchdown: v ? { overall: LIGHT[v.overall][0], meaning: SCREEN_MEANING[v.overall], closeToThreshold: borderline(v), power: LIGHT[v.power][0], earthContact: LIGHT[v.earth][0], rules: 'preliminary screening with Lunar Site Planner rules of thumb, not a NASA standard or a landing approval' } : null,
       window: {
         sunlightFraction: r2(s.litFraction), earthInViewFraction: r2(s.earthCentreFraction), sunAndEarthTogetherFraction: r2(ws.both),
         directToEarthFraction: r2(s.dteFraction), longestNightHours: r2(s.longestDarkH), longestNightCutByWindow: !!s.longestDarkOpenEnded,

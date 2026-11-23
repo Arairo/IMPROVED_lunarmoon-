@@ -99,3 +99,21 @@ WebGL), and Core Web Vitals from real users in several regions.
 | `node test/smoke-e2e.cjs` (production build) | 13 of 13 |
 | `node test/browser-e2e.cjs …/planner.html` | 42 of 42 |
 | axe, WCAG 2.1 AA, eight views | 0 violations |
+
+## Third review (ChatGPT, 23 Nov 2026): immediate corrections
+
+| Item | Status on checking | What was done |
+|---|---|---|
+| P0 scan/battery durations incompatible | **Already fixed** in the second audit (`simulateBattery` takes one duration per sample since 22 Nov; `main` includes it) | Tightened: durations must be finite and positive (Infinity was accepted); tests for scalar, varying and invalid durations (`test/scanIntervals.spec.js`) |
+| P1.1–1.2 Browser tests on the deployed artifact and base path | Confirmed: the browser job built its own copy at `/` | One job now builds with `BASE_PATH=/<repo>/`, serves that `dist` under the same path, runs the smoke test, and only then uploads it to Pages (`test/deployGate.spec.js` checks the order) |
+| P1.3 Audit development dependencies | Missing | `npm audit --audit-level=high` (all dependencies) added next to the runtime-only audit; 0 vulnerabilities today |
+| P1.4 Non-divisible custom window | Covered by unit tests; added one through `scanWindow` (7.3 days at 20 min steps) | |
+| P1.5 Both interfaces after the scanner fix | Smoke test 13/13 under the Pages base path (Beginner, Professional, Terrain 3D, phone) | |
+| P2.1 Low-energy flight schematic | The path was drawn without saying so | "Schematic path" label in the flight caption during the low-energy coast, and in the model note |
+| P2.2 "Good to hours" claim | Overstated for whole timelines | Measured: given Apollo 11's own timings, burns within 19/14/45 m/s and launch within 2.1 h; with default settings, trip lengths 0.2–9.5 days from five flown missions. Wording in the app, `src/core/flight.js` and VALIDATION.md now says exactly this. The note also wrongly said the launch site changes nothing (it moves launch time by up to 6.6 h, trip by ~0.3 d, fuel by ~5 kg) |
+| P2.3 Near-threshold warnings | Missing | "Close to the line" in the Check step, report and JSON when the Sun's or Earth's centre is within 0.5° of the skyline, Earth within 0.5° of the wanted clearance, or sunset/earthset within 12 h of the 7-day / 3-day rules |
+| P2.4 Terrain resolution visible | Shown only when coarse | One line under every Check result ("Terrain at the site: NASA LOLA 20 m …; skyline every 2°") and a row in the report |
+
+Found while checking: dragging the flight timeline slider always jumped back to the
+start (introduced 21 Nov 2026 with the flight-pacing change: `stop()` reset the slider
+before the handler read it). Fixed, and the smoke test now drags it.
