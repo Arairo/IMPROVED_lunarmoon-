@@ -75,7 +75,8 @@ export function simulateBattery(watts, stepH, { loadW, capacityWh = Infinity, in
   // stepH: hours per sample, one number for all, or one per sample (the last step of
   // a window can be shorter: see scan in analysis.js).
   const perStep = typeof stepH !== 'number';
-  if (perStep ? (stepH?.length !== watts.length || !Array.prototype.every.call(stepH, (h) => h > 0)) : !(stepH > 0)) throw new RangeError('simulateBattery: stepH must be > 0 (a number, or one per sample)');
+  const okH = (h) => typeof h === 'number' && Number.isFinite(h) && h > 0;
+  if (perStep ? (stepH?.length !== watts.length || !Array.prototype.every.call(stepH, okH)) : !okH(stepH)) throw new RangeError('simulateBattery: stepH must be a finite number > 0, or one such number per sample');
   if (!(loadW >= 0)) throw new RangeError('simulateBattery: loadW must be >= 0');
   if (!(chargeEff > 0 && chargeEff <= 1 && dischargeEff > 0 && dischargeEff <= 1)) throw new RangeError('simulateBattery: efficiencies must be in (0, 1]');
   const finite = Number.isFinite(capacityWh);

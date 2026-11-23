@@ -4,8 +4,11 @@
 // orbit, the stay in lunar orbit, the coast from Earth (or the loops around
 // Earth, or the long low-energy route), and the launch. Speeds come from
 // vis-viva and Kepler's equation with the Moon's real distance on the day
-// (astronomy-engine). Good to hours and tens of m/s: a planning model, not
-// navigation. Durations of the slow phases follow how recent missions flew.
+// (astronomy-engine). A planning model, not navigation: given Apollo 11's own
+// coast and orbit times it reproduces its burns within 50 m/s and its launch time
+// within ~2 h; with default settings, trip lengths differ from flown missions by
+// 0.2–10 days (test/flight.spec.js, docs/VALIDATION.md). Durations of the slow
+// phases follow how recent missions flew; the low-energy path shape is a sketch.
 
 import * as Astronomy from 'astronomy-engine';
 

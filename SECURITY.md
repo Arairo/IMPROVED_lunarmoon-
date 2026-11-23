@@ -16,13 +16,15 @@ Please open a GitHub issue, or for anything sensitive use GitHub's private
   each update is reviewed, tested and built first. CesiumJS is pinned and updated
   by hand.
 - **CI audit:** the deploy workflow runs `npm audit --omit=dev --audit-level=high`
-  on the packages that ship to the browser; a high or critical advisory stops the
+  on the packages that ship to the browser and `npm audit --audit-level=high` on all
+  of them (build and test tools included); a high or critical advisory stops the
   build. Don't use `npm audit fix --force`: review breaking changes instead.
 - **Actions:** third-party GitHub Actions are pinned to full commit SHAs (the
   version is in a comment next to each). Workflows use the least permissions they
   need (`contents: read` unless a job commits data back).
 - **Deployment:** the site is only published from `main`. Pull requests are built
-  and tested but never published. When a data workflow (terrain, JPL Horizons,
+  and tested but never published. The browser test runs on the exact build that is
+  uploaded to Pages, served under the same base path. When a data workflow (terrain, JPL Horizons,
   PGDA, LROC) finishes, the site is rebuilt only if that run **succeeded** on `main`.
 - **Dev server:** `npm run dev` listens on `localhost` only. To test on a phone
   over Wi-Fi, opt in with `npm run dev -- --host`; anyone on that network can then
