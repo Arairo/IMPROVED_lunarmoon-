@@ -63,16 +63,19 @@ function openClip(src, poster, title) {
 /** Narrated tour of Professional mode (subtitles burned in), in a pop-up player. */
 export function openVideo(kind = 'tour') {
   const base = import.meta.env.BASE_URL;
-  if (kind === 'promo') return openClip(`${base}tutorial/lunar-site-planner-promo.mp4`, `${base}tutorial/promo-poster.jpg`, 'Lunar Site Planner in 48 seconds');
+  if (kind === 'promo') return openClip(`${base}tutorial/lunar-site-planner-promo.mp4`, `${base}tutorial/promo-poster.jpg`, 'Lunar Site Planner in 60 seconds');
   const box = document.createElement('div');
   box.className = 'xp-video';
   box.setAttribute('role', 'dialog');
   box.setAttribute('aria-label', 'Video tour of Professional mode');
   box.innerHTML = `<div class="v-card">
-      <div class="v-head"><b>Professional mode in two minutes</b>
+      <div class="v-head"><b>Professional mode, chapter by chapter (3 min)</b>
         <span><a href="${base}tutorial/pro-tutorial.mp4" download class="xp-link">Download MP4</a>
         <button type="button" class="xp-chip xp-icon-btn" data-v="close" aria-label="Close video">✕</button></span></div>
-      <video src="${base}tutorial/pro-tutorial.mp4" poster="${base}tutorial/pro-tutorial-poster.jpg" controls autoplay playsinline></video>
+      <video src="${base}tutorial/pro-tutorial.mp4" poster="${base}tutorial/pro-tutorial-poster.jpg" controls autoplay playsinline>
+        <track kind="chapters" src="${base}tutorial/pro-tutorial.chapters.vtt" srclang="en" label="Chapters">
+        <track kind="captions" src="${base}tutorial/pro-tutorial.vtt" srclang="en" label="English (also burned in)">
+      </video>
     </div>`;
   document.body.appendChild(box);
   const close = () => { box.querySelector('video')?.pause(); box.remove(); removeEventListener('keydown', onKey); };
@@ -107,11 +110,11 @@ export function initExperience(api) {
 
     createMenu(tools.querySelector('[data-x="help"]'), () => [
       { icon: 'route', label: 'Guided tour', sub: 'Lumi shows you this screen, controls included', run: () => startTour() },
-      { icon: 'video', label: 'Tutorial video', sub: 'Two minutes, narrated', run: () => openVideo() },
+      { icon: 'video', label: 'Tutorial video', sub: 'About 3 minutes, narrated, 16 chapters', run: () => openVideo() },
       { icon: 'sparkles', label: 'Ask Lumi a question', run: () => document.querySelector('[data-x="lumi"]')?.click() },
       { icon: 'check', label: 'Accuracy, data and sources', sub: 'How we know the numbers are right', run: () => import('./trust.js').then((m) => m.openTrust({ sites })) },
       { sep: true },
-      { icon: 'info', label: 'About this project', sub: 'Team, data, the 48-second promo', run: () => openAbout({ onVideo: openVideo }) },
+      { icon: 'info', label: 'About this project', sub: 'Team, data, the 60-second promo', run: () => openAbout({ onVideo: openVideo }) },
     ]);
     createMenu(tools.querySelector('[data-x="settings"]'), () => {
       const dark = document.documentElement.dataset.theme === 'dark';
@@ -356,7 +359,7 @@ export function initExperience(api) {
       title: 'Welcome to Professional mode',
       sub: 'Plan a landing in five steps. How would you like to start?',
       opts: `<button type="button" class="wl-opt is-video" data-w="video">
-            <span class="wl-thumb" style="background-image:url('${base}tutorial/pro-tutorial-poster.jpg')"><span class="wl-play">${icon('play', 22)}</span><span class="wl-dur">2:00</span></span>
+            <span class="wl-thumb" style="background-image:url('${base}tutorial/pro-tutorial-poster.jpg')"><span class="wl-play">${icon('play', 22)}</span><span class="wl-dur">3:15</span></span>
             <b>Watch the tutorial video</b><small>A narrated two-minute walkthrough</small></button>
           <button type="button" class="wl-opt" data-w="tour"><span class="wl-ic">${icon('route', 26)}</span><b>Take the guided tour</b><small>Lumi shows you each part, about a minute</small></button>`,
       onPick: (c) => {
@@ -501,7 +504,7 @@ export function initExperience(api) {
     setMode(hashMode);
   } else {
     document.body.dataset.mode = 'intro';
-    mountIntro({ siteCount: sites.length, onChoose: (m) => setMode(m), onAbout: () => openAbout({ onVideo: openVideo }) });
+    mountIntro({ siteCount: sites.length, onChoose: (m) => setMode(m), onAbout: () => openAbout({ onVideo: openVideo }), onVideo: () => openVideo() });
   }
 
   // NASA's nine Artemis III candidate regions, outlined on the 3D Moon; the

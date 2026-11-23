@@ -313,5 +313,18 @@ export function nextTransition(ctx, ms, predicate, config = DEFAULT_CONFIG, { ma
   return null;
 }
 
+/**
+ * Screening for one moment, with the same rule as the Check step at touchdown:
+ * NO GO when there is no solar power or Earth is hidden by terrain; GO when power and
+ * the radio link are both fine; otherwise GO WITH CARE (partial Sun, Earth low, a
+ * thin link margin, or no Deep Space Network antenna in view right now).
+ * @returns {'green'|'amber'|'red'}
+ */
+export function screenNow(e) {
+  if (!(e.sun.fraction > 0) || !e.earth.los) return 'red'; // as isSunUp / isEarthUp and the scan's lit / los
+  if (e.powerStatus === 'go' && e.commsStatus === 'go') return 'green';
+  return 'amber';
+}
+
 export const isSunUp = (e) => e.sun.fraction > 0;
 export const isEarthUp = (e) => e.earth.los;

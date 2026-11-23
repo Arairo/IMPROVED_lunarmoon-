@@ -1,0 +1,230 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: #000; }
+  body { font-family: 'Inter', -apple-system, system-ui, sans-serif; color: #f5f5f7; -webkit-font-smoothing: antialiased; }
+  #stars { position: absolute; inset: 0; }
+  .layer { position: absolute; inset: 0; }
+  .full { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .stage { position: absolute; inset: 0; perspective: 2200px; perspective-origin: 50% 45%; }
+  .win { position: absolute; left: 0; top: 0; width: 1600px; height: 1000px; transform-origin: 0 0; border-radius: 18px; overflow: hidden;
+    box-shadow: 0 60px 140px rgba(0,0,0,.65), 0 20px 50px rgba(0,0,0,.45), 0 0 0 1px rgba(255,255,255,.08); background: #0b0f17; }
+  .win img { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .txt { position: absolute; left: 0; right: 0; text-align: center; }
+  .w { display: inline-block; }
+  .grad, .grad .w { background: linear-gradient(180deg, #ffffff 30%, #a9b0c2); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .kick { position: absolute; left: 110px; top: 50%; width: 520px; margin-top: -170px; display: flex; flex-direction: column; align-items: flex-start; gap: 20px; z-index: 6; }
+  .kick .n { font: 800 28px 'Inter'; color: #2997ff; padding: 6px 14px; border-radius: 12px; background: rgba(41,151,255,.14); }
+  .kick .h { font: 800 72px 'Inter'; letter-spacing: -0.035em; line-height: 1.02; padding-bottom: .06em; }
+  .kick .s { font: 500 27px/1.4 'Inter'; color: #a1a6b3; margin-top: 12px; }
+  .scrim { position: absolute; left: 0; top: 0; bottom: 0; width: 900px; background: linear-gradient(90deg, rgba(0,0,0,.92) 0%, rgba(0,0,0,.72) 48%, transparent 100%); z-index: 5; }
+  .callout { position: absolute; border-radius: 18px; border: 3px solid #2997ff; box-shadow: 0 0 0 6px rgba(41,151,255,.18), 0 0 40px rgba(41,151,255,.55); z-index: 20; pointer-events: none; }
+  .callout b { position: absolute; left: -3px; top: -46px; padding: 6px 14px; border-radius: 10px; background: #2997ff; color: #fff; font: 700 22px 'Inter'; white-space: nowrap; }
+  .cursor { position: absolute; width: 36px; height: 36px; z-index: 50; filter: drop-shadow(0 4px 8px rgba(0,0,0,.6)); }
+  .ripple { position: absolute; width: 90px; height: 90px; margin: -45px 0 0 -45px; border-radius: 50%; border: 3px solid rgba(255,255,255,.9); z-index: 49; }
+  .cap { position: absolute; left: 50%; bottom: 46px; transform: translateX(-50%); max-width: 1500px; padding: 16px 28px; border-radius: 22px; background: rgba(12,14,20,.78); backdrop-filter: blur(24px) saturate(160%); border: 1px solid rgba(255,255,255,.12);
+    box-shadow: 0 20px 50px rgba(0,0,0,.5); font: 600 34px/1.3 'Inter'; letter-spacing: -0.01em; text-align: center; z-index: 80; white-space: nowrap; }
+  .chip { position: absolute; left: 50%; top: 40px; transform: translateX(-50%); padding: 10px 20px; border-radius: 999px; background: rgba(12,14,20,.7); border: 1px solid rgba(255,255,255,.14); font: 700 22px 'Inter'; z-index: 70; backdrop-filter: blur(16px); }
+  .vign { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at 50% 45%, transparent 55%, rgba(0,0,0,.5) 100%); z-index: 60; }
+  .si { position: absolute; right: 26px; top: 20px; font: 500 15px 'Inter'; color: rgba(255,255,255,.42); z-index: 99; }
+  .logo { width: 96px; height: 96px; border-radius: 24px; background: #0b0f17; display: grid; place-items: center; box-shadow: 0 20px 50px rgba(0,0,0,.6), inset 0 0 0 1px rgba(255,255,255,.12); margin: 0 auto 26px; }
+  .url { display: inline-block; margin-top: 30px; padding: 14px 28px; border-radius: 999px; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.18); font: 600 28px 'Inter'; color: #fff; }
+
+  .chbar { position: absolute; left: 60px; right: 60px; top: 26px; height: 4px; display: flex; gap: 6px; z-index: 90; }
+  .chbar i { flex: 1; height: 4px; border-radius: 2px; background: rgba(255,255,255,.16); overflow: hidden; position: relative; }
+  .chbar i b { position: absolute; inset: 0; width: 0; background: linear-gradient(90deg, #2997ff, #64d2ff); }
+  .chlab { position: absolute; left: 60px; top: 44px; z-index: 90; display: flex; align-items: center; gap: 12px; font: 600 21px 'Inter'; color: rgba(255,255,255,.92); letter-spacing: -0.01em; }
+  .chlab .no { font: 700 15px 'Inter'; color: #64d2ff; letter-spacing: .12em; text-transform: uppercase; }
+  .si { top: 44px; }
+
+  .big { position: absolute; left: 0; right: 0; text-align: center; z-index: 85; font: 800 76px/1.08 'Inter'; letter-spacing: -0.035em; padding: 0 140px; text-shadow: 0 8px 40px rgba(0,0,0,.8); }
+  .big.sm { font-size: 58px; }
+  .bscrim { position: absolute; left: 0; right: 0; bottom: 0; height: 520px; background: linear-gradient(180deg, transparent, rgba(0,0,0,.88) 70%); z-index: 84; }
+  .stat { position: absolute; z-index: 86; width: 440px; padding: 34px 36px; border-radius: 28px; background: rgba(18,20,28,.78); border: 1px solid rgba(255,255,255,.14); backdrop-filter: blur(22px); box-shadow: 0 30px 80px rgba(0,0,0,.6); }
+  .stat b { display: block; font: 800 96px 'Inter'; letter-spacing: -0.04em; background: linear-gradient(180deg,#fff 30%,#9fb4d6); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .stat span { display: block; margin-top: 10px; font: 500 26px/1.35 'Inter'; color: #c7c9d1; }
+  .phone { position: absolute; width: 330px; height: 554px; border-radius: 52px; overflow: hidden; z-index: 30; background: #000; box-shadow: 0 0 0 10px #1c1c1e, 0 0 0 12px #3a3a3c, 0 50px 120px rgba(0,0,0,.7); }
+  .phone img { width: 100%; height: 100%; object-fit: cover; }
+</style></head>
+<body>
+<canvas id="stars" width="1920" height="1080"></canvas>
+<div id="root"></div>
+<div class="vign"></div>
+
+<div class="si">SI-assisted · real screen captures · music generated in code</div>
+<script>
+const A = (n) => `../cap/${n}`;
+const W = 1920, H = 1080;
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const lerp = (a, b, k) => a + (b - a) * k;
+const ease = (k) => (k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2);
+const out = (k) => 1 - Math.pow(1 - k, 3);
+const prog = (t, a, b) => clamp((t - a) / (b - a));
+function kf(u, frames) {
+  if (u <= frames[0][0]) return { ...frames[0][1] };
+  for (let i = 0; i < frames.length - 1; i++) {
+    const [t0, p0] = frames[i], [t1, p1] = frames[i + 1];
+    if (u <= t1) { const k = ease((u - t0) / (t1 - t0)); const o = {}; for (const key in p0) o[key] = lerp(p0[key], p1[key] ?? p0[key], k); return o; }
+  }
+  return { ...frames[frames.length - 1][1] };
+}
+const root = document.getElementById('root');
+const el = (html) => { const d = document.createElement('div'); d.innerHTML = html.trim(); return d.firstChild; };
+(() => {
+  const c = document.getElementById('stars').getContext('2d'); const r = (a, b) => a + Math.random() * (b - a);
+  const g = c.createRadialGradient(W * .5, H * .55, 0, W * .5, H * .55, W * .7); g.addColorStop(0, '#0b1020'); g.addColorStop(1, '#000'); c.fillStyle = g; c.fillRect(0, 0, W, H);
+  for (let i = 0; i < 1500; i++) { c.fillStyle = `rgba(255,255,255,${r(.08, .55)})`; c.beginPath(); c.arc(r(0, W), r(0, H), r(.3, 1.1), 0, 7); c.fill(); }
+})();
+
+
+const CUT = location.hash === '#short' ? 'short' : 'full';
+const T = {};
+const PLAN = CUT === 'full'
+  ? [['hook', 0, 4.6], ['need', 4.4, 10.6], ['pick', 10.4, 16.2], ['layers', 16, 24.2], ['check', 24, 30.2], ['fly', 30, 38.2], ['trust', 38, 46.2], ['modes', 46, 52.4], ['end', 52.2, 60]]
+  : [['hook', 0, 4.2], ['need', 4, 9.2], ['layers', 9, 15.2], ['check', 15, 20.2], ['trust', 20, 25.2], ['end', 25, 30]];
+PLAN.forEach(([id, a, b]) => { T[id] = { start: a, end: b - 0.35 }; });
+const DURATION = PLAN[PLAN.length - 1][2];
+window.T = T; window.CUES = PLAN.map((p) => p[1]);
+// ---------- building blocks ----------
+function placeWin(w, p) {
+  const s = p.s, px = p.cx * 1600, py = p.cy * 1000;
+  w.style.transform = `translate(${W / 2 + (p.dx || 0)}px, ${H / 2 + (p.dy || 0)}px) rotateX(${p.rx || 0}deg) rotateY(${p.ry || 0}deg) scale(${s}) translate(${-px}px, ${-py}px)`;
+  w.style.opacity = p.o ?? 1;
+}
+const toScreen = (p, x, y) => [W / 2 + (p.dx || 0) + (x - p.cx) * 1600 * p.s, H / 2 + (p.dy || 0) + (y - p.cy) * 1000 * p.s];
+function kicker(n, h, sub) { return el(`<div class="kick"><div class="scrim" style="left:-110px;top:-700px;bottom:-700px;position:absolute;z-index:-1"></div><span class="n">${n}</span><div><div class="h grad">${h}</div><div class="s">${sub}</div></div></div>`); }
+function animKicker(k, t, tin, tout) {
+  const a = out(prog(t, tin, tin + 0.6)), b = ease(prog(t, tout - 0.45, tout));
+  k.style.opacity = a * (1 - b); k.style.transform = `translateX(${(1 - a) * -40}px)`; k.style.filter = `blur(${(1 - a) * 10 + b * 8}px)`;
+}
+const show = (n, on) => { n.style.display = on ? '' : 'none'; };
+const S = [];
+const CUR_SVG = '<svg class="cursor" viewBox="0 0 24 24"><path d="M4 2l16 10-7 1.5L16 21l-3 1.5-3-7.5-6 5z" fill="#fff" stroke="#000" stroke-width="1.2" stroke-linejoin="round"/></svg>';
+
+/**
+ * Generic app-window scene.
+ * cfg: { id, imgs:[name...], swaps:[[u, index]], cam:[[u,{...}]], kick:[n,h,sub], callouts:[[u0,u1,[x0,y0,x1,y1],label]], click:{at:u, x, y}, frames }
+ */
+function winScene(cfg) {
+  const sc = T[cfg.id];
+  const st = el('<div class="stage"></div>');
+  const w = el('<div class="win"></div>');
+  const ims = cfg.imgs.map((n, i) => { const im = el(`<img src="${A(n)}">`); im.style.opacity = i === 0 ? 1 : 0; w.appendChild(im); return im; });
+  st.appendChild(w); root.appendChild(st);
+  const k = cfg.kick ? kicker(...cfg.kick) : null; if (k) root.appendChild(k);
+  const calls = (cfg.callouts || []).map((c) => { const d = el(`<div class="callout">${c[3] ? `<b>${c[3]}</b>` : ''}</div>`); root.appendChild(d); return d; });
+  let cur, rip; if (cfg.click) { cur = el(CUR_SVG); rip = el('<div class="ripple"></div>'); root.appendChild(rip); root.appendChild(cur); }
+  const a = sc.start, b = sc.end + 0.35, len = b - a;
+  S.push((t) => {
+    const on = t >= a && t < b + 0.01;
+    [st, k, cur, rip, ...calls].forEach((n) => n && show(n, on));
+    if (!on) return;
+    const u = (t - a) / len;
+    const p = kf(u, cfg.cam);
+    p.o = Math.min(p.o ?? 1, prog(t, a, a + 0.45), 1 - prog(t, b - 0.4, b));
+    placeWin(w, p);
+    // image swaps (fade 0.25 s) and optional flipbook
+    if (cfg.swaps) { let idx = 0; cfg.swaps.forEach(([su, i]) => { if (u >= su) idx = i; }); ims.forEach((im, i) => { const sw = cfg.swaps.find((x) => x[1] === i); const tin = sw ? a + sw[0] * len : a; im.style.opacity = i === 0 ? 1 : i <= idx ? prog(t, tin, tin + 0.25) : 0; }); }
+    if (cfg.frames) { const f = clamp((u - cfg.frames.u0) / (cfg.frames.u1 - cfg.frames.u0)) * (ims.length - 2) + 1; const i = Math.floor(f), fr = f - i; ims.forEach((im, j) => { im.style.opacity = j === 0 ? 1 : u < cfg.frames.u0 ? 0 : j === i ? 1 : j === i + 1 ? fr : 0; }); }
+    if (k) animKicker(k, t, a + 0.3, b - 0.05);
+    calls.forEach((d, i) => {
+      const [u0, u1, r] = cfg.callouts[i];
+      const [x0, y0] = toScreen(p, r[0], r[1]), [x1, y1] = toScreen(p, r[2], r[3]);
+      const kin = out(prog(u, u0, u0 + 0.06)), kout = prog(u, u1 - 0.04, u1);
+      d.style.left = `${x0 - 8}px`; d.style.top = `${y0 - 8}px`; d.style.width = `${x1 - x0 + 16}px`; d.style.height = `${y1 - y0 + 16}px`;
+      d.style.opacity = (kin * (1 - kout) * (p.o ?? 1)).toFixed(3); d.style.transform = `scale(${lerp(1.06, 1, kin)})`;
+    });
+    if (cfg.click) {
+      const c = cfg.click; const [tx, ty] = toScreen(p, c.x, c.y);
+      const km = ease(prog(u, c.at - 0.14, c.at));
+      cur.style.left = `${lerp(W - 260, tx, km)}px`; cur.style.top = `${lerp(H - 220, ty, km)}px`;
+      cur.style.opacity = prog(u, c.at - 0.2, c.at - 0.14) * (1 - prog(u, 0.93, 0.99));
+      const kr = prog(u, c.at, c.at + 0.08); rip.style.left = `${tx + 6}px`; rip.style.top = `${ty + 6}px`; rip.style.opacity = u > c.at ? 1 - kr : 0; rip.style.transform = `scale(${0.3 + kr * 1.2})`;
+    }
+  });
+}
+
+
+function big(text, a, b, top = 820, cls = '') {
+  const d = el(`<div class="big grad ${cls}" style="top:${top}px">${text}</div>`); root.appendChild(d);
+  S.push((t) => { const on = t > a - 0.1 && t < b + 0.1; show(d, on); if (!on) return; const k = out(prog(t, a, a + 0.55)), q = prog(t, b - 0.35, b); d.style.opacity = k * (1 - q); d.style.transform = `translateY(${(1 - k) * 26}px) scale(${lerp(1.04, 1, k)})`; d.style.filter = `blur(${(1 - k) * 10 + q * 8}px)`; });
+}
+function scrim(a, b) { const d = el('<div class="bscrim"></div>'); root.appendChild(d); S.push((t) => { const on = t > a && t < b; show(d, on); if (on) d.style.opacity = Math.min(prog(t, a, a + .4), 1 - prog(t, b - .4, b)); }); }
+const has = (id) => !!T[id];
+// Hook: the landing page's sunrise
+if (has('hook')) {
+  const sc = T.hook; const g = el('<div class="layer"></div>');
+  const ims = ['land0','land1','land2','land3','land4','land5','land6','land7'].map((n) => { const i = el(`<img class="full" src="${A(n + '.png')}" style="transform-origin:50% 22%">`); g.appendChild(i); return i; });
+  root.appendChild(g);
+  S.push((t) => { const end = sc.end + 0.35; const on = t < end; show(g, on); if (!on) return;
+    const f = clamp(t / 3.6) * (ims.length - 1), i = Math.floor(f), fr = f - i;
+    ims.forEach((im, j) => { im.style.opacity = j <= i ? 1 : j === i + 1 ? fr : 0; im.style.transform = `scale(${lerp(3.0, 2.7, t / end)})`; });
+    g.style.opacity = 1 - prog(t, sc.end - 0.3, end); });
+  scrim(0.6, T.hook.end + 0.3); big('At the Moon’s south pole,<br>the Sun barely rises.', 0.9, T.hook.end + 0.2, 760);
+}
+if (has('need')) {
+  winScene({ id: 'need', imgs: ['globe_site.png'], cam: [[0, { cx: .6, cy: .5, s: 1.4 }], [0.55, { cx: .61, cy: .5, s: 2.6 }], [1, { cx: .61, cy: .3, s: 2.8 }]],
+    callouts: [[0.1, 0.5, [.24, .79, .365, .82], 'Sun · Earth'], [0.6, 0.98, [.505, .105, .725, .142], 'Right now']] });
+  const a = T.need.start; scrim(a, T.need.end + .3);
+  big('A lander needs sunlight for power.', a + 0.3, a + 3.0, 840, 'sm'); big('And Earth in view to call home.', a + 3.1, T.need.end + 0.2, 840, 'sm');
+}
+if (has('pick')) {
+  winScene({ id: 'pick', imgs: ['site.png', 'date_cal.png'], swaps: [[0.5, 1]], cam: [[0, { cx: .5, cy: .5, s: .8, rx: 14, ry: -12 }], [0.25, { cx: .118, cy: .35, s: 1.9, dx: -330 }], [0.5, { cx: .118, cy: .38, s: 1.95, dx: -330 }], [0.58, { cx: .118, cy: .45, s: 1.9, dx: -330 }], [1, { cx: .118, cy: .47, s: 1.95, dx: -330 }]] });
+  const a = T.pick.start; const d1 = el('<div class="big grad" style="top:420px;left:1120px;right:60px;text-align:left;padding:0">Pick a site.</div>'), d2 = el('<div class="big grad" style="top:520px;left:1120px;right:60px;text-align:left;padding:0">Pick a date.</div>');
+  root.appendChild(d1); root.appendChild(d2);
+  S.push((t) => { [[d1, a + .6], [d2, a + 3.0]].forEach(([d, s]) => { const on = t > s - .1 && t < T.pick.end + .2; show(d, on); if (on) { const k = out(prog(t, s, s + .5)); d.style.opacity = k * (1 - prog(t, T.pick.end - .3, T.pick.end)); d.style.transform = `translateX(${(1 - k) * 40}px)`; } }); });
+}
+if (has('layers')) {
+  const L = CUT === 'full' ? ['layer_sun_year.png', 'layer_earth.png', 'layer_both.png', 'polar_sun.png', 'layer_height.png', 'layer_slope.png'] : ['layer_sun_year.png', 'layer_earth.png', 'layer_both.png', 'layer_slope.png'];
+  winScene({ id: 'layers', imgs: L, swaps: L.slice(1).map((_, i) => [(i + 1) / L.length, i + 1]), cam: [[0, { cx: .6, cy: .47, s: 1.25 }], [1, { cx: .6, cy: .47, s: 1.5 }]] });
+  scrim(T.layers.start, T.layers.end + .3); big('See the whole pole at once.', T.layers.start + .5, T.layers.end + .2, 860);
+}
+if (has('check')) {
+  winScene({ id: 'check', imgs: ['check.png'], cam: [[0, { cx: .5, cy: .5, s: .9 }], [0.2, { cx: .118, cy: .28, s: 2.4, dx: 360 }], [0.55, { cx: .118, cy: .3, s: 2.4, dx: 360 }], [0.7, { cx: .118, cy: .66, s: 2.4, dx: 360 }], [1, { cx: .118, cy: .67, s: 2.5, dx: 360 }]],
+    callouts: [[0.72, 0.99, [.005, .625, .225, .722], 'Close to the line']] });
+  const a = T.check.start; const d1 = el('<div class="big grad" style="top:430px;left:80px;right:1000px;text-align:left;padding:0">A clear answer.</div>'), d2 = el('<div class="big grad" style="top:530px;left:80px;right:1000px;text-align:left;padding:0">And an honest one.</div>');
+  root.appendChild(d1); root.appendChild(d2);
+  S.push((t) => { [[d1, a + .7], [d2, a + 3.2]].forEach(([d, s]) => { const on = t > s - .1 && t < T.check.end + .2; show(d, on); if (on) { const k = out(prog(t, s, s + .5)); d.style.opacity = k * (1 - prog(t, T.check.end - .3, T.check.end)); d.style.transform = `translateX(${(1 - k) * -40}px)`; } }); });
+}
+if (has('fly')) {
+  winScene({ id: 'fly', imgs: ['flight0.png', 'flight2.png', 'flight3.png', 'terrain0.png', 'terrain1.png'], swaps: [[0.18, 1], [0.34, 2], [0.5, 3], [0.75, 4]],
+    cam: [[0, { cx: .66, cy: .42, s: 1.3 }], [0.48, { cx: .66, cy: .42, s: 1.45 }], [0.52, { cx: .42, cy: .45, s: 1.45 }], [1, { cx: .42, cy: .45, s: 1.6 }]] });
+  scrim(T.fly.start, T.fly.end + .3); big('From launch to touchdown,<br>on real NASA terrain.', T.fly.start + .5, T.fly.end + .2, 790, 'sm');
+}
+if (has('trust')) {
+  winScene({ id: 'trust', imgs: ['trust.png'], cam: [[0, { cx: .75, cy: .6, s: 1.6, o: .14 }], [1, { cx: .75, cy: .62, s: 1.7, o: .14 }]] });
+  const a = T.trust.start, b = T.trust.end;
+  const st = [['154', 'checks against NASA JPL Horizons. Worst: 0.007°', 180], ['93.5%', 'of pixels agree with Lunar Reconnaissance Orbiter photos', 716], ['38', 'sites on NASA LOLA terrain, 20 m at Artemis III regions', 1252]].map(([n, s, x], i) => { const d = el(`<div class="stat" style="left:${x}px;top:330px"><b>${n}</b><span>${s}</span></div>`); root.appendChild(d); return [d, a + 0.5 + i * (CUT === 'full' ? 1.2 : 0.8)]; });
+  S.push((t) => st.forEach(([d, s]) => { const on = t > s - .1 && t < b + .3; show(d, on); if (on) { const k = out(prog(t, s, s + .6)); d.style.opacity = k * (1 - prog(t, b - .3, b + .2)); d.style.transform = `translateY(${(1 - k) * 40}px)`; } }));
+  big('Checked against NASA data.', a + (CUT === 'full' ? 4.2 : 3.0), b + .2, 760, 'sm');
+}
+if (has('modes')) {
+  const sc = T.modes; const g = el('<div class="layer"></div>'); root.appendChild(g);
+  const w1 = el(`<div class="win"><img src="${A('beg1.png')}"></div>`), w2 = el(`<div class="win"><img src="${A('check.png')}"></div>`);
+  const ph = el(`<div class="phone"><img src="${A('phone_check.png')}"></div>`);
+  const st = el('<div class="stage"></div>'); st.appendChild(w1); st.appendChild(w2); g.appendChild(st); g.appendChild(ph);
+  const l1 = el('<div class="big sm grad" style="top:120px">For first-timers and mission planners.</div>'), l2 = el('<div class="big sm grad" style="top:880px">On any screen.</div>'); g.appendChild(l1); g.appendChild(l2);
+  S.push((t) => { const a = sc.start, b = sc.end + .35; const on = t > a && t < b; show(g, on); if (!on) return; const u = (t - a) / (b - a);
+    const o = Math.min(prog(t, a, a + .4), 1 - prog(t, b - .4, b));
+    placeWin(w1, { cx: .5, cy: .5, s: .5, dx: -420, dy: 40, ry: 12, o }); placeWin(w2, { cx: .5, cy: .5, s: .5, dx: 300, dy: 40, ry: -12, o: o * prog(t, a + .4, a + .9) });
+    const kp = out(prog(t, a + 2.6, a + 3.4)); ph.style.left = '1420px'; ph.style.top = `${lerp(1100, 300, kp)}px`; ph.style.opacity = o; ph.style.transform = `rotate(${lerp(8, 3, kp)}deg)`;
+    l1.style.opacity = out(prog(t, a + .5, a + 1.1)) * o; l2.style.opacity = out(prog(t, a + 3.2, a + 3.8)) * o; });
+}
+// End card
+{
+  const sc = T.end;
+  const g = el(`<div class="layer"><img class="full" src="${A('land_end.png')}" style="filter:brightness(.55) blur(2px);transform-origin:50% 12%"><div class="layer" style="background:linear-gradient(180deg,rgba(0,0,0,.2) 0%,rgba(0,0,0,.55) 55%,#000 82%)"></div><div class="txt" style="top:400px">
+    <div class="grad" style="font:800 110px Inter;letter-spacing:-0.04em">Lunar Site Planner</div>
+    <div style="margin-top:14px;font:500 32px Inter;color:#c7c9d1">Where a Moon lander gets sunlight and Earth contact. Free, in your browser.</div>
+    <div class="url">arairo.github.io/IMPROVED_lunarmoon-</div>
+    <div style="margin-top:28px;font:500 22px Inter;color:#8e93a0">Team Dell Monitors · NASA Space Apps 2026 · doi.org/10.5281/zenodo.24435109<br>A screening tool, not a landing approval</div></div></div>`);
+  root.appendChild(g);
+  S.push((t) => { const on = t > sc.start; show(g, on); if (!on) return; const k = out(prog(t, sc.start, sc.start + 1.2));
+    g.querySelector('img').style.transform = `scale(${lerp(2.3, 2.1, k)})`; g.style.opacity = Math.min(k, 1 - prog(t, DURATION - 0.7, DURATION)); });
+}
+window.DURATION = DURATION;
+window.render = (t) => { S.forEach((f) => f(t)); };
+window.ready = async () => { await document.fonts.ready; await Promise.all([...document.images].map((i) => i.decode().catch(() => {}))); return true; };
+render(0);
+</script></body></html>

@@ -8,6 +8,7 @@ import { findNextTransition } from '../ui/assessment.js';
 import { fmtLatLon } from '../ui/format.js';
 import { lumiSvg } from './lumi.js';
 import { play } from './sound.js';
+import { screenNow } from '../core/analysis.js';
 
 const DAY = 86400000;
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
@@ -106,7 +107,7 @@ export function createAssistant(api) {
     const head = `At <b>${siteName()}</b>, ${when(app.timeMs)}:`;
     if (focus === 'power') return `${head}<br>${power}`;
     if (focus === 'earth') return `${head}<br>${earth}`;
-    const verdict = n.powerStatus === 'go' && n.commsStatus === 'go' ? 'GO right now ✅' : n.powerStatus === 'no-go' && n.commsStatus === 'no-go' ? 'NO GO right now ⛔' : 'GO WITH CARE right now ⚠️';
+    const verdict = { green: 'GO right now ✅', amber: 'GO WITH CARE right now ⚠️', red: 'NO GO right now ⛔' }[screenNow(n)];
     return `${head} <b>${verdict}</b><br>${power}<br>${earth}`;
   }
   function summary30() {

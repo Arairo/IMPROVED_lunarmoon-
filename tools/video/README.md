@@ -1,28 +1,49 @@
-# Video pipeline (promo + Professional tutorial)
+# Video pipeline (Professional tutorial, promo, 30-second cut)
 
-Both videos are made from **real screen captures of the app**, animated by an
-HTML "composition" that is rendered frame by frame (so every zoom and fade is
-perfectly smooth), plus a soundtrack generated in code. Nothing here is a
-one-off: after the app changes, re-run only the parts that changed.
+All three videos (re-made 23 Nov 2026) are built from **real screen captures of the
+production build**. An HTML "composition" animates them and is rendered frame by
+frame, so every zoom and fade is smooth. The soundtrack is generated in code. Nothing
+here is a one-off: when the app changes, re-run only the parts that changed.
 
-Work directory: the scripts read and write `/tmp/claude-0/promo` and
-`/tmp/claude-0/tut` (copy these folders there first). The app must be running:
-`npx vite --port 5180 --strictPort`.
-
-| Step | Promo | Tutorial | Re-run when |
+| Video | File in `public/tutorial/` | Length | Size |
 |---|---|---|---|
-| 1. Capture screens | `promo/capture.cjs`, `promo/capture2.cjs` | `tutorial/cap.cjs` | the UI on screen changed (≈5–10 min) |
-| 2. Narration (Kokoro TTS) | — | `tutorial/script.json` → `tutorial/tts.py` → `lines.json` | a line of the script changed (only that line needs a new voice) |
-| 3. Composition | `promo/comp.html` | `tutorial/tut.tpl.html` (+ `lines.json` → `tut.html`) | scenes, zooms or captions change |
-| 4. Render frames | `promo/render.cjs` | `tutorial/render.cjs` (run 2–3 in parallel: `node render.cjs 0 40`, `40 80`, `80`) | after 1–3 (≈5–8 min) |
-| 5. Music + mix | `promo/music.py promo/cues.json` | `music.py` + `tutorial/mix.py` (ducks under the voice) | the length changed |
-| 6. Encode | ffmpeg (see below) | ffmpeg | always |
+| Professional tutorial, 16 chapters, narrated | `pro-tutorial.mp4` (+ `pro-tutorial.vtt` captions, `pro-tutorial.chapters.vtt`) | 3:15 | 22.6 MiB |
+| Promo, music only | `lunar-site-planner-promo.mp4` | 1:00 | 15.4 MiB |
+| Social cut, music only | `lunar-site-planner-demo-30s.mp4` | 0:30 | 7.9 MiB |
+
+Every file must stay **under 25 MiB**. Captions are burned in, and the tutorial's
+are also in the .vtt file. Raw captures and frames never go in the repo.
+
+The work directory is `/tmp/claude-0/v2` (`cap/`, `tut/`, `promo/`); copy these
+scripts there. Serve the production build first:
+`npm run build && npx vite preview --port 5180 --strictPort`.
+
+| Step | Command | Re-run when |
+|---|---|---|
+| 1. Capture | `node capture.cjs all` (or `pro`, `later`, `phone`); `node capture-beginner.cjs` | the UI changed |
+| 2. Narration | edit `tutorial/script.json` (`text` = captions, `say` = what the voice reads), then `python3 tts.py` → `lines.json` | a line changed |
+| 3. Composition | `python3 build.py` (tutorial: `tut.tpl.html` + `lines.json` → `tut.html`); `promo/promo.html` (`#short` = 30-second cut) | scenes, zooms or titles changed |
+| 4. Check frames | `node peek.cjs site@0.5 check@0.8 …` (scene@fraction, or seconds) | always, before step 5 |
+| 5. Render | `node render.cjs 0 50` / `50 100` / … in parallel; promo: `node render.cjs`, `CUT=short node render.cjs` | after 1-3 |
+| 6. Captions | `node vtt.cjs` → `tutorial-pro.vtt`, `tutorial-pro.chapters.vtt` | the narration changed |
+| 7. Music + mix | `python3 promo/music.py cues.json music.wav`; tutorial: `python3 mix.py` (ducks under the voice) | the length changed |
+| 8. Encode | see below | always |
 
 ```bash
-ffmpeg -framerate 30 -i frames/%05d.jpg -i mix.wav -c:v libx264 -preset slow -crf 25 -pix_fmt yuv420p -movflags +faststart -c:a aac -b:a 160k -shortest out.mp4
+# tutorial: two-pass to stay under 25 MiB
+ffmpeg -framerate 30 -i frames/%05d.jpg -c:v libx264 -preset slow -b:v 860k -pass 1 -an -f mp4 /dev/null
+ffmpeg -framerate 30 -i frames/%05d.jpg -i mix.wav -c:v libx264 -preset slow -b:v 860k -pass 2 -pix_fmt yuv420p -c:a aac -b:a 96k -movflags +faststart -shortest pro-tutorial.mp4
+# promo and 30-second cut
+ffmpeg -framerate 30 -i frames/%05d.jpg -i music.wav -c:v libx264 -preset slow -crf 22 -maxrate 3M -bufsize 6M -pix_fmt yuv420p -c:a aac -b:a 128k -movflags +faststart -shortest lunar-site-planner-promo.mp4
 ```
 
-`peek.cjs` renders single frames for quick checks; `montage.sh` tiles them.
-The Kokoro model files (`kokoro-v1.0.int8.onnx`, `voices-v1.0.bin`) are not in
-the repo; `pip install kokoro-onnx soundfile` and download them from the
-kokoro-onnx releases. Both videos carry an "SI-assisted" label.
+The story follows one plan from start to finish. On the default date the
+connecting ridge is NO GO (Earth hidden). "Find the next good date" then picks
+18 Nov 2026, which is GO WITH CARE with a "Close to the line" warning. Captures
+after the Date step must stay on that date: don't press Reset Date.
+
+The Kokoro TTS model files (`kokoro-v1.0.int8.onnx`, `voices-v1.0.bin`) are not in
+the repo. Run `pip install kokoro-onnx soundfile`, then download the files from the
+kokoro-onnx releases into `/tmp/claude-0/tts/`. Every video carries an
+"SI-assisted" label. Terrain 3D keeps its own interactive walkthrough
+(`src/planner/ui/videoTutorial.js`, `lunar-site-planner-tutorial.mp4`).
