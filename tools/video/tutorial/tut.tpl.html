@@ -208,7 +208,7 @@ function beatScene(id, { kick, beats, move = 0.85 }) {
   const times = beats.map((bt, i) => (i === 0 || bt.at == null ? a : Math.max(a + 0.2, WD(id, bt.at) - 0.2)));
   const kickEnd = kick ? (beats.length > 1 ? times[1] + 0.2 : b - 0.05) : undefined;
   const cams = beats.map((bt, i) => {
-    const side = bt.side ?? (kick && times[i] < kickEnd - 0.1);
+    const side = bt.side ?? (!!kick && i === 0);
     if (bt.cam) return bt.cam;
     return focus(bt.focus || bt.box || FULLR, { side, ...(bt.fit || {}) });
   });
@@ -226,7 +226,8 @@ function beatScene(id, { kick, beats, move = 0.85 }) {
   beats.forEach((bt, i) => {
     if (!bt.box) return;
     const end = i + 1 < beats.length ? times[i + 1] : b - 0.1;
-    const arrive = Math.min(times[i] + (i === 0 ? 0.4 : Math.min(move, (end - times[i]) * 0.6)), end - 0.4);
+    const still = i > 0 && JSON.stringify(cams[i]) === JSON.stringify(cams[i - 1]);
+    const arrive = Math.min(times[i] + (i === 0 ? 0.4 : still ? 0.15 : Math.min(move, (end - times[i]) * 0.6)), end - 0.4);
     callouts.push([(arrive - a) / len, (end - a) / len, pad(bt.box), bt.label || '']);
   });
   const ci = beats.findIndex((bt) => bt.click);
@@ -321,13 +322,15 @@ beatScene('whatif', { kick: ['04', 'What if', 'Nudge it, and read what changes.'
   { at: 'in plain words', img: 'whatif_n', focus: near(rr('whatif_n', 'whatifOut'), 0.3), box: rr('whatif_n', 'whatifOut'), label: 'What changes, in plain words' },
 ] });
 const FSIDE = rr('flight2', 'flightSide');
+const clipTo = (r, c) => [r[0], Math.max(r[1], c[1]), r[2], Math.min(r[3], c[3] - 0.004)];
+const BURNS = clipTo(rr('flight_burns', 'burns'), FSIDE), ROUTES = clipTo(rr('flight_routes', 'routes'), FSIDE);
+const FLY = U(FSIDE, [0.24, 0.75, 0.62, 0.825]);
 beatScene('flight', { kick: ['', 'Flight', 'Launch, route, burns and fuel.'], beats: [
   { img: 'flight0', focus: [0.235, 0.06, 1, 0.84] },
-  { at: 'launch date', img: 'flight2', focus: FSIDE, box: rr('flight2', 'flightStats'), label: 'Launch · door to door · fuel' },
-  { at: 'route', img: 'flight3', focus: U(rr('flight3', 'flightBar'), [0.4, 0.1, 1, 0.82]), box: rr('flight3', 'flightBar'), label: 'The route, phase by phase' },
-  { at: 'every burn', img: 'flight_burns', focus: U(FSIDE, rr('flight_burns', 'burns')), box: rr('flight_burns', 'burns'), label: 'Every burn' },
-  { at: 'Compare a direct', img: 'flight_routes', focus: U(FSIDE, rr('flight_routes', 'routes')), box: rr('flight_routes', 'routes'), label: 'Direct · phasing loops · low-energy' },
-  { at: 'Each burn says', img: 'flight_burns', focus: U(FSIDE, rr('flight_burns', 'burns')), box: rr('flight_burns', 'burns'), label: 'Computed or assumed' },
+  { at: "how you'd get there", img: 'flight2', focus: FLY, box: rr('flight2', 'flightStats'), label: 'Launch · door to door · fuel' },
+  { at: 'every burn', img: 'flight_burns', focus: FLY, box: BURNS, label: 'Every burn' },
+  { at: 'Compare a direct', img: 'flight_routes', focus: FLY, box: ROUTES, label: 'Direct · phasing loops · low-energy' },
+  { at: 'Each burn says', img: 'flight_burns', focus: FLY, box: BURNS, label: 'Computed or assumed' },
 ] });
 beatScene('compare', { kick: ['', 'Compare', 'Plans side by side, to scale.'], beats: [
   { img: 'cmp1', focus: [0.1, 0.05, 0.9, 0.9] },
