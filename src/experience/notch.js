@@ -2,6 +2,8 @@
 // Shows scanning activity, then the live verdict with rolling numbers that
 // flash green when a value rises and red when it falls.
 
+import { screenNow } from '../core/analysis.js';
+
 let el = null;
 let last = { watts: null, clear: null };
 let busyTimer = null;
@@ -38,9 +40,8 @@ export function notchUpdate(now, { playing = false } = {}) {
   const apply = () => {
     el.classList.remove('is-busy');
     el.classList.add('is-wide');
-    const p = now.powerStatus, c = now.commsStatus;
-    // Same words as the Check step (GO / GO WITH CARE / NO GO); this pill is about right now.
-    const state = p === 'go' && c === 'go' ? ['GO', '#30d158'] : p === 'no-go' && c === 'no-go' ? ['NO GO', '#ff453a'] : ['GO WITH CARE', '#ffd60a'];
+    // Same words and rule as the Check step (GO / GO WITH CARE / NO GO); this pill is about right now.
+    const state = { green: ['GO', '#30d158'], amber: ['GO WITH CARE', '#ffd60a'], red: ['NO GO', '#ff453a'] }[screenNow(now)];
     el.style.setProperty('--c', state[1]);
     if (!el.querySelector('[data-k="w"]')) {
       el.innerHTML = `<span class="n-dot"></span><span class="n-top" data-k="s"></span><span class="n-sep"></span>

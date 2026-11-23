@@ -54,6 +54,8 @@ function starfield(canvas) {
   }
   const frame = (t) => {
     if (!alive) return;
+    // Hidden (e.g. opened straight into a mode): nothing to draw yet; size it once visible.
+    if (!base.width || !base.height) { if (canvas.clientWidth) build(); if (!base.width) { if (!still) raf = requestAnimationFrame(frame); return; } }
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.drawImage(base, 0, 0);
