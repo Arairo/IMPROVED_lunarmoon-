@@ -504,7 +504,7 @@ export function initExperience(api) {
     setMode(hashMode);
   } else {
     document.body.dataset.mode = 'intro';
-    mountIntro({ siteCount: sites.length, onChoose: (m) => setMode(m), onAbout: () => openAbout({ onVideo: openVideo }) });
+    mountIntro({ siteCount: sites.length, onChoose: (m) => setMode(m), onAbout: () => openAbout({ onVideo: openVideo }), onVideo: () => openVideo() });
   }
 
   // NASA's nine Artemis III candidate regions, outlined on the 3D Moon; the

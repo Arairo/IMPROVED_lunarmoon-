@@ -171,7 +171,7 @@ function spinMoon(canvas, base) {
   };
 }
 
-export function mountIntro({ onChoose, onAbout, siteCount = 29 }) {
+export function mountIntro({ onChoose, onAbout, onVideo, siteCount = 29 }) {
   const base = import.meta.env.BASE_URL;
   const el = document.createElement('div');
   el.id = 'xp-intro';
@@ -216,7 +216,60 @@ export function mountIntro({ onChoose, onAbout, siteCount = 29 }) {
       <button type="button" class="xp-stat" data-about title="How it is checked">Matches <b>JPL Horizons</b> to &lt; 0.01°</button>
       <button type="button" class="xp-stat" data-about title="How it is checked">Checked against <b>NASA Goddard</b> and <b>LRO</b> data</button>
     </div>
-    </div>`;
+      <button type="button" class="xp-more" data-scroll="xa-what" aria-label="Learn more about Lunar Site Planner">Learn more <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+    </div>
+    <div class="xa-bar" aria-hidden="true"><span class="xa-bar-name">Lunar Site Planner</span><button type="button" class="xa-bar-go" data-scroll="xa-ways" tabindex="-1">Start</button></div>
+    <main class="xa" aria-label="About Lunar Site Planner">
+      <section class="xa-sec xa-what" id="xa-what">
+        <p class="xa-eyebrow xa-reveal">What it is</p>
+        <h2 class="xa-h xa-reveal">Will your lander have power?<br> Can it call home?</h2>
+        <p class="xa-lead xa-reveal">At the Moon’s south pole the Sun skims the horizon, so one hill or crater rim can block it for days. Lunar Site Planner works out, for any site and date, when sunlight reaches the solar panels and when Earth is in view for the radio, from NASA’s own terrain and orbit data.</p>
+        <p class="xa-lead xa-reveal">Free, and it runs in your browser.</p>
+      </section>
+      <section class="xa-sec xa-film" aria-labelledby="xa-film-h">
+        <h2 class="xa-h2 xa-reveal" id="xa-film-h">See it in 60 seconds.</h2>
+        <div class="xa-player xa-reveal">
+          <video preload="none" playsinline data-poster="${base}about/promo-poster.webp" aria-label="60-second promo video (music, no narration)" width="1280" height="720"></video>
+          <button type="button" class="xa-play" aria-label="Play the 60-second promo"><svg width="30" height="30" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5z" fill="currentColor"/></svg></button>
+        </div>
+        <button type="button" class="xa-textlink xa-reveal" data-v="tour">Or watch the 3-minute tutorial, chapter by chapter ›</button>
+      </section>
+      <section class="xa-sec" aria-labelledby="xa-how-h">
+        <p class="xa-eyebrow xa-reveal">How it works</p>
+        <h2 class="xa-h2 xa-reveal" id="xa-how-h">Three steps to a clear answer.</h2>
+        <div class="xa-tiles">
+          <figure class="xa-tile xa-reveal"><img data-src="${base}about/site.webp" alt="The site list beside the 3D Moon, with landing sites marked near the south pole" loading="lazy" width="960" height="600"><figcaption><b><span>1</span> Pick a site</b>Search ${siteCount} landing sites, including all nine Artemis III candidate regions, or type any coordinates.</figcaption></figure>
+          <figure class="xa-tile xa-reveal"><img data-src="${base}about/date.webp" alt="A calendar with each day coloured green, amber or red for the chosen site" loading="lazy" width="960" height="600"><figcaption><b><span>2</span> Pick a date</b>Every day is coloured for your site. Or let the planner find the next stretch with sunlight and Earth together.</figcaption></figure>
+          <figure class="xa-tile xa-reveal"><img data-src="${base}about/check.webp" alt="The Check step: GO WITH CARE, with lines for power, Earth contact and slope" loading="lazy" width="960" height="600"><figcaption><b><span>3</span> Get a clear answer</b>GO, GO WITH CARE or NO GO at touchdown, with the reasons, the terrain used and every assumption.</figcaption></figure>
+        </div>
+      </section>
+      <section class="xa-sec" id="xa-ways" aria-labelledby="xa-ways-h">
+        <p class="xa-eyebrow xa-reveal">Two ways in</p>
+        <h2 class="xa-h2 xa-reveal" id="xa-ways-h">Same engine. Your pace.</h2>
+        <div class="xa-ways">
+          <div class="xa-way xa-reveal"><img data-src="${base}about/beginner.webp" alt="Beginner mode: Lumi asks you to find the sunny spot on a map of the south pole" loading="lazy" width="960" height="600">
+            <div class="xa-way-body"><h3>Beginner</h3><p>A guided mission with Lumi. Six short steps, no jargon, and the “why” whenever you want it.</p><button type="button" class="xp-btn xp-btn-light" data-start="beginner">Start Beginner</button></div></div>
+          <div class="xa-way xa-reveal"><img data-src="${base}about/pro.webp" alt="Professional mode: the mission flow, the 3D Moon and the report column" loading="lazy" width="960" height="600">
+            <div class="xa-way-body"><h3>Professional</h3><p>The full planner: map layers, flight, Terrain 3D, side-by-side comparison, reports and data exports.</p><button type="button" class="xp-btn xp-btn-primary" data-start="pro">Open Professional</button></div></div>
+        </div>
+      </section>
+      <section class="xa-sec xa-proof" aria-labelledby="xa-proof-h">
+        <p class="xa-eyebrow xa-reveal">Checked</p>
+        <h2 class="xa-h2 xa-reveal" id="xa-proof-h">Checked against NASA data.</h2>
+        <div class="xa-nums">
+          <div class="xa-num xa-reveal"><b>154</b><span>checks against NASA JPL Horizons for the Sun and Earth. Worst: 0.007°.</span></div>
+          <div class="xa-num xa-reveal"><b>93.5%</b><span>of pixels agree with lit and shadowed ground in Lunar Reconnaissance Orbiter photos.</span></div>
+          <div class="xa-num xa-reveal"><b>20 m</b><span>NASA LOLA terrain across all nine Artemis III candidate regions.</span></div>
+          <div class="xa-num xa-reveal"><b>${siteCount}</b><span>sites, each with a skyline cast from real terrain.</span></div>
+        </div>
+        <button type="button" class="xa-textlink xa-reveal" data-about>How it is checked, and its limits ›</button>
+      </section>
+      <footer class="xa-foot">
+        <p>A screening tool for planning and learning, not a landing approval.</p>
+        <p>Built for the NASA Space Apps Challenge 2026 by Team Dell Monitors.</p>
+        <p class="xa-links"><a href="https://github.com/Arairo/IMPROVED_lunarmoon-" target="_blank" rel="noopener">Source code</a><a href="https://doi.org/10.5281/zenodo.24435109" target="_blank" rel="noopener">Cite (DOI)</a><button type="button" data-v="tour">Tutorial</button><button type="button" data-about>About</button></p>
+      </footer>
+    </main>`;
   document.body.appendChild(el);
 
   const stopSky = starfield(el.querySelector('.xp-sky'));
@@ -238,22 +291,50 @@ export function mountIntro({ onChoose, onAbout, siteCount = 29 }) {
   };
 
   start.addEventListener('click', split);
-  el.querySelector('.xp-tourlink').addEventListener('click', () => onAbout?.());
+  // Below the hero: the About page (scrolls inside the intro).
+  const page = el.querySelector('.xa');
+  const scrollTo = (id) => el.querySelector(`#${id}`)?.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+  el.querySelector('.xp-tourlink').addEventListener('click', () => scrollTo('xa-what'));
+  el.querySelectorAll('[data-scroll]').forEach((b) => b.addEventListener('click', () => scrollTo(b.dataset.scroll)));
+  el.querySelectorAll('[data-v="tour"]').forEach((b) => b.addEventListener('click', () => onVideo?.()));
+  const video = page.querySelector('video'), playBtn = page.querySelector('.xa-play');
+  playBtn.addEventListener('click', () => {
+    load(video);
+    if (!video.src) video.src = `${base}tutorial/lunar-site-planner-promo.mp4`;
+    video.controls = true; playBtn.hidden = true; video.play().catch(() => {}); video.focus();
+  });
+  // The slim bar appears once the hero has scrolled away.
+  const bar = el.querySelector('.xa-bar'), barBtn = bar.querySelector('button');
+  const onScroll = () => { const on = el.scrollTop > el.clientHeight * 0.75; bar.classList.toggle('is-on', on); bar.setAttribute('aria-hidden', String(!on)); barBtn.tabIndex = on ? 0 : -1; };
+  el.addEventListener('scroll', onScroll, { passive: true });
+  // Pictures below the hero load only when the visitor scrolls near them.
+  const lazy = [...page.querySelectorAll('[data-src], [data-poster]')];
+  const load = (n) => { if (n.dataset.src) { n.src = n.dataset.src; delete n.dataset.src; } if (n.dataset.poster) { n.poster = n.dataset.poster; delete n.dataset.poster; } };
+  if ('IntersectionObserver' in window) {
+    const lio = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { load(e.target); lio.unobserve(e.target); } }), { root: el, rootMargin: '600px 0px' });
+    lazy.forEach((n) => lio.observe(n));
+  } else lazy.forEach(load);
+  // Sections rise in as they scroll into view (still for reduced motion: see CSS).
+  if ('IntersectionObserver' in window) {
+    const io = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('is-in'); io.unobserve(e.target); } }), { root: el, threshold: 0.15 });
+    page.querySelectorAll('.xa-reveal').forEach((n) => io.observe(n));
+  } else page.querySelectorAll('.xa-reveal').forEach((n) => n.classList.add('is-in'));
   el.querySelectorAll('[data-about]').forEach((b) => b.addEventListener('click', () => onAbout?.()));
   el.querySelector('.xp-sound').addEventListener('click', toggleSound);
   el.querySelector('.xp-skip:not(.xp-sound)').addEventListener('click', (e) => {
     el.classList.add('is-fast');
     e.currentTarget.remove();
   });
-  modes.querySelectorAll('.xp-mode').forEach((b) => {
-    b.addEventListener('click', () => {
-      try { localStorage.setItem('lsp.introSeen', '1'); } catch {}
-      play('whoosh');
-      el.classList.add('is-leaving');
-      onChoose(b.dataset.mode);
-      setTimeout(() => { stopSpin(); stopSky(); el.remove(); }, 850);
-    });
-  });
+  const choose = (mode) => {
+    try { localStorage.setItem('lsp.introSeen', '1'); } catch {}
+    play('whoosh');
+    video.pause();
+    el.classList.add('is-leaving');
+    onChoose(mode);
+    setTimeout(() => { stopSpin(); stopSky(); el.remove(); }, 850);
+  };
+  modes.querySelectorAll('.xp-mode').forEach((b) => b.addEventListener('click', () => choose(b.dataset.mode)));
+  page.querySelectorAll('[data-start]').forEach((b) => b.addEventListener('click', () => choose(b.dataset.start)));
   el.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && document.activeElement === start) split();
   });
