@@ -136,6 +136,8 @@ export function mountPlanCard({ app, selectSite, setTime, getGlobe }) {
         if (!r || stale()) return;
         const aimEl = dispOut.querySelector('[data-aim]');
         const gain = Math.round(r.dispersion.p10 * 100) - Math.round(d.p10 * 100);
+        // The report's landing-area map draws the safer aim only when this panel suggests one.
+        app.lastAim = r.aim.dist === 0 || gain < 2 ? null : { ...r, siteId: site.id, start };
         if (r.aim.dist === 0 || gain < 2) { aimEl.textContent = ' Aiming here is already the safest choice nearby.'; return; }
         aimEl.innerHTML = ` <br><b>Safer aim:</b> ${distWord(r.aim.dist)} ${dirWord(r.aim.az)} keeps at least ${pct(r.dispersion.p10)} even after a bad landing (${pct(d.p10)} aiming here). <button type="button" class="p-aim">Aim there</button>`;
         aimEl.querySelector('.p-aim').addEventListener('click', () => {

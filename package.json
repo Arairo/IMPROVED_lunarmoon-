@@ -1,7 +1,7 @@
 {
   "name": "lunar-site-planner",
   "private": true,
-  "version": "0.1.0",
+  "version": "1.1.0",
   "description": "Compare lunar landing sites and dates: Sun and Earth over the real horizon, solar power and direct-to-Earth link windows. CesiumJS + LOLA terrain.",
   "type": "module",
   "license": "MIT",

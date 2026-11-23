@@ -744,6 +744,7 @@ body[data-mode='pro'] #expandResultsBtn { display: none !important; }
 .xp-report .r-close { width: 32px; padding: 0 !important; display: grid; place-items: center; }
 .xp-report .r-body { flex: 1; overflow: auto; margin: 0; border: 0; border-radius: 0; padding: 16px 18px 24px; background: transparent; }
 .xp-report .r-cols { display: grid; grid-template-columns: 1fr; gap: 14px; }
+.xp-report .r-cols > .r-wide, .xp-report .r-cols > .r-top { grid-column: 1 / -1; }
 .xp-report h3 { font-size: 20px; }
 .xp-report .f-meta { font-size: 12.5px; }
 .xp-report .f-rv { font-size: 13.5px; }
@@ -1650,4 +1651,61 @@ html[data-theme='dark'] .cc-badge.amber { color: var(--xp-warn); }
   .xa-player { border-radius: 18px; }
   .xa-play { width: 68px; height: 68px; margin: -34px 0 0 -34px; }
   .xa-h br { display: none; }
+}
+
+/* ==========================================================================
+   Report charts (src/experience/reportCharts.js). Identity colours validated
+   with the dataviz palette checker (lightness band, chroma, colour-blind and
+   normal-vision separation, 3:1 contrast) on each report surface.
+   ========================================================================== */
+.r-charts { display: grid; gap: 14px; margin: 2px 0 4px; }
+.rc { margin: 0; padding: 12px 14px 10px; border-radius: 14px; background: var(--xp-surface-2, rgba(255, 255, 255, 0.03)); border: 1px solid var(--xp-line);
+  --rc-sun: #BA8A1A; --rc-earth: #4B8FEA; --rc-both: #2BA86C; --rc-link: #9277EC;
+  --rc-s0: #1f3d33; --rc-s1: #1e5a43; --rc-s2: #1f7a55; --rc-s3: #2ba86c; --rc-s4: #6fd6a0;
+  --rc-terrain: #3a414f; --rc-terrain-line: #8e96a8; --rc-track: rgba(255, 255, 255, 0.05); --rc-grid: rgba(255, 255, 255, 0.07); --rc-ink: var(--xp-ink-2); --rc-ink-3: var(--xp-ink-3); --rc-onbat: rgba(255, 255, 255, 0.1); }
+html[data-theme='light'] .rc { --rc-sun: #B87F00; --rc-earth: #2F7FE0; --rc-both: #1F9D63; --rc-link: #8B6CF0;
+  --rc-s0: #d9f2e4; --rc-s1: #a7e0c0; --rc-s2: #62c290; --rc-s3: #1f9d63; --rc-s4: #0d6b40;
+  --rc-terrain: #d6d9e0; --rc-terrain-line: #7c8394; --rc-track: rgba(0, 0, 0, 0.05); --rc-grid: rgba(0, 0, 0, 0.08); --rc-onbat: rgba(0, 0, 0, 0.05); }
+.rc-title { font: 600 13px var(--xp-font); color: var(--xp-ink); margin-bottom: 6px; letter-spacing: -0.005em; }
+.rc-plot svg { display: block; overflow: visible; }
+.rc-cap { margin: 6px 0 0; font: 400 12.5px/1.5 var(--xp-font); color: var(--xp-ink-2); }
+.rc-cap b.rc-k-sun { color: inherit; border-bottom: 2px solid var(--rc-sun); }
+.rc-cap b.rc-k-earth { color: inherit; border-bottom: 2px solid var(--rc-earth); }
+.rc-empty { margin: 6px 0; font: 400 13px var(--xp-font); color: var(--xp-ink-3); }
+.rc text { font-family: var(--xp-font); }
+.rc .rc-lab { font-size: 15px; font-weight: 500; fill: var(--rc-ink); }
+.rc .rc-val { font-size: 15px; font-weight: 600; fill: var(--xp-ink); font-variant-numeric: tabular-nums; }
+.rc .rc-tick { font-size: 13px; fill: var(--rc-ink-3); font-variant-numeric: tabular-nums; }
+.rc .rc-grid { stroke: var(--rc-grid); stroke-width: 1; }
+.rc .rc-zero { stroke: var(--rc-ink-3); stroke-width: 1; stroke-dasharray: 3 4; opacity: 0.6; }
+.rc .rc-axis { stroke: var(--rc-ink-3); stroke-width: 2; }
+.rc .rc-track { fill: var(--rc-track); }
+.rc .rc-sun { fill: var(--rc-sun); }
+.rc .rc-earth { fill: var(--rc-earth); }
+.rc .rc-both { fill: var(--rc-both); }
+.rc .rc-link { fill: var(--rc-link); }
+.rc .rc-hid { opacity: 0.22; }
+.rc .rc-ring { stroke: var(--xp-surface-solid); stroke-width: 2.5; }
+.rc .rc-terrain { fill: var(--rc-terrain); stroke: var(--rc-terrain-line); stroke-width: 1.5; stroke-linejoin: round; }
+.rc .rc-disc { fill: none; stroke: var(--rc-grid); stroke-width: 1.5; }
+.rc .rc-seq { stroke: var(--xp-surface-solid); stroke-width: 2; }
+.rc .rc-s0 { fill: var(--rc-s0); } .rc .rc-s1 { fill: var(--rc-s1); } .rc .rc-s2 { fill: var(--rc-s2); } .rc .rc-s3 { fill: var(--rc-s3); } .rc .rc-s4 { fill: var(--rc-s4); }
+.rc .rc-worst { fill: none; stroke: var(--xp-ink); stroke-width: 2; stroke-dasharray: 3 3; }
+.rc .rc-aim { fill: none; stroke: var(--xp-ink); stroke-width: 2.2; }
+.rc .rc-arrow { stroke: var(--xp-ink); stroke-width: 2.2; fill: none; }
+.rc .rc-arrowhead { fill: var(--xp-ink); }
+.rc .rc-area { opacity: 0.22; }
+.rc .rc-sunline { fill: none; stroke: var(--rc-sun); stroke-width: 2; stroke-linejoin: round; }
+.rc .rc-load { stroke: var(--xp-ink-2); stroke-width: 1.5; stroke-dasharray: 6 4; }
+.rc .rc-onbat { fill: var(--rc-onbat); }
+@media (max-width: 640px) { .rc .rc-lab, .rc .rc-val { font-size: 18px; } .rc .rc-tick { font-size: 16px; } }
+@media print {
+  .rc:has(.rc-empty) { display: none; }
+  .rc { break-inside: avoid; background: #fff; border-color: #ddd;
+    --rc-sun: #B87F00; --rc-earth: #2F7FE0; --rc-both: #1F9D63; --rc-link: #8B6CF0;
+    --rc-s0: #d9f2e4; --rc-s1: #a7e0c0; --rc-s2: #62c290; --rc-s3: #1f9d63; --rc-s4: #0d6b40;
+    --rc-terrain: #d6d9e0; --rc-terrain-line: #7c8394; --rc-track: #f1f2f4; --rc-grid: #e3e5e9; --rc-ink: #333; --rc-ink-3: #666; --rc-onbat: #eef0f3; }
+  .rc-title { color: #000; } .rc-cap { color: #333; }
+  .rc .rc-val, .rc .rc-aim, .rc .rc-worst, .rc .rc-arrow { fill: #000; stroke: #000; } .rc .rc-val { stroke: none; } .rc .rc-arrowhead { fill: #000; }
+  .rc .rc-ring, .rc .rc-seq { stroke: #fff; }
 }
