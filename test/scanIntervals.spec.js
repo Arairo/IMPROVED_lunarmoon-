@@ -87,8 +87,16 @@ test('simulateBattery: per-sample hours give the same result as one step when eq
   const a = simulateBattery(w, 2, { loadW: 120 });
   const b = simulateBattery(w, new Float64Array(6).fill(2), { loadW: 120 });
   assert.equal(a.neededWh, b.neededWh);
-  assert.throws(() => simulateBattery(w, [1, 2], { loadW: 120 }), RangeError);
-  assert.throws(() => simulateBattery(w, [1, 1, 1, 1, 1, 0], { loadW: 120 }), RangeError);
+  assert.throws(() => simulateBattery(w, [1, 2], { loadW: 120 }), RangeError); // wrong length
+  for (const bad of [0, -1, NaN, Infinity]) {
+    assert.throws(() => simulateBattery(w, [1, 1, 1, 1, 1, bad], { loadW: 120 }), RangeError, `per-sample ${bad}`);
+    assert.throws(() => simulateBattery(w, bad, { loadW: 120 }), RangeError, `scalar ${bad}`);
+  }
+  // Varying durations: a step twice as long counts twice the energy.
+  const one = simulateBattery(Float32Array.from([0]), [2], { loadW: 100, chargeEff: 1, dischargeEff: 1 });
+  const two = simulateBattery(Float32Array.from([0, 0]), [1, 1], { loadW: 100, chargeEff: 1, dischargeEff: 1 });
+  assert.equal(one.neededWh, 200);
+  assert.equal(two.neededWh, 200);
 });
 
 test('windowStats: "Sun and Earth together" is weighted by time too', () => {
