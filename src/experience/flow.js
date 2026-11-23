@@ -4,6 +4,7 @@
 // steps (moving DOM nodes keeps their event listeners).
 
 import { verdicts } from './walk.js';
+import { timelineChart, skyChart, areaChart, powerChart } from './reportCharts.js';
 import { findNextWindow, windowStats } from '../core/planning.js';
 import { SYNODIC_MONTH_DAYS } from '../core/constants.js';
 import { fmtLatLon, fmtHours } from '../ui/format.js';
@@ -407,10 +408,11 @@ export function mountFlow({ app, setTime, switchMode, getBestSpots, actions }) {
     const ws = windowStats(app.site, app.windowStartMs, app.config, app.windowDays, app.windowDays > 60 ? 2 * 3600000 : 3600000);
     const range = document.querySelector('.xp-plan .p-range')?.textContent || '';
     const spots = getBestSpots().map((sp) => `<li>${esc(sp.title)}: ${esc(sp.r.site.name)} (${pct(sp.r.ops)} with Sun and Earth together)</li>`).join('');
-    return `<div class="r-cols"><div class="r-main"><h3>${esc(app.site.name)}</h3>
+    return `<div class="r-cols"><div class="r-main r-top"><h3>${esc(app.site.name)}</h3>
       <p class="f-meta">${fmtLatLon(app.site.lat, app.site.lon)} · touchdown ${when(app.windowStartMs)} · ${app.windowDays}-day window</p>
       <p class="f-rv">Screening at touchdown: <span class="${v.overall}">${LIGHT[v.overall][0]}</span> Power ${LIGHT[v.power][0]} · Earth ${LIGHT[v.earth][0]}</p>
       <p class="f-note">${SCREEN_MEANING[v.overall]} Preliminary, under the assumptions in this report; not a landing approval.</p>
+      </div><div class="r-wide">${reportCharts()}</div><div class="r-main">
       <table class="f-table">
         <tr><td>Terrain at the site</td><td>${esc((() => { const q = app.ctx?.horizon?.quality; return q?.siteCellM ? (q.siteCellM >= 1000 ? `${+(q.siteCellM / 1000).toFixed(1)} km` : `${Math.round(q.siteCellM)} m`) + ' LOLA' : '—'; })())}</td></tr>
         <tr><td>Sunlight</td><td>${pct(s.litFraction)}</td></tr>
@@ -434,6 +436,14 @@ export function mountFlow({ app, setTime, switchMode, getBestSpots, actions }) {
         <tr><td>Door to door</td><td>${(f.doorToDoorDays).toFixed(1)} days</td></tr>
         <tr><td>Lander speed changes / fuel</td><td>${f.landerDv.toFixed(2)} km/s / ${Math.round(f.propKg).toLocaleString('en-GB')} kg</td></tr></table>`; })()}
       <p class="f-note">Lunar Site Planner · NASA LOLA terrain · ephemeris checked against NASA JPL Horizons · verdicts are preliminary screening under the assumptions above, using our own rules of thumb.</p></div></div>`;
+  }
+  /** Timeline, sky, landing area and (when there is a night to survive) power charts. */
+  function reportCharts() {
+    try {
+      const d = app.lastDispersion && app.lastDispersion.siteId === app.site.id && app.lastDispersion.start === app.windowStartMs ? app.lastDispersion : null;
+      const aim = d && app.lastAim && app.lastAim.siteId === app.site.id && app.lastAim.start === app.windowStartMs ? app.lastAim : null;
+      return `<div class="r-charts">${timelineChart(app.scan)}${skyChart(app.scan, app.ctx?.horizon)}${areaChart(d, aim)}${powerChart(app.scan, app.config)}</div>`;
+    } catch (e) { console.warn('report charts', e); return ''; }
   }
   /** Short version for the Report step; the full report opens in the side panel. */
   function reportSummaryHtml() {

@@ -13,7 +13,7 @@ authors:
   # The NASA Space Apps Challenge team: Pratyush Kumar Biswal, Muhammad Nawfal bin
   # Khairul Azlan, Ahmad Ibrahim Shahmi, Kevin Yanlin Li Li (listed by name in .zenodo.json).
   - name: "Team Dell Monitors (NASA Space Apps Challenge 2026, Kuala Lumpur)"
-version: "1.0.0"
+version: "1.1.0"
 # Concept DOI: all versions (always resolves to the latest). v1.0.0 itself: 10.5281/zenodo.24435110
 doi: "10.5281/zenodo.24435109"
 identifiers:
@@ -23,7 +23,7 @@ identifiers:
   - type: doi
     value: "10.5281/zenodo.24435110"
     description: "Version 1.0.0"
-date-released: "2026-11-22"
+date-released: "2026-11-23"
 license: MIT
 repository-code: "https://github.com/Arairo/IMPROVED_lunarmoon-"
 url: "https://arairo.github.io/IMPROVED_lunarmoon-/"
