@@ -49,6 +49,7 @@
 const LINES = __LINES__;
 const A = (n) => `../cap/${n}`;
 const CH = __CH__;
+const R = __RECTS__;
 const W = 1920, H = 1080;
 const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
 const lerp = (a, b, k) => a + (b - a) * k;
@@ -125,6 +126,7 @@ function winScene(cfg) {
   const calls = (cfg.callouts || []).map((c) => { const d = el(`<div class="callout">${c[3] ? `<b>${c[3]}</b>` : ''}</div>`); root.appendChild(d); return d; });
   let cur, rip; if (cfg.click) { cur = el(CUR_SVG); rip = el('<div class="ripple"></div>'); root.appendChild(rip); root.appendChild(cur); }
   const a = sc.start, b = sc.end + 0.35, len = b - a;
+  (window.SC ||= []).push({ id: cfg.id, a, b, callouts: cfg.callouts || [], imgs: cfg.imgs, swaps: cfg.swaps || [], click: cfg.click || null });
   S.push((t) => {
     const on = t >= a && t < b + 0.01;
     [st, k, cur, rip, ...calls].forEach((n) => n && show(n, on));
@@ -136,20 +138,20 @@ function winScene(cfg) {
     // image swaps (fade 0.25 s) and optional flipbook
     if (cfg.swaps) { let idx = 0; cfg.swaps.forEach(([su, i]) => { if (u >= su) idx = i; }); ims.forEach((im, i) => { const sw = cfg.swaps.find((x) => x[1] === i); const tin = sw ? a + sw[0] * len : a; im.style.opacity = i === 0 ? 1 : i <= idx ? prog(t, tin, tin + 0.25) : 0; }); }
     if (cfg.frames) { const f = clamp((u - cfg.frames.u0) / (cfg.frames.u1 - cfg.frames.u0)) * (ims.length - 2) + 1; const i = Math.floor(f), fr = f - i; ims.forEach((im, j) => { im.style.opacity = j === 0 ? 1 : u < cfg.frames.u0 ? 0 : j === i ? 1 : j === i + 1 ? fr : 0; }); }
-    if (k) animKicker(k, t, a + 0.3, b - 0.05);
+    if (k) animKicker(k, t, a + 0.3, cfg.kickEnd ?? (b - 0.05));
     calls.forEach((d, i) => {
       const [u0, u1, r] = cfg.callouts[i];
       const [x0, y0] = toScreen(p, r[0], r[1]), [x1, y1] = toScreen(p, r[2], r[3]);
-      const kin = out(prog(u, u0, u0 + 0.06)), kout = prog(u, u1 - 0.04, u1);
+      const kin = out(prog(t, a + u0 * len, a + u0 * len + 0.35)), kout = prog(t, a + u1 * len - 0.3, a + u1 * len);
       d.style.left = `${x0 - 8}px`; d.style.top = `${y0 - 8}px`; d.style.width = `${x1 - x0 + 16}px`; d.style.height = `${y1 - y0 + 16}px`;
       d.style.opacity = (kin * (1 - kout) * (p.o ?? 1)).toFixed(3); d.style.transform = `scale(${lerp(1.06, 1, kin)})`;
     });
     if (cfg.click) {
-      const c = cfg.click; const [tx, ty] = toScreen(p, c.x, c.y);
-      const km = ease(prog(u, c.at - 0.14, c.at));
+      const c = cfg.click; const [tx, ty] = toScreen(p, c.x, c.y); const ta = a + c.at * len;
+      const km = ease(prog(t, ta - 0.9, ta));
       cur.style.left = `${lerp(W - 260, tx, km)}px`; cur.style.top = `${lerp(H - 220, ty, km)}px`;
-      cur.style.opacity = prog(u, c.at - 0.2, c.at - 0.14) * (1 - prog(u, 0.93, 0.99));
-      const kr = prog(u, c.at, c.at + 0.08); rip.style.left = `${tx + 6}px`; rip.style.top = `${ty + 6}px`; rip.style.opacity = u > c.at ? 1 - kr : 0; rip.style.transform = `scale(${0.3 + kr * 1.2})`;
+      cur.style.opacity = prog(t, ta - 1.1, ta - 0.9) * (1 - prog(t, ta + 1.0, ta + 1.4));
+      const kr = prog(t, ta, ta + 0.5); rip.style.left = `${tx + 6}px`; rip.style.top = `${ty + 6}px`; rip.style.opacity = t > ta ? 1 - kr : 0; rip.style.transform = `scale(${0.3 + kr * 1.2})`;
     }
   });
 }
@@ -173,55 +175,194 @@ function winScene(cfg) {
     g.style.opacity = 1 - prog(t, sc.end - 0.3, end);
   });
 }
-const FULL = { cx: .5, cy: .5, s: .92, dy: 10 };
-const RAIL = (cy, s = 1.95) => ({ cx: .118, cy, s, dx: 330, dy: 0 });
-winScene({ id: 'screen', imgs: ['site.png'], cam: [[0, { cx: .5, cy: .5, s: .6, rx: 18, ry: -14, dy: 140, o: 1 }], [0.14, FULL], [1, { ...FULL, s: .94 }]],
-  callouts: [[0.12, 0.38, [0, .045, .233, 1], 'Mission flow'], [0.38, 0.58, [.236, .07, 1, .83], 'The Moon'], [0.58, 0.8, [.505, .105, .725, .142], 'Right now'], [0.8, 0.99, [.236, .835, 1, .995], 'Next 30 days']] });
-winScene({ id: 'site', imgs: ['site.png', 'site_search.png'], swaps: [[0.42, 1]], kick: ['01', 'Site', 'Search, filter, type coordinates, or take a best spot.'],
-  cam: [[0, FULL], [0.14, RAIL(.32)], [0.72, RAIL(.34)], [0.84, { cx: .6, cy: .5, s: 2.1, dx: 0, dy: 0 }], [1, { cx: .6, cy: .5, s: 2.2, dx: 0, dy: 0 }]],
-  callouts: [[0.16, 0.4, [.005, .255, .23, .325], 'Best spots'], [0.42, 0.72, [.005, .395, .17, .425], 'Search']] });
-winScene({ id: 'rays', imgs: ['globe_site.png'], cam: [[0, { cx: .6, cy: .5, s: 2.2 }], [0.45, { cx: .56, cy: .55, s: 2.4 }], [0.62, { cx: .615, cy: .2, s: 2.2 }], [1, { cx: .615, cy: .2, s: 2.3 }]],
-  callouts: [[0.08, 0.5, [.24, .79, .365, .82], 'Sun · Earth'], [0.66, 0.99, [.505, .105, .725, .142], 'NO GO: Earth hidden']] });
-winScene({ id: 'layers', imgs: ['layers_menu.png', 'layer_sun_now.png', 'layer_sun_window.png', 'layer_sun_year.png', 'layer_earth.png', 'layer_both.png', 'layer_shadow.png', 'layer_height.png', 'layer_slope.png'],
-  swaps: [[0.2, 1], [0.32, 2], [0.43, 3], [0.53, 4], [0.62, 5], [0.73, 6], [0.83, 7], [0.92, 8]],
-  cam: [[0, { cx: .78, cy: .3, s: 1.9 }], [0.18, { cx: .78, cy: .3, s: 1.9 }], [0.26, { cx: .58, cy: .46, s: 1.25 }], [1, { cx: .58, cy: .46, s: 1.3 }]],
-  callouts: [[0.03, 0.19, [.705, .095, .993, .525], 'Colour the Moon by']] });
-winScene({ id: 'polar', imgs: ['polar.png', 'polar_sun.png', 'polar_earth.png'], swaps: [[0.3, 1], [0.66, 2]], kick: ['', 'South-Pole Map', 'The same region, from straight above.'],
-  cam: [[0, { cx: .58, cy: .46, s: 1.3 }], [0.2, { cx: .6, cy: .48, s: 1.45, dx: 300 }], [1, { cx: .6, cy: .48, s: 1.55, dx: 300 }]] });
-winScene({ id: 'date', imgs: ['date_cal.png'], kick: ['02', 'Date', 'Green days: sunlight and Earth together.'],
-  cam: [[0, FULL], [0.14, RAIL(.45, 1.9)], [0.62, RAIL(.5, 1.9)], [0.72, RAIL(.72, 2.0)], [1, RAIL(.73, 2.05)]],
-  callouts: [[0.18, 0.6, [.005, .265, .225, .71], 'Colour = this site'], [0.8, 0.99, [.005, .872, .225, .905], 'Found it']], click: { at: 0.76, x: 0.07, y: 0.815 } });
-winScene({ id: 'play', imgs: ['tl00.png', ...Array.from({ length: 40 }, (_, i) => `tl${String(i).padStart(2, '0')}.png`)], frames: { u0: 0.12, u1: 0.96 },
-  cam: [[0, RAIL(.73, 2.05)], [0.12, { cx: .62, cy: .52, s: 1.15 }], [1, { cx: .62, cy: .55, s: 1.2 }]],
-  callouts: [[0.2, 0.97, [.236, .835, 1, .995], 'Drag to scrub'], [0.45, 0.97, [.505, .105, .725, .142], '']] });
-winScene({ id: 'check', imgs: ['check.png'], kick: ['03', 'Check', 'A screening at touchdown, with your settings.'],
-  cam: [[0, FULL], [0.13, RAIL(.36)], [0.55, RAIL(.4)], [0.68, RAIL(.62)], [1, RAIL(.64)]],
-  callouts: [[0.15, 0.55, [.005, .23, .225, .322], 'Screening'], [0.68, 0.99, [.005, .625, .225, .722], 'Close to the line']] });
-winScene({ id: 'method', imgs: ['check.png', 'check_more.png'], swaps: [[0.42, 1]],
-  cam: [[0, RAIL(.64)], [0.12, RAIL(.74)], [0.4, RAIL(.74)], [0.46, RAIL(.3)], [1, RAIL(.32)]],
-  callouts: [[0.06, 0.38, [.005, .735, .225, .775], 'Terrain used'], [0.5, 0.98, [.005, .14, .225, .495], 'How this was worked out']] });
-winScene({ id: 'whatif', imgs: ['whatif.png', 'whatif_n.png', 'whatif_area.png'], swaps: [[0.36, 1], [0.66, 2]], kick: ['04', 'What if', 'Nudge it, and read what changes.'],
-  cam: [[0, FULL], [0.14, RAIL(.42)], [0.62, RAIL(.45)], [0.7, RAIL(.55)], [1, RAIL(.56)]],
-  callouts: [[0.18, 0.34, [.015, .29, .125, .33], 'Move'], [0.4, 0.64, [.005, .495, .225, .555], 'What changed'], [0.72, 0.99, [.005, .49, .225, .62], 'The landing area']], click: { at: 0.34, x: 0.055, y: 0.31 } });
-winScene({ id: 'flight', imgs: ['flight0.png', 'flight1.png', 'flight2.png', 'flight3.png', 'flight_burns.png', 'flight_routes.png'], swaps: [[0.14, 1], [0.27, 2], [0.4, 3], [0.55, 4], [0.76, 5]], kick: ['', 'Flight', 'Launch, route, burns and fuel.'],
-  cam: [[0, { cx: .62, cy: .45, s: 1.1, dx: 280 }], [0.5, { cx: .62, cy: .45, s: 1.15, dx: 280 }], [0.58, { cx: .36, cy: .55, s: 1.9 }], [1, { cx: .36, cy: .57, s: 1.95 }]],
-  callouts: [[0.6, 0.76, [.245, .645, .47, .735], 'Each burn, labelled'], [0.8, 0.99, [.245, .662, .47, .745], 'Three routes']] });
-winScene({ id: 'compare', imgs: ['cmp1.png', 'cmp2.png'], swaps: [[0.62, 1]], kick: ['', 'Compare', 'Plans side by side, to scale.'],
-  cam: [[0, { cx: .5, cy: .5, s: .85, rx: 10, ry: -10 }], [0.14, { cx: .5, cy: .5, s: 1.05, dx: 300 }], [1, { cx: .5, cy: .55, s: 1.1, dx: 300 }]],
-  callouts: [[0.3, 0.6, [.125, .255, .875, .345], 'The answer first']] });
-winScene({ id: 'report', imgs: ['report.png', 'report_col.png', 'report_wide.png'], swaps: [[0.3, 1], [0.6, 2]], kick: ['05', 'Report', 'A column beside the Moon; nothing covered.'],
-  cam: [[0, FULL], [0.12, { cx: .5, cy: .5, s: 1.0, dx: 260 }], [1, { cx: .5, cy: .5, s: 1.02, dx: 260 }]],
-  callouts: [[0.34, 0.58, [.355, .07, .5, .995], 'Report column'], [0.62, 0.99, [.62, .03, .995, .07], 'Print · JSON · CSV · link']], click: { at: 0.58, x: 0.372, y: 0.111 } });
-winScene({ id: 'terrain', imgs: ['report.png', 'terrain0.png', 'terrain1.png', 'terrain_back.png'], swaps: [[0.2, 1], [0.5, 2], [0.86, 3]], kick: ['', 'Terrain 3D', 'NASA LOLA 20 m terrain at the site.'],
-  cam: [[0, { cx: .5, cy: .5, s: 1.0, dx: 260 }], [0.2, { cx: .5, cy: .5, s: 1.0, dx: 260 }], [1, { cx: .5, cy: .5, s: 1.05, dx: 260 }]],
-  callouts: [[0.66, 0.85, [.4, .062, .475, .09], 'Back']], click: { at: 0.18, x: 0.092, y: 0.51 } });
-winScene({ id: 'help', imgs: ['help.png', 'tour1.png', 'lumi2.png', 'trust.png'], swaps: [[0.24, 1], [0.42, 2], [0.68, 3]],
-  cam: [[0, { cx: .86, cy: .2, s: 1.9 }], [0.23, { cx: .86, cy: .2, s: 1.9 }], [0.28, { cx: .55, cy: .5, s: 1.1 }], [0.4, { cx: .55, cy: .5, s: 1.1 }], [0.46, { cx: .74, cy: .58, s: 1.7 }], [0.66, { cx: .74, cy: .58, s: 1.7 }], [0.72, { cx: .75, cy: .45, s: 1.3 }], [1, { cx: .75, cy: .45, s: 1.35 }]],
-  callouts: [[0.03, 0.24, [.765, .06, .96, .3], 'Help']] });
-// Outro: trust numbers, then end card
+// ---- Beat-driven scenes -------------------------------------------------------------
+// Each scene is a list of beats. A beat starts when the narrator says its phrase (or at
+// the scene start), switches to its screenshot, moves the camera to frame its focus, and
+// draws its highlight box. Boxes come from rects.json, measured on the real page during
+// capture, so they sit exactly on the element being described.
+const U = (...rs) => [Math.min(...rs.map((r) => r[0])), Math.min(...rs.map((r) => r[1])), Math.max(...rs.map((r) => r[2])), Math.max(...rs.map((r) => r[3]))];
+const pad = (r, x = 0.006, y = 0.006) => [r[0] - x, r[1] - y, r[2] + x, r[3] + y];
+const rr = (shot, key) => { const v = R[shot]?.[key]; if (!v) throw new Error(`no rect ${shot}.${key}`); return v; };
+/** When the narrator reaches `phrase` in line `id` (characters spoken at an even rate, as the captions). */
+function WD(id, phrase) {
+  const l = LINES.find((x) => x.id === id); const i = l.text.indexOf(phrase);
+  if (i < 0) throw new Error(`phrase not in ${id}: ${phrase}`);
+  return T[id].voice + (l.dur * i) / l.text.length;
+}
+/** Camera that frames rect r in the free part of the screen (right of the title while it shows). */
+function focus(r, { side = false, maxS = 2.3, minS = 0.62, fill = 0.78 } = {}) {
+  const x0 = side ? 700 : 40, x1 = 1880, y0 = 96, y1 = 930;
+  const w = (r[2] - r[0]) * 1600, h = (r[3] - r[1]) * 1000;
+  const s = Math.max(minS, Math.min(maxS, (fill * (x1 - x0)) / w, (fill * (y1 - y0)) / h));
+  return { cx: (r[0] + r[2]) / 2, cy: (r[1] + r[3]) / 2, s, dx: (x0 + x1) / 2 - 960, dy: (y0 + y1) / 2 - 540 };
+}
+const FULLR = [0, 0, 1, 1];
+/** The left panel around a box, about h tall (readable zoom). */
+const near = (box, h = 0.4) => { const c = (box[1] + box[3]) / 2, hh = Math.max(h, box[3] - box[1] + 0.06) / 2; return [0, Math.max(0.03, c - hh), 0.2325, Math.min(1, c + hh)]; };
+/**
+ * beats: [{ at: phrase | null, img, focus: rect | cam, box: rect, label, click: true, side }]
+ * side: frame to the right of the chapter title (default: while the title shows).
+ */
+function beatScene(id, { kick, beats, move = 0.85 }) {
+  const sc = T[id]; const a = sc.start, b = sc.end + 0.35, len = b - a;
+  const times = beats.map((bt, i) => (i === 0 || bt.at == null ? a : Math.max(a + 0.2, WD(id, bt.at) - 0.2)));
+  const kickEnd = kick ? (beats.length > 1 ? times[1] + 0.2 : b - 0.05) : undefined;
+  const cams = beats.map((bt, i) => {
+    const side = bt.side ?? (kick && times[i] < kickEnd - 0.1);
+    if (bt.cam) return bt.cam;
+    return focus(bt.focus || bt.box || FULLR, { side, ...(bt.fit || {}) });
+  });
+  const cam = [[0, cams[0]]];
+  for (let i = 1; i < beats.length; i++) {
+    const gap = (i + 1 < beats.length ? times[i + 1] : b) - times[i];
+    const m = Math.min(move, gap * 0.6);
+    cam.push([(times[i] - a) / len, cams[i - 1]], [(times[i] + m - a) / len, cams[i]]);
+  }
+  const last = cams[cams.length - 1]; cam.push([1, { ...last, s: last.s * 1.03 }]);
+  // images: one per run of beats with the same screenshot
+  const imgs = [], swaps = [];
+  beats.forEach((bt, i) => { if (!imgs.length || bt.img !== imgs[imgs.length - 1]) { if (imgs.length) swaps.push([(times[i] + 0.1 - a) / len, imgs.length]); imgs.push(bt.img); } });
+  const callouts = [];
+  beats.forEach((bt, i) => {
+    if (!bt.box) return;
+    const end = i + 1 < beats.length ? times[i + 1] : b - 0.1;
+    const arrive = Math.min(times[i] + (i === 0 ? 0.4 : Math.min(move, (end - times[i]) * 0.6)), end - 0.4);
+    callouts.push([(arrive - a) / len, (end - a) / len, pad(bt.box), bt.label || '']);
+  });
+  const ci = beats.findIndex((bt) => bt.click);
+  const click = ci >= 0 ? { at: (Math.min(times[ci] + 0.9, (ci + 1 < beats.length ? times[ci + 1] : b) - 0.3) - a) / len, x: beats[ci].clickAt ? beats[ci].clickAt[0] : (beats[ci].box[0] + beats[ci].box[2]) / 2, y: beats[ci].clickAt ? beats[ci].clickAt[1] : (beats[ci].box[1] + beats[ci].box[3]) / 2 } : null;
+  winScene({ id, imgs: imgs.map((n) => n + '.png'), swaps, cam, callouts, kick, kickEnd, click });
+}
+
+beatScene('screen', { beats: [
+  { img: 'site', cam: { cx: .5, cy: .5, s: .92, dy: 10 } },
+  { at: 'mission flow', img: 'site', focus: U(rr('site', 'steps'), rr('site', 'best'), rr('site', 'search')), box: rr('site', 'steps'), label: 'Mission flow: five steps' },
+  { at: 'The Moon sits', img: 'site', focus: rr('site', 'globe'), box: rr('site', 'globe'), label: 'The Moon' },
+  { at: 'The pill', img: 'site', focus: pad(rr('site', 'pill'), 0.12, 0.08), box: rr('site', 'pill'), label: 'Right now' },
+  { at: 'the timeline below', img: 'site', focus: rr('site', 'timeline'), box: rr('site', 'timeline'), label: 'The next 30 days' },
+] });
+const RAILTOP = [0, 0.05, 0.2325, 0.55];
+beatScene('site', { kick: ['01', 'Site', 'Search, filter, type coordinates, or take a best spot.'], beats: [
+  { img: 'site', focus: RAILTOP },
+  { at: 'Search by name', img: 'site_search', focus: near(rr('site_search', 'search'), 0.34), box: rr('site_search', 'search'), label: 'Search' },
+  { at: 'filter by mission', img: 'site', focus: near(rr('site', 'chips'), 0.34), box: rr('site', 'chips'), label: 'Filter by mission' },
+  { at: 'type coordinates', img: 'site_coords', focus: near(rr('site_coords', 'coords'), 0.34), box: [0.0088, rr('site_coords', 'coords')[1], 0.2231, rr('site_coords', 'search')[1] - 0.006], label: 'Coordinates' },
+  { at: 'best spots', img: 'site', focus: near(rr('site', 'best'), 0.34), box: rr('site', 'best'), label: 'Best spots this month' },
+  { at: 'Every listed site', img: 'site', focus: [0.5, 0.38, 0.86, 0.74], box: [0.555, 0.44, 0.8, 0.7], label: 'Sites and Artemis III regions' },
+] });
+const SITE = [0.588, 0.49, 0.645, 0.545];
+beatScene('rays', { beats: [
+  { img: 'site', focus: [0.36, 0.42, 0.84, 0.84], box: SITE, label: 'Your site' },
+  { at: 'The gold line', img: 'site', focus: [0.3, 0.42, 0.8, 0.84], box: [0.4, 0.5, 0.62, 0.82], label: 'Gold: to the Sun' },
+  { at: 'blue line', img: 'site', focus: [0.22, 0.42, 0.8, 0.84], box: [0.24, 0.789, 0.37, 0.822], label: 'Blue: to Earth' },
+  { at: 'Right now the Sun', img: 'site', focus: pad(rr('site', 'pill'), 0.14, 0.1), box: rr('site', 'pill'), label: 'Sun up: 808 W' },
+  { at: 'but Earth is', img: 'site', focus: pad(rr('site', 'pill'), 0.14, 0.1), box: rr('site', 'pill'), label: 'Earth 2° below the skyline' },
+  { at: 'so the pill says', img: 'site', focus: pad(rr('site', 'pill'), 0.14, 0.1), box: rr('site', 'pill'), label: 'NO GO' },
+] });
+const LCARD = (n) => U(rr(n, 'layerCard'), [0.24, 0.2, 0.75, 0.8]);
+beatScene('layers', { beats: [
+  { img: 'layers_menu', focus: pad(rr('layers_menu', 'menu'), 0.05, 0.03), box: rr('layers_menu', 'menu'), label: 'Map layers' },
+  { at: 'by sunlight', img: 'layer_sun_year', focus: LCARD('layer_sun_year'), box: rr('layer_sun_year', 'layerCard'), label: 'Sunlight' },
+  { at: 'Earth in view', img: 'layer_earth', focus: LCARD('layer_earth'), box: rr('layer_earth', 'layerCard'), label: 'Earth in view' },
+  { at: 'both together', img: 'layer_both', focus: LCARD('layer_both'), box: rr('layer_both', 'layerCard'), label: 'Sun + Earth together' },
+  { at: 'right now', img: 'layer_sun_now', focus: LCARD('layer_sun_now'), box: rr('layer_sun_now', 'modes'), label: 'Now' },
+  { at: 'over your thirty days', img: 'layer_sun_window', focus: LCARD('layer_sun_window'), box: rr('layer_sun_window', 'modes'), label: 'Your 30 days' },
+  { at: 'across all of 2027', img: 'layer_sun_year', focus: LCARD('layer_sun_year'), box: rr('layer_sun_year', 'modes'), label: 'Year 2027' },
+  { at: 'Never-sunlit', img: 'layer_shadow', focus: LCARD('layer_shadow'), box: rr('layer_shadow', 'layerCard'), label: 'Never sunlit' },
+  { at: 'height', img: 'layer_height', focus: LCARD('layer_height'), box: rr('layer_height', 'layerCard'), label: 'Height' },
+  { at: 'slope', img: 'layer_slope', focus: LCARD('layer_slope'), box: rr('layer_slope', 'layerCard'), label: 'Slope' },
+] });
+beatScene('polar', { kick: ['', 'South-Pole Map', 'The same region, from straight above.'], beats: [
+  { img: 'polar', focus: [0.235, 0.06, 1, 0.83] },
+  { at: 'average sunlight', img: 'polar_sun', focus: [0.235, 0.25, 0.75, 0.84], box: rr('polar_sun', 'polarOverlay'), label: 'Average sunlight' },
+  { at: 'Earth visibility', img: 'polar_earth', focus: [0.235, 0.25, 0.75, 0.84], box: rr('polar_earth', 'polarOverlay'), label: 'Earth visibility' },
+  { at: 'real NASA imagery', img: 'polar_earth', focus: [0.235, 0.06, 1, 0.83] },
+] });
+const DATEF = [0, 0.1, 0.2325, 0.8];
+beatScene('date', { kick: ['02', 'Date', 'Green days: sunlight and Earth together.'], beats: [
+  { img: 'date_cal0', focus: DATEF },
+  { at: 'The calendar colours', img: 'date_cal0', focus: near(rr('date_cal0', 'cal'), 0.45), box: rr('date_cal0', 'cal'), label: 'Every day, for this site' },
+  { at: 'green for', img: 'date_cal0', focus: near(rr('date_cal0', 'cal'), 0.45), box: rr('date_cal0', 'cal'), label: 'Green: Sun and Earth together' },
+  { at: 'amber for', img: 'date_cal0', focus: near(rr('date_cal0', 'cal'), 0.45), box: rr('date_cal0', 'cal'), label: 'Amber: power only' },
+  { at: 'red for', img: 'date_cal0', focus: near(rr('date_cal0', 'cal'), 0.45), box: rr('date_cal0', 'cal'), label: 'Red: no sunlight' },
+  { at: 'Find the next good date', img: 'date_cal0', focus: near(rr('date_cal0', 'find'), 0.36), box: rr('date_cal0', 'find'), label: 'Find the next good date', click: true },
+  { at: 'it searches the year', img: 'date_found', focus: near(rr('date_found', 'findOut'), 0.36), box: rr('date_found', 'findOut'), label: 'Found: 18 Nov, 11 days' },
+] });
+// Timeline: a flipbook of real scrubs
+{
+  const id = 'play', sc = T[id], a = sc.start, b = sc.end + 0.35, len = b - a;
+  const tD = WD(id, 'drag along'), tP = WD(id, 'power and radio');
+  const PLAY = [0.6, 0.004, 0.66, 0.034];
+  const camAll = focus([0.2325, 0.04, 1, 1]), camPlay = focus(pad(PLAY, 0.16, 0.06));
+  winScene({ id, imgs: ['tl00.png', ...Array.from({ length: 40 }, (_, i) => `tl${String(i).padStart(2, '0')}.png`)], frames: { u0: (tD - a) / len, u1: 0.97 },
+    cam: [[0, camPlay], [(tD - 0.1 - a) / len, camPlay], [(tD + 0.8 - a) / len, camAll], [1, { ...camAll, s: camAll.s * 1.03 }]],
+    callouts: [[0.05, (tD - a) / len, PLAY, 'Play'], [(tD + 0.8 - a) / len, (tP - a) / len, rr('site', 'timeline'), 'Drag to scrub'], [(tP + 0.3 - a) / len, 0.98, rr('site', 'pill'), 'Power and radio, live']] });
+}
+const CHECKF = [0, 0.1, 0.2325, 0.78];
+beatScene('check', { kick: ['03', 'Check', 'A screening at touchdown, with your settings.'], beats: [
+  { img: 'check', focus: CHECKF },
+  { at: 'A screening at', img: 'check', focus: near(rr('check', 'verdict'), 0.34), box: rr('check', 'verdict'), label: 'Screening at touchdown' },
+  { at: 'with a line each', img: 'check', focus: near([0, rr('check', 'power')[1], 0.2, rr('check', 'close')[1]], 0.34), box: [0.0375, rr('check', 'power')[1], 0.2156, rr('check', 'close')[1] - 0.008], label: 'Power · Earth contact · Slope' },
+  { at: 'Here, Earth', img: 'check_close', focus: near(rr('check_close', 'close'), 0.34), box: rr('check_close', 'close'), label: 'Close to the line' },
+] });
+beatScene('method', { beats: [
+  { img: 'check_close', focus: near(rr('check_close', 'terrainLine'), 0.32), box: rr('check_close', 'terrainLine'), label: 'The terrain it used' },
+  { at: 'How this was worked out', img: 'check_more', focus: near(rr('check_more', 'how'), 0.4), box: rr('check_more', 'how'), label: 'How this was worked out' },
+  { at: 'every assumption', img: 'check_close', focus: near(rr('check_close', 'assume'), 0.32), box: rr('check_close', 'assume'), label: 'Every assumption' },
+  { at: 'never a landing approval', img: 'check_close', focus: near(rr('check_close', 'verdict'), 0.32), box: rr('check_close', 'verdict'), label: 'A screening, not an approval' },
+] });
+const WIFF = [0, 0.1, 0.2325, 0.7];
+const mv = rr('whatif', 'move'), fd = rr('whatif', 'find');
+beatScene('whatif', { kick: ['04', 'What if', 'Nudge it, and read what changes.'], beats: [
+  { img: 'whatif', focus: WIFF },
+  { at: 'Move the site', img: 'whatif', focus: near(mv, 0.32), box: [0.0169, mv[1] - 0.004, 0.2, mv[3] + 0.004], label: 'Move 1 km', click: true, clickAt: [mv[0] + 0.01, (mv[1] + mv[3]) / 2] },
+  { at: 'shift the date', img: 'whatif_n', focus: near(mv, 0.32), box: [0.0169, (mv[1] + fd[1]) / 2 - 0.004, 0.2, (mv[3] + fd[3]) / 2 + 0.004], label: 'Shift a day' },
+  { at: 'check the whole landing area', img: 'whatif_area', focus: near(rr('whatif_area', 'area'), 0.34), box: rr('whatif_area', 'area'), label: 'The whole landing area' },
+  { at: 'in plain words', img: 'whatif_n', focus: near(rr('whatif_n', 'whatifOut'), 0.3), box: rr('whatif_n', 'whatifOut'), label: 'What changes, in plain words' },
+] });
+const FSIDE = rr('flight2', 'flightSide');
+beatScene('flight', { kick: ['', 'Flight', 'Launch, route, burns and fuel.'], beats: [
+  { img: 'flight0', focus: [0.235, 0.06, 1, 0.84] },
+  { at: 'launch date', img: 'flight2', focus: FSIDE, box: rr('flight2', 'flightStats'), label: 'Launch · door to door · fuel' },
+  { at: 'route', img: 'flight3', focus: U(rr('flight3', 'flightBar'), [0.4, 0.1, 1, 0.82]), box: rr('flight3', 'flightBar'), label: 'The route, phase by phase' },
+  { at: 'every burn', img: 'flight_burns', focus: U(FSIDE, rr('flight_burns', 'burns')), box: rr('flight_burns', 'burns'), label: 'Every burn' },
+  { at: 'Compare a direct', img: 'flight_routes', focus: U(FSIDE, rr('flight_routes', 'routes')), box: rr('flight_routes', 'routes'), label: 'Direct · phasing loops · low-energy' },
+  { at: 'Each burn says', img: 'flight_burns', focus: U(FSIDE, rr('flight_burns', 'burns')), box: rr('flight_burns', 'burns'), label: 'Computed or assumed' },
+] });
+beatScene('compare', { kick: ['', 'Compare', 'Plans side by side, to scale.'], beats: [
+  { img: 'cmp1', focus: [0.1, 0.05, 0.9, 0.9] },
+  { at: 'side by side', img: 'cmp1', focus: [0.1, 0.05, 0.9, 0.9], box: [0.1275, 0.389, 0.8725, 0.867], label: 'Side by side' },
+  { at: 'your plan against', img: 'cmp1', focus: [0.1, 0.05, 0.9, 0.9], box: rr('cmp1', 'cmpWinner'), label: 'The answer first' },
+  { at: 'every measure', img: 'cmp1', focus: [0.1, 0.05, 0.9, 0.9], box: [0.1275, 0.389, 0.8725, 0.867], label: 'Every measure, to scale' },
+] });
+beatScene('report', { kick: ['05', 'Report', 'A column beside the Moon; nothing covered.'], beats: [
+  { img: 'report', focus: near(rr('report', 'openBtn'), 0.45), box: rr('report', 'openBtn'), label: 'Open the full report', click: true },
+  { at: 'It opens as a column', img: 'report_col', focus: [0.2325, 0.05, 1, 1], box: rr('report_col', 'report'), label: 'Report column' },
+  { at: 'Expand it', img: 'report_col', focus: [0.5, 0.05, 1, 0.6], box: rr('report_col', 'expand'), label: 'Expand' },
+  { at: 'read everything', img: 'report_wide', focus: [0.4, 0.05, 1, 1], box: rr('report_wide', 'report'), label: 'Everything, wider' },
+  { at: 'print it', img: 'report_wide', focus: [0.5, 0.03, 1, 0.5], box: rr('report_wide', 'reportTools'), label: 'Print · JSON · CSV · link' },
+] });
+beatScene('terrain', { kick: ['', 'Terrain 3D', 'NASA LOLA 20 m terrain at the site.'], beats: [
+  { img: 'report', focus: near(rr('report', 'terrainBtn'), 0.45), box: rr('report', 'terrainBtn'), label: 'Terrain 3D', click: true },
+  { at: 'Terrain 3D puts', img: 'terrain0', focus: rr('terrain0', 'cesium') },
+  { at: 'Sun and Earth', img: 'terrain1', focus: rr('terrain0', 'cesium'), box: [0.28, 0.4, 0.72, 0.64], label: 'Sun ray · Earth ray' },
+  { at: 'Back takes you', img: 'terrain1', focus: [0.55, 0, 1, 0.5], box: rr('terrain0', 'back'), label: 'Back to your plan', click: false },
+  { at: 'your plan', img: 'terrain_back', cam: { cx: .5, cy: .5, s: .92, dy: 10 } },
+] });
+beatScene('help', { beats: [
+  { img: 'help', focus: [0.55, 0, 1, 0.45] },
+  { at: 'guided tour', img: 'help', focus: [0.55, 0, 1, 0.45], box: rr('help', 'tourItem'), label: 'A tour for every view' },
+  { at: 'Ask Lumi', img: 'lumi2', focus: pad(rr('lumi2', 'lumi'), 0.06, 0.01), box: rr('lumi2', 'lumiAnswer'), label: 'Answers from the same engine' },
+  { at: 'the accuracy page', img: 'help', focus: [0.55, 0, 1, 0.45], box: rr('help', 'trustItem'), label: 'Accuracy, data and sources' },
+  { at: 'every number was checked', img: 'trust', focus: [0.25, 0, 0.75, 0.6], box: rr('trust', 'trustTable'), label: 'Checked against what flew' },
+] });
+// Outro: the accuracy numbers, then the end card
 {
   const sc = T.outro;
-  winScene({ id: 'outro', imgs: ['trust.png'], cam: [[0, { cx: .75, cy: .45, s: 1.35 }], [0.1, { cx: .75, cy: .14, s: 2.1 }], [0.5, { cx: .75, cy: .14, s: 2.15 }], [0.6, { cx: .75, cy: .14, s: 2.15, o: 0 }], [1, { cx: .75, cy: .14, s: 2.15, o: 0 }]] });
+  beatScene('outro', { beats: [
+    { img: 'trust', focus: [0.25, 0.0, 0.75, 0.25], box: [0.2794, 0.11, 0.7206, 0.21], label: 'Checked against NASA data' },
+    { at: 'Free, open source', img: 'trust', focus: [0.25, 0.0, 0.75, 0.25] },
+  ] });
   const g = el(`<div class="layer"><img class="full" src="${A('land_end.png')}" style="filter:brightness(.55) blur(2px);transform-origin:50% 12%"><div class="layer" style="background:linear-gradient(180deg,rgba(0,0,0,.2) 0%,rgba(0,0,0,.55) 55%,#000 82%)"></div><div class="txt" style="top:470px">
     <div class="grad" style="font:800 92px Inter;letter-spacing:-0.035em">Happy landing!</div>
     <div style="margin-top:14px;font:500 30px Inter;color:#c7c9d1">Lunar Site Planner · Team Dell Monitors · NASA Space Apps 2026</div>
@@ -234,6 +375,7 @@ winScene({ id: 'help', imgs: ['help.png', 'tour1.png', 'lumi2.png', 'trust.png']
     g.style.opacity = Math.min(k, 1 - prog(t, DURATION - 0.8, DURATION));
   });
 }
+
 // Chapter bar and label
 {
   const ids = Object.keys(T); const chs = []; ids.forEach((id) => { const c = CH[id]; if (!chs.length || chs[chs.length - 1].name !== c) chs.push({ name: c, a: T[id].start, b: T[id].end }); else chs[chs.length - 1].b = T[id].end; });
