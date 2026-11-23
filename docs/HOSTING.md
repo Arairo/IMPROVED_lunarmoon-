@@ -13,7 +13,7 @@ and costs setup work. Revisit when the items under "When to revisit" happen.
 |---|---|---|---|
 | Site size | 1 GB | — | 135 MB: fine |
 | Files | — | 20,000 | 701: fine |
-| Largest single file | 100 MB (git) | **25 MiB** | **`tutorial/pro-tutorial.mp4` 26.8 MiB: too big for Cloudflare** |
+| Largest single file | 100 MB (git) | **25 MiB** | `tutorial/pro-tutorial.mp4` 22.6 MiB (re-made 23 Nov 2026): fits |
 | Bandwidth | ~100 GB/month (soft) | no stated cap on static assets | see below |
 | Response headers (CSP, cache) | not settable | `_headers` file | ready: `docs/hosting/_headers.example` |
 
@@ -29,8 +29,8 @@ That is far above current use, but a classroom or conference demo could reach it
 
 ## What a move would need
 
-1. **Videos:** re-encode `pro-tutorial.mp4` below 25 MiB (the videos are due to be
-   redone anyway), or host the videos elsewhere (Cloudflare R2, YouTube).
+1. **Videos:** done. Every video is now below 25 MiB (largest: `pro-tutorial.mp4`,
+   22.6 MiB).
 2. **Base path:** the GitHub build serves from `/IMPROVED_lunarmoon-/` (`BASE_PATH`
    in `deploy.yml`); a Cloudflare site would serve from `/`. Build without
    `BASE_PATH` and re-check `planner.html`, the CesiumJS assets

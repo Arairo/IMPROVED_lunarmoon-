@@ -1,15 +1,92 @@
-{"voice": "af_heart", "lines": [
- {"id": "intro", "text": "This is Lunar Site Planner. In under two minutes, I'll show you how to plan a Moon landing in Professional mode, from picking a site to sharing a report."},
- {"id": "layout", "text": "On the left is your mission flow: five steps, in order. The 3D Moon stays in the middle, and the timeline along the bottom covers the next thirty days."},
- {"id": "site", "text": "Step one, Site. Pick a landing site from the list, search by name, type in coordinates, or tap one of the best spots we found for the coming month."},
- {"id": "globe", "text": "On the Moon, the gold line points to the Sun from your site, and the blue line points to Earth. The pill at the top tells you, live, whether you have power and a radio link."},
- {"id": "date", "text": "Step two, Date. The calendar colours every day for your site. Green means sunlight and Earth together for at least three days. Amber is power only. Red means no sunlight. Tap a day to choose it."},
- {"id": "find", "text": "Not sure? Find the next good date searches the coming year for you."},
- {"id": "check", "text": "Step three, Check. You get a clear verdict at touchdown, with one light for power and one for Earth contact, and the full assessment underneath."},
- {"id": "play", "text": "Press Play, or drag along the timeline, to watch the Sun circle the sky, and see exactly when power and radio come and go."},
- {"id": "whatif", "text": "Step four, What if. Move the site by a kilometre or shift the date by a day, and it tells you in plain words what changes."},
- {"id": "compare", "text": "For bigger questions, open the Compare Lab. It ranks your plans, shows how far each one is from your baseline, and charts every measure side by side."},
- {"id": "report", "text": "Step five, Report. Your whole scenario on one page, ready to print, save as a PDF, or share as a link."},
- {"id": "lumi", "text": "And if you're ever stuck, just ask Lumi. Type a question in plain English, and Lumi works out the answer with the same engine."},
- {"id": "outro", "text": "The tutorial, the tour, and your settings are always in the top right. Happy landing!"}
-]}
+{
+ "voice": "af_heart",
+ "lines": [
+  {
+   "id": "intro",
+   "ch": "Overview",
+   "text": "Lunar Site Planner answers one question for the Moon's south pole: at this place and time, will a lander get sunlight for power, and Earth in view to call home? Here's Professional mode, one feature at a time."
+  },
+  {
+   "id": "screen",
+   "ch": "The screen",
+   "text": "On the left is the mission flow: five steps, from a site to a report. The Moon sits in the middle. The pill on top says what's true right now, and the timeline below covers the next thirty days."
+  },
+  {
+   "id": "site",
+   "ch": "1 · Site",
+   "text": "Step one, Site. Search by name, filter by mission, type coordinates, or take one of the best spots for the coming month. Every listed site and Artemis Three region is marked on the Moon."
+  },
+  {
+   "id": "rays",
+   "ch": "Sunlight",
+   "text": "The gold line points from your site to the Sun, and the blue line to Earth. Right now the Sun is up, but Earth is just below the skyline, so the pill says NO GO.",
+   "say": "The gold line points from your site to the Sun, and the blue line to Earth. Right now the Sun is up, but Earth is just below the skyline, so the pill says no go."
+  },
+  {
+   "id": "layers",
+   "ch": "Map layers",
+   "text": "Open Map layers to colour the Moon by sunlight, Earth in view, or both together: right now, over your thirty days, or across all of 2027. Never-sunlit ground, height and slope are here too."
+  },
+  {
+   "id": "polar",
+   "ch": "South-Pole Map",
+   "text": "The South-Pole Map shows the same region from straight above, with average sunlight or Earth visibility laid over real NASA imagery."
+  },
+  {
+   "id": "date",
+   "ch": "2 · Date",
+   "text": "Step two, Date. The calendar colours every day for this site: green for sunlight and Earth together, amber for power only, red for no sunlight. Or press Find the next good date, and it searches the year for you."
+  },
+  {
+   "id": "play",
+   "ch": "Timeline",
+   "text": "Press Play, or drag along the timeline, to watch the Sun circle the horizon, and see exactly when power and radio come and go."
+  },
+  {
+   "id": "check",
+   "ch": "3 · Check",
+   "text": "Step three, Check. A screening at touchdown: GO, GO WITH CARE, or NO GO, with a line each for power, Earth contact and slope. Here, Earth clears the skyline by less than a degree, so it warns you: close to the line.",
+   "say": "Step three, Check. A screening at touchdown: go, go with care, or no go, with a line each for power, Earth contact and slope. Here, Earth clears the skyline by less than a degree, so it warns you: close to the line."
+  },
+  {
+   "id": "method",
+   "ch": "3 · Check",
+   "text": "Every result names the terrain it used. How this was worked out lists the method and every assumption. It's a screening with your settings, never a landing approval."
+  },
+  {
+   "id": "whatif",
+   "ch": "4 · What if",
+   "text": "Step four, What if. Move the site a kilometre, shift the date, or check the whole landing area, and it tells you in plain words what changes."
+  },
+  {
+   "id": "flight",
+   "ch": "Flight",
+   "text": "Flight shows how you'd get there: launch date, route, every burn, and the fuel. Compare a direct trip, phasing loops, and a slow low-energy path. Each burn says whether it's computed or assumed."
+  },
+  {
+   "id": "compare",
+   "ch": "Compare",
+   "text": "Compare puts plans side by side: other sites, other dates, or your plan against the best spot, with every measure drawn to scale."
+  },
+  {
+   "id": "report",
+   "ch": "5 · Report",
+   "text": "Step five, Report. It opens as a column beside the Moon. Expand it to read everything, then print it, download the data, or copy a link."
+  },
+  {
+   "id": "terrain",
+   "ch": "Terrain 3D",
+   "text": "For a closer look, Terrain 3D puts you on NASA's twenty-metre terrain at the site, with the Sun and Earth drawn in. Back takes you straight to your plan."
+  },
+  {
+   "id": "help",
+   "ch": "Help",
+   "text": "Stuck? Every view has its own guided tour under Help. Ask Lumi in plain English, and the accuracy page shows how every number was checked."
+  },
+  {
+   "id": "outro",
+   "ch": "Checked",
+   "text": "Positions match NASA JPL Horizons to within a hundredth of a degree, and shadows match Lunar Reconnaissance Orbiter photos on ninety-three percent of pixels. Free, open source, in your browser. Happy landing."
+  }
+ ]
+}

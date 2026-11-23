@@ -6,7 +6,7 @@
 
 Lunar Site Planner answers that for any site and any date, against the real terrain skyline from NASA's LRO LOLA laser altimeter. It runs in any browser, on a phone too, with no install, no account and no API key.
 
-**▶ Try it: [arairo.github.io/IMPROVED_lunarmoon-](https://arairo.github.io/IMPROVED_lunarmoon-/)** · [48-second promo](public/tutorial/lunar-site-planner-promo.mp4) · [2-minute tutorial](public/tutorial/pro-tutorial.mp4)
+**▶ Try it: [arairo.github.io/IMPROVED_lunarmoon-](https://arairo.github.io/IMPROVED_lunarmoon-/)** · [60-second promo](public/tutorial/lunar-site-planner-promo.mp4) · [3-minute tutorial](public/tutorial/pro-tutorial.mp4)
 
 Team **Dell Monitors**, Kuala Lumpur · NASA Space Apps Challenge 2026: *Lunar Landing Site Navigator*.
 The version submitted during the event stays frozen at [Arairo/NASA_lunarmoon-](https://github.com/Arairo/NASA_lunarmoon-); this repo is where we kept going. The full change log is in [IMPROVEMENTS.md](IMPROVEMENTS.md).

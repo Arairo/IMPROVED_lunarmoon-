@@ -30,16 +30,25 @@
   .si { position: absolute; right: 26px; top: 20px; font: 500 15px 'Inter'; color: rgba(255,255,255,.42); z-index: 99; }
   .logo { width: 96px; height: 96px; border-radius: 24px; background: #0b0f17; display: grid; place-items: center; box-shadow: 0 20px 50px rgba(0,0,0,.6), inset 0 0 0 1px rgba(255,255,255,.12); margin: 0 auto 26px; }
   .url { display: inline-block; margin-top: 30px; padding: 14px 28px; border-radius: 999px; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.18); font: 600 28px 'Inter'; color: #fff; }
+
+  .chbar { position: absolute; left: 60px; right: 60px; top: 26px; height: 4px; display: flex; gap: 6px; z-index: 90; }
+  .chbar i { flex: 1; height: 4px; border-radius: 2px; background: rgba(255,255,255,.16); overflow: hidden; position: relative; }
+  .chbar i b { position: absolute; inset: 0; width: 0; background: linear-gradient(90deg, #2997ff, #64d2ff); }
+  .chlab { position: absolute; left: 60px; top: 44px; z-index: 90; display: flex; align-items: center; gap: 12px; font: 600 21px 'Inter'; color: rgba(255,255,255,.92); letter-spacing: -0.01em; }
+  .chlab .no { font: 700 15px 'Inter'; color: #64d2ff; letter-spacing: .12em; text-transform: uppercase; }
+  .si { top: 44px; }
 </style></head>
 <body>
 <canvas id="stars" width="1920" height="1080"></canvas>
 <div id="root"></div>
 <div class="vign"></div>
 <div class="cap" id="cap" style="opacity:0"></div>
-<div class="si">SI-assisted · AI narration (Kokoro TTS) · built with Claude Code</div>
+<div class="chbar" id="chbar"></div><div class="chlab" id="chlab"><span class="no"></span><span class="nm"></span></div>
+<div class="si">SI-assisted · AI narration (Kokoro TTS) · real screen captures</div>
 <script>
 const LINES = __LINES__;
-const A = (n) => `../promo/cap/${n}`;
+const A = (n) => `../cap/${n}`;
+const CH = __CH__;
 const W = 1920, H = 1080;
 const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
 const lerp = (a, b, k) => a + (b - a) * k;
@@ -146,66 +155,99 @@ function winScene(cfg) {
 }
 
 // ---------- scenes ----------
-// Intro: sunrise behind a title card
+// Intro: the landing page's sunrise, with the title
 {
   const sc = T.intro; const g = el('<div class="layer"></div>');
-  const ims = ['intro0', 'intro1', 'intro2', 'intro3'].map((n) => { const i = el(`<img class="full" src="${A(n + '.png')}">`); g.appendChild(i); return i; });
-  const kick = el('<div class="txt" style="top:640px;font:700 24px Inter;letter-spacing:.14em;text-transform:uppercase;color:#ffb300">Tutorial</div>');
-  const ttl = el('<div class="txt grad" style="top:690px;font:800 108px Inter;letter-spacing:-0.035em">Professional mode</div>');
-  const sub = el('<div class="txt" style="top:830px;font:500 32px Inter;color:#c7c9d1">Plan a Moon landing in five steps</div>');
-  [kick, ttl, sub].forEach((n) => g.appendChild(n)); root.appendChild(g);
+  const ims = ['land1','land2','land3','land4','land5','land6','land7','land_end'].map((n) => { const i = el(`<img class="full" src="${A(n + '.png')}">`); g.appendChild(i); return i; });
+  const kick = el('<div class="txt" style="top:430px;font:700 22px Inter;letter-spacing:.18em;text-transform:uppercase;color:#ffb300">Tutorial</div>');
+  const ttl = el('<div class="txt grad" style="top:468px;font:800 104px Inter;letter-spacing:-0.035em">Professional mode</div>');
+  const sub = el('<div class="txt" style="top:604px;font:500 30px Inter;color:#c7c9d1">Every feature, one chapter at a time</div>');
+  const scr = el('<div class="layer" style="background:rgba(0,0,0,.8);backdrop-filter:blur(18px)"></div>');
+  g.appendChild(scr); [kick, ttl, sub].forEach((n) => g.appendChild(n)); root.appendChild(g);
   S.push((t) => {
-    const on = t < sc.end + 0.4; show(g, on); if (!on) return;
-    const z = lerp(1.0, 1.12, t / sc.end);
-    const wts = [1 - prog(t, 0.8, 2.0), Math.min(prog(t, 0.8, 2.0), 1 - prog(t, 2.4, 3.6)), Math.min(prog(t, 2.4, 3.6), 1 - prog(t, 4.0, 5.4)), prog(t, 4.0, 5.4)];
-    ims.forEach((im, i) => { im.style.opacity = wts[i]; im.style.transform = `scale(${z}) translateY(${-t * 4}px)`; });
-    const k1 = out(prog(t, 1.0, 2.2)); ttl.style.opacity = k1; ttl.style.filter = `blur(${(1 - k1) * 14}px)`; ttl.style.transform = `scale(${lerp(1.12, 1, k1)})`;
-    kick.style.opacity = out(prog(t, 0.6, 1.4)); sub.style.opacity = out(prog(t, 1.8, 2.8));
-    g.style.opacity = 1 - prog(t, sc.end - 0.3, sc.end + 0.4);
+    const end = sc.end + 0.4; const on = t < end; show(g, on); if (!on) return;
+    const f = clamp(t / 5.5) * (ims.length - 1), i = Math.floor(f), fr = f - i;
+    ims.forEach((im, j) => { im.style.opacity = j === 0 ? 1 : j <= i ? 1 : j === i + 1 ? fr : 0; im.style.transform = `scale(${lerp(1.0, 1.08, t / end)})`; });
+    const k1 = out(prog(t, 4.6, 5.8)); ttl.style.opacity = k1; ttl.style.filter = `blur(${(1 - k1) * 14}px)`; ttl.style.transform = `scale(${lerp(1.08, 1, k1)})`;
+    kick.style.opacity = out(prog(t, 4.2, 5.0)); sub.style.opacity = out(prog(t, 5.4, 6.4)); scr.style.opacity = out(prog(t, 3.8, 5.0));
+    g.style.opacity = 1 - prog(t, sc.end - 0.3, end);
   });
 }
-winScene({ id: 'layout', imgs: ['site.png'], cam: [[0, { cx: .5, cy: .5, s: .62, rx: 20, ry: -16, dy: 160, o: 1 }], [0.14, { cx: .5, cy: .5, s: .9, rx: 0, ry: 0, dy: -40 }], [1, { cx: .5, cy: .5, s: .92, dy: -40 }]],
-  callouts: [[0.16, 0.42, [0, .085, .233, .885], 'Mission flow'], [0.42, 0.7, [.235, .12, 1, .72], '3D Moon'], [0.7, 0.98, [.235, .73, 1, .99], 'Timeline']] });
-winScene({ id: 'site', imgs: ['site.png'], kick: ['01', 'Site', 'Search, filter, type coordinates, or take a best spot.'],
-  cam: [[0, { cx: .5, cy: .5, s: .92, dx: 0, dy: -40 }], [0.18, { cx: .12, cy: .42, s: 1.75, dx: 330, dy: -30 }], [1, { cx: .12, cy: .5, s: 1.8, dx: 330, dy: -30 }]],
-  callouts: [[0.5, 0.95, [.008, .23, .23, .31], 'Best spots']] });
-winScene({ id: 'globe', imgs: ['site.png'], cam: [[0, { cx: .12, cy: .5, s: 1.8, dx: 330, dy: -30 }], [0.16, { cx: .6, cy: .38, s: 1.45, dx: 0, dy: -40 }], [1, { cx: .6, cy: .36, s: 1.55, dx: 0, dy: -40 }]],
-  callouts: [[0.62, 0.98, [.425, .085, .64, .135], 'Live status']] });
-winScene({ id: 'date', imgs: ['date.png', 'date2.png'], swaps: [[0.8, 1]], kick: ['02', 'Date', 'Green days have sunlight and Earth together for 3+ days.'],
-  cam: [[0, { cx: .5, cy: .5, s: .9, dy: -40 }], [0.16, { cx: .12, cy: .58, s: 1.95, dx: 330, dy: -40 }], [1, { cx: .125, cy: .6, s: 2.0, dx: 330, dy: -40 }]],
-  click: { at: 0.8, x: 0.144, y: 0.636 } });
-winScene({ id: 'find', imgs: ['find0.png', 'find1.png'], swaps: [[0.55, 1]],
-  cam: [[0, { cx: .125, cy: .6, s: 2.0, dx: 330, dy: -40 }], [0.25, { cx: .12, cy: .58, s: 2.15, dx: 330, dy: -40 }], [1, { cx: .12, cy: .6, s: 2.2, dx: 330, dy: -40 }]],
-  click: { at: 0.55, x: 0.075, y: 0.566 } });
-winScene({ id: 'check', imgs: ['check.png'], kick: ['03', 'Check', 'A verdict at touchdown: one light for power, one for Earth.'],
-  cam: [[0, { cx: .5, cy: .5, s: .9, dy: -40 }], [0.16, { cx: .12, cy: .32, s: 1.85, dx: 330, dy: -20 }], [1, { cx: .12, cy: .36, s: 1.9, dx: 330, dy: -20 }]] });
-winScene({ id: 'play', imgs: ['check.png', ...Array.from({ length: 48 }, (_, i) => `tl${String(i).padStart(2, '0')}.png`)], frames: { u0: 0.15, u1: 0.95 },
-  cam: [[0, { cx: .12, cy: .36, s: 1.9, dx: 330, dy: -20 }], [0.14, { cx: .5, cy: .5, s: .9, dx: 0, dy: -40 }], [1, { cx: .55, cy: .55, s: 1.0, dx: 0, dy: -40 }]],
-  callouts: [[0.3, 0.95, [.235, .73, 1, .99], 'Timeline']] });
-winScene({ id: 'whatif', imgs: ['whatif.png'], kick: ['04', 'What if', 'Nudge the site or the date and read what changes.'],
-  cam: [[0, { cx: .5, cy: .5, s: .9, dy: -40 }], [0.18, { cx: .115, cy: .42, s: 1.95, dx: 330, dy: -30 }], [1, { cx: .115, cy: .45, s: 2.0, dx: 330, dy: -30 }]] });
-winScene({ id: 'compare', imgs: ['cmp1.png', 'cmp2.png'], swaps: [[0.6, 1]],
-  cam: [[0, { cx: .45, cy: .5, s: .8, rx: 10, ry: -10, dy: -20 }], [0.14, { cx: .44, cy: .46, s: 1.12, dy: -30 }], [0.56, { cx: .44, cy: .5, s: 1.16, dy: -30 }], [0.62, { cx: .45, cy: .45, s: 1.12, dy: -30 }], [1, { cx: .45, cy: .48, s: 1.16, dy: -30 }]],
-  callouts: [[0.16, 0.55, [.055, .235, .8, .335], 'The winner'], [0.66, 0.98, [.08, .05, .835, .75], 'Every measure, to scale']] });
-winScene({ id: 'report', imgs: ['report.png'], kick: ['05', 'Report', 'One page to print, save as PDF, or share as a link.'],
-  cam: [[0, { cx: .5, cy: .5, s: .9, dy: -40 }], [0.2, { cx: .115, cy: .45, s: 1.75, dx: 330, dy: -30 }], [1, { cx: .115, cy: .55, s: 1.8, dx: 330, dy: -30 }]] });
-winScene({ id: 'lumi', imgs: ['lumi0.png', 'lumi1.png', 'lumi2.png'], swaps: [[0.35, 1], [0.6, 2]], kick: ['✦', 'Ask Lumi', 'Plain English in, real numbers out.'],
-  cam: [[0, { cx: .5, cy: .5, s: .9, dy: -40 }], [0.2, { cx: .845, cy: .62, s: 1.55, dx: 330, dy: -30 }], [1, { cx: .845, cy: .64, s: 1.62, dx: 330, dy: -30 }]] });
-// Outro: Help menu, then end card
+const FULL = { cx: .5, cy: .5, s: .92, dy: 10 };
+const RAIL = (cy, s = 1.95) => ({ cx: .118, cy, s, dx: 330, dy: 0 });
+winScene({ id: 'screen', imgs: ['site.png'], cam: [[0, { cx: .5, cy: .5, s: .6, rx: 18, ry: -14, dy: 140, o: 1 }], [0.14, FULL], [1, { ...FULL, s: .94 }]],
+  callouts: [[0.12, 0.38, [0, .045, .233, 1], 'Mission flow'], [0.38, 0.58, [.236, .07, 1, .83], 'The Moon'], [0.58, 0.8, [.505, .105, .725, .142], 'Right now'], [0.8, 0.99, [.236, .835, 1, .995], 'Next 30 days']] });
+winScene({ id: 'site', imgs: ['site.png', 'site_search.png'], swaps: [[0.42, 1]], kick: ['01', 'Site', 'Search, filter, type coordinates, or take a best spot.'],
+  cam: [[0, FULL], [0.14, RAIL(.32)], [0.72, RAIL(.34)], [0.84, { cx: .6, cy: .5, s: 2.1, dx: 0, dy: 0 }], [1, { cx: .6, cy: .5, s: 2.2, dx: 0, dy: 0 }]],
+  callouts: [[0.16, 0.4, [.005, .255, .23, .325], 'Best spots'], [0.42, 0.72, [.005, .395, .17, .425], 'Search']] });
+winScene({ id: 'rays', imgs: ['globe_site.png'], cam: [[0, { cx: .6, cy: .5, s: 2.2 }], [0.45, { cx: .56, cy: .55, s: 2.4 }], [0.62, { cx: .615, cy: .2, s: 2.2 }], [1, { cx: .615, cy: .2, s: 2.3 }]],
+  callouts: [[0.08, 0.5, [.24, .79, .365, .82], 'Sun · Earth'], [0.66, 0.99, [.505, .105, .725, .142], 'NO GO: Earth hidden']] });
+winScene({ id: 'layers', imgs: ['layers_menu.png', 'layer_sun_now.png', 'layer_sun_window.png', 'layer_sun_year.png', 'layer_earth.png', 'layer_both.png', 'layer_shadow.png', 'layer_height.png', 'layer_slope.png'],
+  swaps: [[0.2, 1], [0.32, 2], [0.43, 3], [0.53, 4], [0.62, 5], [0.73, 6], [0.83, 7], [0.92, 8]],
+  cam: [[0, { cx: .78, cy: .3, s: 1.9 }], [0.18, { cx: .78, cy: .3, s: 1.9 }], [0.26, { cx: .58, cy: .46, s: 1.25 }], [1, { cx: .58, cy: .46, s: 1.3 }]],
+  callouts: [[0.03, 0.19, [.705, .095, .993, .525], 'Colour the Moon by']] });
+winScene({ id: 'polar', imgs: ['polar.png', 'polar_sun.png', 'polar_earth.png'], swaps: [[0.3, 1], [0.66, 2]], kick: ['', 'South-Pole Map', 'The same region, from straight above.'],
+  cam: [[0, { cx: .58, cy: .46, s: 1.3 }], [0.2, { cx: .6, cy: .48, s: 1.45, dx: 300 }], [1, { cx: .6, cy: .48, s: 1.55, dx: 300 }]] });
+winScene({ id: 'date', imgs: ['date_cal.png'], kick: ['02', 'Date', 'Green days: sunlight and Earth together.'],
+  cam: [[0, FULL], [0.14, RAIL(.45, 1.9)], [0.62, RAIL(.5, 1.9)], [0.72, RAIL(.72, 2.0)], [1, RAIL(.73, 2.05)]],
+  callouts: [[0.18, 0.6, [.005, .265, .225, .71], 'Colour = this site'], [0.8, 0.99, [.005, .872, .225, .905], 'Found it']], click: { at: 0.76, x: 0.07, y: 0.815 } });
+winScene({ id: 'play', imgs: ['tl00.png', ...Array.from({ length: 40 }, (_, i) => `tl${String(i).padStart(2, '0')}.png`)], frames: { u0: 0.12, u1: 0.96 },
+  cam: [[0, RAIL(.73, 2.05)], [0.12, { cx: .62, cy: .52, s: 1.15 }], [1, { cx: .62, cy: .55, s: 1.2 }]],
+  callouts: [[0.2, 0.97, [.236, .835, 1, .995], 'Drag to scrub'], [0.45, 0.97, [.505, .105, .725, .142], '']] });
+winScene({ id: 'check', imgs: ['check.png'], kick: ['03', 'Check', 'A screening at touchdown, with your settings.'],
+  cam: [[0, FULL], [0.13, RAIL(.36)], [0.55, RAIL(.4)], [0.68, RAIL(.62)], [1, RAIL(.64)]],
+  callouts: [[0.15, 0.55, [.005, .23, .225, .322], 'Screening'], [0.68, 0.99, [.005, .625, .225, .722], 'Close to the line']] });
+winScene({ id: 'method', imgs: ['check.png', 'check_more.png'], swaps: [[0.42, 1]],
+  cam: [[0, RAIL(.64)], [0.12, RAIL(.74)], [0.4, RAIL(.74)], [0.46, RAIL(.3)], [1, RAIL(.32)]],
+  callouts: [[0.06, 0.38, [.005, .735, .225, .775], 'Terrain used'], [0.5, 0.98, [.005, .14, .225, .495], 'How this was worked out']] });
+winScene({ id: 'whatif', imgs: ['whatif.png', 'whatif_n.png', 'whatif_area.png'], swaps: [[0.36, 1], [0.66, 2]], kick: ['04', 'What if', 'Nudge it, and read what changes.'],
+  cam: [[0, FULL], [0.14, RAIL(.42)], [0.62, RAIL(.45)], [0.7, RAIL(.55)], [1, RAIL(.56)]],
+  callouts: [[0.18, 0.34, [.015, .29, .125, .33], 'Move'], [0.4, 0.64, [.005, .495, .225, .555], 'What changed'], [0.72, 0.99, [.005, .49, .225, .62], 'The landing area']], click: { at: 0.34, x: 0.055, y: 0.31 } });
+winScene({ id: 'flight', imgs: ['flight0.png', 'flight1.png', 'flight2.png', 'flight3.png', 'flight_burns.png', 'flight_routes.png'], swaps: [[0.14, 1], [0.27, 2], [0.4, 3], [0.55, 4], [0.76, 5]], kick: ['', 'Flight', 'Launch, route, burns and fuel.'],
+  cam: [[0, { cx: .62, cy: .45, s: 1.1, dx: 280 }], [0.5, { cx: .62, cy: .45, s: 1.15, dx: 280 }], [0.58, { cx: .36, cy: .55, s: 1.9 }], [1, { cx: .36, cy: .57, s: 1.95 }]],
+  callouts: [[0.6, 0.76, [.245, .645, .47, .735], 'Each burn, labelled'], [0.8, 0.99, [.245, .662, .47, .745], 'Three routes']] });
+winScene({ id: 'compare', imgs: ['cmp1.png', 'cmp2.png'], swaps: [[0.62, 1]], kick: ['', 'Compare', 'Plans side by side, to scale.'],
+  cam: [[0, { cx: .5, cy: .5, s: .85, rx: 10, ry: -10 }], [0.14, { cx: .5, cy: .5, s: 1.05, dx: 300 }], [1, { cx: .5, cy: .55, s: 1.1, dx: 300 }]],
+  callouts: [[0.3, 0.6, [.125, .255, .875, .345], 'The answer first']] });
+winScene({ id: 'report', imgs: ['report.png', 'report_col.png', 'report_wide.png'], swaps: [[0.3, 1], [0.6, 2]], kick: ['05', 'Report', 'A column beside the Moon; nothing covered.'],
+  cam: [[0, FULL], [0.12, { cx: .5, cy: .5, s: 1.0, dx: 260 }], [1, { cx: .5, cy: .5, s: 1.02, dx: 260 }]],
+  callouts: [[0.34, 0.58, [.355, .07, .5, .995], 'Report column'], [0.62, 0.99, [.62, .03, .995, .07], 'Print · JSON · CSV · link']], click: { at: 0.58, x: 0.372, y: 0.111 } });
+winScene({ id: 'terrain', imgs: ['report.png', 'terrain0.png', 'terrain1.png', 'terrain_back.png'], swaps: [[0.2, 1], [0.5, 2], [0.86, 3]], kick: ['', 'Terrain 3D', 'NASA LOLA 20 m terrain at the site.'],
+  cam: [[0, { cx: .5, cy: .5, s: 1.0, dx: 260 }], [0.2, { cx: .5, cy: .5, s: 1.0, dx: 260 }], [1, { cx: .5, cy: .5, s: 1.05, dx: 260 }]],
+  callouts: [[0.66, 0.85, [.4, .062, .475, .09], 'Back']], click: { at: 0.18, x: 0.092, y: 0.51 } });
+winScene({ id: 'help', imgs: ['help.png', 'tour1.png', 'lumi2.png', 'trust.png'], swaps: [[0.24, 1], [0.42, 2], [0.68, 3]],
+  cam: [[0, { cx: .86, cy: .2, s: 1.9 }], [0.23, { cx: .86, cy: .2, s: 1.9 }], [0.28, { cx: .55, cy: .5, s: 1.1 }], [0.4, { cx: .55, cy: .5, s: 1.1 }], [0.46, { cx: .74, cy: .58, s: 1.7 }], [0.66, { cx: .74, cy: .58, s: 1.7 }], [0.72, { cx: .75, cy: .45, s: 1.3 }], [1, { cx: .75, cy: .45, s: 1.35 }]],
+  callouts: [[0.03, 0.24, [.765, .06, .96, .3], 'Help']] });
+// Outro: trust numbers, then end card
 {
   const sc = T.outro;
-  winScene({ id: 'outro', imgs: ['help.png'], cam: [[0, { cx: .5, cy: .5, s: .9, dy: -40 }], [0.12, { cx: .82, cy: .2, s: 1.7, dx: -60, dy: 0 }], [0.5, { cx: .82, cy: .2, s: 1.75, dx: -60, dy: 0 }], [0.62, { cx: .82, cy: .2, s: 1.75, dx: -60, dy: 0, o: 0 }], [1, { cx: .82, cy: .2, s: 1.75, o: 0 }]],
-    callouts: [[0.14, 0.55, [.715, .025, .99, .19], 'Help']] });
-  const g = el(`<div class="layer"><img class="full" src="${A('intro3.png')}" style="filter:brightness(.5)"><div class="txt" style="top:320px">
-    <div class="logo"><svg width="58" height="58" viewBox="0 0 32 32" fill="none" stroke-width="2.5"><circle cx="16" cy="16" r="12" stroke="#f8fafc"/><path d="M4 18h24" stroke="#94a3b8"/><circle cx="21" cy="10" r="3" fill="#fbbf24"/></svg></div>
-    <div class="grad" style="font:800 96px Inter;letter-spacing:-0.035em">Happy landing!</div>
-    <div style="margin-top:12px;font:500 30px Inter;color:#c7c9d1">Lunar Site Planner · Team Dell Monitors</div>
-    <div class="url">arairo.github.io/IMPROVED_lunarmoon-</div></div></div>`);
+  winScene({ id: 'outro', imgs: ['trust.png'], cam: [[0, { cx: .75, cy: .45, s: 1.35 }], [0.1, { cx: .75, cy: .14, s: 2.1 }], [0.5, { cx: .75, cy: .14, s: 2.15 }], [0.6, { cx: .75, cy: .14, s: 2.15, o: 0 }], [1, { cx: .75, cy: .14, s: 2.15, o: 0 }]] });
+  const g = el(`<div class="layer"><img class="full" src="${A('land_end.png')}" style="filter:brightness(.55) blur(2px);transform-origin:50% 12%"><div class="layer" style="background:linear-gradient(180deg,rgba(0,0,0,.2) 0%,rgba(0,0,0,.55) 55%,#000 82%)"></div><div class="txt" style="top:470px">
+    <div class="grad" style="font:800 92px Inter;letter-spacing:-0.035em">Happy landing!</div>
+    <div style="margin-top:14px;font:500 30px Inter;color:#c7c9d1">Lunar Site Planner · Team Dell Monitors · NASA Space Apps 2026</div>
+    <div class="url">arairo.github.io/IMPROVED_lunarmoon-</div>
+    <div style="margin-top:26px;font:500 22px Inter;color:#8e93a0">doi.org/10.5281/zenodo.24435109 · A screening tool, not a landing approval</div></div></div>`);
   root.appendChild(g);
   S.push((t) => {
-    const a = sc.start + (sc.end - sc.start) * 0.55; const on = t > a; show(g, on); if (!on) return;
-    const k = out(prog(t, a, a + 1.4)); g.style.opacity = k; g.firstChild.style.transform = `scale(${lerp(1.1, 1, k)})`;
+    const a = sc.start + (sc.end - sc.start) * 0.56; const on = t > a; show(g, on); if (!on) return;
+    const k = out(prog(t, a, a + 1.4)); g.querySelector('img').style.transform = `scale(${lerp(2.3, 2.1, k)})`;
     g.style.opacity = Math.min(k, 1 - prog(t, DURATION - 0.8, DURATION));
+  });
+}
+// Chapter bar and label
+{
+  const ids = Object.keys(T); const chs = []; ids.forEach((id) => { const c = CH[id]; if (!chs.length || chs[chs.length - 1].name !== c) chs.push({ name: c, a: T[id].start, b: T[id].end }); else chs[chs.length - 1].b = T[id].end; });
+  const bar = document.getElementById('chbar'); chs.forEach(() => bar.appendChild(el('<i><b></b></i>')));
+  const lab = document.getElementById('chlab'); const no = lab.querySelector('.no'), nm = lab.querySelector('.nm');
+  window.CHAPTERS = chs;
+  S.push((t) => {
+    const vis = prog(t, T.intro.end - 0.6, T.intro.end) * (1 - prog(t, T.outro.start + (T.outro.end - T.outro.start) * 0.5, T.outro.start + (T.outro.end - T.outro.start) * 0.56));
+    bar.style.opacity = vis; lab.style.opacity = vis;
+    [...bar.children].forEach((x, i) => { x.firstChild.style.width = `${100 * clamp((t - chs[i].a) / (chs[i].b - chs[i].a))}%`; });
+    const i = Math.max(0, chs.findIndex((c) => t >= c.a && t < c.b));
+    const nmText = chs[i].name;
+    if (nm.textContent !== nmText) { nm.textContent = nmText; no.textContent = `Chapter ${i + 1} of ${chs.length}`; }
+    const k = out(prog(t, chs[i].a, chs[i].a + 0.5)); nm.style.opacity = k; nm.style.transform = `translateY(${(1 - k) * 8}px)`;
   });
 }
 // Captions
