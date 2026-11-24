@@ -87,53 +87,225 @@ const fmtDate = (ms) => new Date(ms).toLocaleDateString('en-GB', { day: 'numeric
 const fmtWhen = (ms) => new Date(ms).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'UTC' }) + ' UTC';
 const starRow = (n, size = 26) => `<span class="w-stars" aria-label="${n} of 3 stars">${[0, 1, 2].map((k) => `<svg width="${size}" height="${size}" viewBox="0 0 24 24" class="${k < n ? 'on' : ''}"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`).join('')}</span>`;
 
-function skyline(ctx, scan) {
-  const s = scan.series;
-  let maxEl = 8;
-  for (let i = 0; i < s.times.length; i++) maxEl = Math.max(maxEl, s.sunEl[i], s.earthEl[i]);
-  const W = 900, H = 300, top = 26, bottom = 250;
-  const yMin = -8, yMax = clamp(Math.ceil(maxEl + 4), 12, 92);
-  const x = (az) => ((((az % 360) + 360) % 360) / 360) * W;
-  const y = (el) => bottom - ((clamp(el, yMin, yMax) - yMin) / (yMax - yMin)) * (bottom - top);
-  let ground = `M0 ${H} `, edge = '';
-  for (let k = 0; k <= 360; k += 2) {
-    const pt = `${((k / 360) * W).toFixed(1)} ${y(horizonAt(ctx.horizon, k % 360)).toFixed(1)}`;
-    ground += `L${pt} `; edge += `${k ? 'L' : 'M'}${pt} `;
+function skyline(ctx, scan, loadW = 100) {
+  const s = scan.series, N = s.times.length;
+  const W = 860, H = 392;
+  const skyLeft = 18, skyRight = 842, skyW = skyRight - skyLeft, skyTop = 34, skyBottom = 152;
+  const tlLeft = 118, tlRight = 842, tlW = tlRight - tlLeft;
+
+  // Center the horizon panorama on Earth's mean direction so Earth never wraps across the edge.
+  let sumSin = 0, sumCos = 0, maxEl = 10;
+  for (let k = 0; k < 360; k += 2) maxEl = Math.max(maxEl, horizonAt(ctx.horizon, k));
+  for (let i = 0; i < N; i++) {
+    sumSin += Math.sin(s.earthAz[i] * DEG);
+    sumCos += Math.cos(s.earthAz[i] * DEG);
+    maxEl = Math.max(maxEl, s.sunEl[i], s.earthEl[i]);
   }
-  ground += `L${W} ${H} Z`;
-  let trails = '';
-  for (let i = 0; i < s.times.length; i += 3) {
-    trails += `<circle cx="${x(s.sunAz[i]).toFixed(1)}" cy="${y(s.sunEl[i]).toFixed(1)}" r="1.6" class="trail-sun"/>`;
-    trails += `<circle cx="${x(s.earthAz[i]).toFixed(1)}" cy="${y(s.earthEl[i]).toFixed(1)}" r="1.6" class="trail-earth"/>`;
+  const earthMean = (((Math.atan2(sumSin, sumCos) / DEG) % 360) + 360) % 360;
+  const azCenter = ((Math.round(earthMean / 90) * 90) % 360 + 360) % 360;
+  const relAz = (az) => ((((az - azCenter) % 360) + 540) % 360) - 180;
+  const sxOf = (az) => skyLeft + ((relAz(az) + 180) / 360) * skyW;
+
+  const yMin = -6, yMax = clamp(Math.ceil(maxEl + 4), 12, 92);
+  const syOf = (el) => skyBottom - ((clamp(el, yMin, yMax) - yMin) / (yMax - yMin)) * (skyBottom - skyTop);
+
+  let ground = `M${skyLeft} ${skyBottom} `, edge = '';
+  for (let d = -180; d <= 180; d += 2) {
+    const px = skyLeft + ((d + 180) / 360) * skyW;
+    const py = syOf(horizonAt(ctx.horizon, ((azCenter + d) % 360 + 360) % 360));
+    const pt = `${px.toFixed(1)} ${py.toFixed(1)}`;
+    ground += `L${pt} `;
+    edge += `${d === -180 ? 'M' : 'L'}${pt} `;
   }
-  const compass = [['N', 0], ['E', 90], ['S', 180], ['W', 270]].map(([l, az]) => `<text x="${x(az) + 6}" y="${H - 14}" class="lbl">${l}</text><line x1="${x(az)}" x2="${x(az)}" y1="${H - 30}" y2="${H - 22}" stroke="#8e93a0"/>`).join('');
-  const svg = `<svg class="w-sky" viewBox="0 0 ${W} ${H}" role="img" aria-label="360 degree skyline with the Sun and Earth">
-    <defs><radialGradient id="wSunGlow"><stop offset="0" stop-color="#ffb300" stop-opacity="0.75"/><stop offset="1" stop-color="#ffb300" stop-opacity="0"/></radialGradient></defs>
-    <rect width="${W}" height="${H}" class="sky"/>
-    <line x1="0" x2="${W}" y1="${y(0)}" y2="${y(0)}" class="lvl"/>
-    <text x="8" y="${y(0) - 6}" class="lbl">level (0°)</text>
-    ${trails}
-    <circle data-b="sunglow" r="34" fill="url(#wSunGlow)" class="body"/>
-    <circle data-b="sun" r="11" fill="#ffb300" class="body"/>
-    <circle data-b="earth" r="9" fill="#38bdf8" stroke="#bfe9ff" stroke-width="1.5" class="body"/>
-    <path d="${ground}" class="ground"/><path d="${edge}" class="ground-edge"/>
-    <text data-b="sunlbl" class="tag">Sun</text><text data-b="earthlbl" class="tag">Earth</text>
+  ground += `L${skyRight} ${skyBottom} Z`;
+
+  const buildTrail = (azArr, elArr) => {
+    let d = '', prevX = null;
+    for (let i = 0; i < N; i++) {
+      const px = sxOf(azArr[i]), py = syOf(elArr[i]);
+      const cmd = prevX === null || Math.abs(px - prevX) > skyW * 0.45 ? 'M' : 'L';
+      d += `${cmd}${px.toFixed(1)} ${py.toFixed(1)} `;
+      prevX = px;
+    }
+    return d;
+  };
+  const sunTrail = buildTrail(s.sunAz, s.sunEl);
+  const earthTrail = buildTrail(s.earthAz, s.earthEl);
+
+  const dirName = { 0: 'N', 90: 'E', 180: 'S', 270: 'W' };
+  const compass = [-180, -90, 0, 90, 180].map((d) => {
+    const px = skyLeft + ((d + 180) / 360) * skyW;
+    const label = dirName[((azCenter + d) % 360 + 360) % 360];
+    const anchor = d === -180 ? 'start' : d === 180 ? 'end' : 'middle';
+    const cls = d === 0 ? 'lbl lbl-center' : 'lbl';
+    return `<line x1="${px.toFixed(1)}" x2="${px.toFixed(1)}" y1="${skyBottom}" y2="${skyBottom + 5}" stroke="#6b7280"/><text x="${px.toFixed(1)}" y="${skyBottom + 17}" text-anchor="${anchor}" class="${cls}">${label}</text>`;
+  }).join('');
+
+  // 30-day survival timeline tracks
+  const txOf = (i) => tlLeft + (i / Math.max(1, N - 1)) * tlW;
+  const pTop = 214, pH = 48, pBot = pTop + pH;
+  const rTop = 274, rH = 28;
+  const bTop = 314, bH = 26;
+
+  let maxW = Math.max(loadW * 1.4, 1);
+  for (let i = 0; i < N; i++) maxW = Math.max(maxW, s.watts[i]);
+  const powerY = (i) => {
+    const frac = s.lit[i] === 1 ? clamp(Math.max(0.14, s.watts[i] / maxW), 0.14, 1) : 0;
+    return pBot - frac * (pH - 4);
+  };
+  let powerArea = `M${tlLeft} ${pBot} `, powerLine = '';
+  for (let i = 0; i < N; i++) {
+    const px = txOf(i).toFixed(1), py = powerY(i).toFixed(1);
+    powerArea += `L${px} ${py} `;
+    powerLine += `${i ? 'L' : 'M'}${px} ${py} `;
+  }
+  powerArea += `L${tlRight} ${pBot} Z`;
+
+  const runs = (pred, y, h, fill) => {
+    let out = '', start = -1;
+    const flush = (end) => {
+      const x0 = Math.max(tlLeft, start === 0 ? tlLeft : (txOf(start - 1) + txOf(start)) * 0.5);
+      const x1 = Math.min(tlRight, end === N - 1 ? tlRight : (txOf(end) + txOf(end + 1)) * 0.5);
+      const w = Math.max(3, x1 - x0);
+      out += `<rect x="${x0.toFixed(1)}" y="${y}" width="${w.toFixed(1)}" height="${h}" rx="4" fill="${fill}"/>`;
+    };
+    for (let i = 0; i < N; i++) {
+      const ok = pred(i);
+      if (ok && start < 0) start = i;
+      else if (!ok && start >= 0) { flush(i - 1); start = -1; }
+    }
+    if (start >= 0) flush(N - 1);
+    return out;
+  };
+  const radioRects = runs((i) => s.los[i] === 1, rTop + 3, rH - 6, '#38bdf8');
+  const bothRects = runs((i) => s.lit[i] === 1 && s.los[i] === 1, bTop + 3, bH - 6, '#30d158');
+
+  let sunCount = 0, earthCount = 0, bothCount = 0;
+  for (let i = 0; i < N; i++) {
+    if (s.lit[i] === 1) sunCount++;
+    if (s.los[i] === 1) earthCount++;
+    if (s.lit[i] === 1 && s.los[i] === 1) bothCount++;
+  }
+  const sunPct = Math.round((sunCount / Math.max(1, N)) * 100);
+  const earthPct = Math.round((earthCount / Math.max(1, N)) * 100);
+  const bothPct = Math.round((bothCount / Math.max(1, N)) * 100);
+
+  const dayTicks = [1, 5, 10, 15, 20, 25, 30].map((d) => {
+    const frac = clamp((d - 1) / 29, 0, 1);
+    const px = tlLeft + frac * tlW;
+    const anchor = d === 1 ? 'start' : d === 30 ? 'end' : 'middle';
+    return `<line x1="${px.toFixed(1)}" x2="${px.toFixed(1)}" y1="${pTop}" y2="${bTop + bH}" stroke="rgba(255,255,255,0.08)"/><text x="${px.toFixed(1)}" y="${bTop + bH + 17}" text-anchor="${anchor}" class="lbl">Day ${d}</text>`;
+  }).join('');
+
+  const svg = `<svg class="w-sky" viewBox="0 0 ${W} ${H}" role="img" aria-label="Live sky above lander and 30-day survival timeline">
+    <defs>
+      <radialGradient id="wSunGlow"><stop offset="0" stop-color="#ffb300" stop-opacity="0.8"/><stop offset="1" stop-color="#ffb300" stop-opacity="0"/></radialGradient>
+      <linearGradient id="wGroundGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3c4352"/><stop offset="1" stop-color="#1a1f2b"/></linearGradient>
+      <linearGradient id="wPowerGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd60a" stop-opacity="0.65"/><stop offset="1" stop-color="#ff9f0a" stop-opacity="0.16"/></linearGradient>
+      <clipPath id="wSkyClip"><rect x="${skyLeft}" y="${skyTop}" width="${skyW}" height="${skyBottom - skyTop}" rx="10"/></clipPath>
+    </defs>
+    <rect width="${W}" height="${H}" class="sky" rx="14"/>
+    <text x="${skyLeft}" y="22" class="hd">LIVE VIEW FROM YOUR LANDER</text>
+    <g transform="translate(${skyRight}, 18)" text-anchor="end">
+      <circle cx="-212" cy="-3" r="4.5" fill="#ffb300"/><text x="-203" y="1" text-anchor="start" class="lbl">Sun</text>
+      <circle cx="-158" cy="-3" r="4.5" fill="#38bdf8"/><text x="-149" y="1" text-anchor="start" class="lbl">Earth</text>
+      <rect x="-98" y="-8" width="12" height="9" rx="2" fill="#3c4352" stroke="#8b93a5" stroke-width="1"/><text x="-82" y="1" text-anchor="start" class="lbl">Hills block sky</text>
+    </g>
+    <rect x="${skyLeft}" y="${skyTop}" width="${skyW}" height="${skyBottom - skyTop}" rx="10" fill="#0b101b" stroke="rgba(255,255,255,0.08)"/>
+    <g clip-path="url(#wSkyClip)">
+      <line x1="${skyLeft}" x2="${skyRight}" y1="${syOf(0).toFixed(1)}" y2="${syOf(0).toFixed(1)}" class="lvl"/>
+      <text x="${skyLeft + 8}" y="${(syOf(0) - 5).toFixed(1)}" class="lbl">Eye-level horizon (0°)</text>
+      <text x="${skyRight - 8}" y="${skyTop + 14}" text-anchor="end" class="lbl">+${yMax}° sky</text>
+      <path d="${sunTrail}" fill="none" stroke="rgba(255,179,0,0.32)" stroke-width="1.6" stroke-dasharray="3 4"/>
+      <path d="${earthTrail}" fill="none" stroke="rgba(56,189,248,0.4)" stroke-width="1.6"/>
+      <circle data-b="sunglow" r="30" fill="url(#wSunGlow)" class="body"/>
+      <circle data-b="sun" r="9.5" fill="#ffb300" class="body"/>
+      <circle data-b="earth" r="8" fill="#38bdf8" stroke="#bfe9ff" stroke-width="1.5" class="body"/>
+      <path d="${ground}" fill="url(#wGroundGrad)"/><path d="${edge}" class="ground-edge"/>
+    </g>
     ${compass}
-    <text x="${W - 8}" y="18" class="lbl" text-anchor="end">Height stretched to show detail</text>
+    <text data-b="sunlbl" class="tag">Sun</text><text data-b="earthlbl" class="tag">Earth</text>
+
+    <line x1="${skyLeft}" x2="${skyRight}" y1="179" y2="179" stroke="rgba(255,255,255,0.1)"/>
+    <text x="${skyLeft}" y="199" class="hd">30-DAY SURVIVAL TIMELINE</text>
+    <text x="${skyRight}" y="199" text-anchor="end" class="lbl"><tspan fill="#ffd60a">● Sun ${sunPct}%</tspan> · <tspan fill="#38bdf8">● Earth ${earthPct}%</tspan> · <tspan fill="#30d158">● Both ${bothPct}%</tspan></text>
+
+    <text x="${skyLeft}" y="${pTop + 21}" class="tl-lbl">Power (Sun)</text>
+    <text x="${skyLeft}" y="${pTop + 36}" class="tl-sub">Solar watts</text>
+    <rect x="${tlLeft}" y="${pTop}" width="${tlW}" height="${pH}" rx="6" class="tl-bg"/>
+    <path d="${powerArea}" fill="url(#wPowerGrad)"/>
+    <path d="${powerLine}" fill="none" stroke="#ffd60a" stroke-width="1.8" stroke-linejoin="round"/>
+    ${sunCount === 0 ? `<text x="${tlLeft + tlW / 2}" y="${pTop + 28}" text-anchor="middle" class="tl-empty">No sunlight this month — stays in shadow</text>` : ''}
+
+    <text x="${skyLeft}" y="${rTop + 14}" class="tl-lbl">Radio (Earth)</text>
+    <text x="${skyLeft}" y="${rTop + 27}" class="tl-sub">Line of sight</text>
+    <rect x="${tlLeft}" y="${rTop}" width="${tlW}" height="${rH}" rx="6" class="tl-bg"/>
+    ${radioRects}
+    ${earthCount === 0 ? `<text x="${tlLeft + tlW / 2}" y="${rTop + 19}" text-anchor="middle" class="tl-empty">Earth never rises above the horizon</text>` : ''}
+
+    <text x="${skyLeft}" y="${bTop + 13}" class="tl-lbl">Both together</text>
+    <text x="${skyLeft}" y="${bTop + 25}" class="tl-sub">Safe to work</text>
+    <rect x="${tlLeft}" y="${bTop}" width="${tlW}" height="${bH}" rx="6" class="tl-bg"/>
+    ${bothRects}
+    ${bothCount === 0 ? `<text x="${tlLeft + tlW / 2}" y="${bTop + 17}" text-anchor="middle" class="tl-empty">Power and radio never overlap</text>` : ''}
+
+    ${dayTicks}
+    <rect data-b="futureVeil" y="${pTop}" height="${bTop + bH - pTop}" fill="#070a12" opacity="0.46" pointer-events="none"/>
+    <line data-b="playhead" y1="${pTop - 4}" y2="${bTop + bH + 3}" stroke="#ffffff" stroke-width="2" pointer-events="none"/>
+    <circle data-b="tlSunDot" r="4.5" fill="#ffd60a" stroke="#070a12" stroke-width="1.5" pointer-events="none"/>
+    <circle data-b="tlEarthDot" cy="${rTop + rH / 2}" r="4.5" fill="#38bdf8" stroke="#070a12" stroke-width="1.5" pointer-events="none"/>
+    <rect data-b="nowBox" y="${pTop - 20}" width="54" height="17" rx="8" fill="#ffffff" pointer-events="none"/>
+    <text data-b="nowLbl" y="${pTop - 8}" text-anchor="middle" class="now-pill" pointer-events="none">Day 1</text>
+    <text x="${tlLeft + tlW / 2}" y="${H - 9}" text-anchor="middle" class="tl-sub">Click or drag anywhere on the 30-day timeline to jump to that day</text>
+    <rect data-tl x="${tlLeft}" y="${pTop - 10}" width="${tlW}" height="${bTop + bH - pTop + 22}" fill="transparent" class="tl-hit"/>
   </svg>`;
+
   const place = (root, i) => {
     const set = (k, attrs) => { const el = root.querySelector(`[data-b="${k}"]`); if (el) for (const a in attrs) el.setAttribute(a, attrs[a]); };
-    const sx = x(s.sunAz[i]), sy = y(s.sunEl[i]), ex = x(s.earthAz[i]), ey = y(s.earthEl[i]);
+    const sx = sxOf(s.sunAz[i]), sy = syOf(s.sunEl[i]);
+    const ex = sxOf(s.earthAz[i]), ey = syOf(s.earthEl[i]);
     const sunHidden = s.lit[i] !== 1, earthHidden = s.los[i] !== 1;
-    set('sun', { cx: sx, cy: sy, opacity: sunHidden ? 0.35 : 1 });
-    set('sunglow', { cx: sx, cy: sy, opacity: sunHidden ? 0 : 1 });
-    set('earth', { cx: ex, cy: ey, opacity: earthHidden ? 0.35 : 1 });
-    set('sunlbl', { x: Math.min(W - 70, sx + 14), y: sy - 14 });
-    set('earthlbl', { x: Math.min(W - 70, ex + 12), y: ey - 12 });
-    root.querySelector('[data-b="sunlbl"]').textContent = sunHidden ? 'Sun (hidden)' : 'Sun';
-    root.querySelector('[data-b="earthlbl"]').textContent = earthHidden ? 'Earth (hidden)' : 'Earth';
+    set('sun', { cx: sx.toFixed(1), cy: sy.toFixed(1), opacity: sunHidden ? 0.35 : 1 });
+    set('sunglow', { cx: sx.toFixed(1), cy: sy.toFixed(1), opacity: sunHidden ? 0 : 1 });
+    set('earth', { cx: ex.toFixed(1), cy: ey.toFixed(1), opacity: earthHidden ? 0.35 : 1 });
+
+    // Place labels inside sky frame and separate them if they overlap.
+    const clampX = (x) => clamp(x + 12, skyLeft + 6, skyRight - 96);
+    const placeY = (y) => (y < skyTop + 22 ? y + 20 : y - 12);
+    let slx = clampX(sx), sly = placeY(sy);
+    let elx = clampX(ex), ely = placeY(ey);
+    if (Math.abs(slx - elx) < 92 && Math.abs(sly - ely) < 18) {
+      if (sly <= ely) { sly = Math.max(skyTop + 14, sly - 10); ely = Math.min(skyBottom - 6, sly + 18); }
+      else { ely = Math.max(skyTop + 14, ely - 10); sly = Math.min(skyBottom - 6, ely + 18); }
+    }
+    set('sunlbl', { x: slx.toFixed(1), y: sly.toFixed(1), opacity: sunHidden ? 0.72 : 1 });
+    set('earthlbl', { x: elx.toFixed(1), y: ely.toFixed(1), opacity: earthHidden ? 0.72 : 1 });
+    const sunTxt = root.querySelector('[data-b="sunlbl"]');
+    const earthTxt = root.querySelector('[data-b="earthlbl"]');
+    if (sunTxt) sunTxt.textContent = sunHidden ? 'Sun · hidden' : `Sun +${Math.round(s.sunEl[i])}°`;
+    if (earthTxt) earthTxt.textContent = earthHidden ? 'Earth · hidden' : `Earth +${Math.round(s.earthEl[i])}°`;
+
+    // Update timeline playhead and active indicators.
+    const px = txOf(i);
+    const dayNum = Math.min(30, Math.floor((s.times[i] - s.times[0]) / DAY) + 1);
+    set('playhead', { x1: px.toFixed(1), x2: px.toFixed(1) });
+    set('futureVeil', { x: px.toFixed(1), width: Math.max(0, tlRight - px).toFixed(1) });
+    set('tlSunDot', { cx: px.toFixed(1), cy: powerY(i).toFixed(1), opacity: sunHidden ? 0.35 : 1 });
+    set('tlEarthDot', { cx: px.toFixed(1), opacity: earthHidden ? 0.35 : 1 });
+    const pillX = clamp(px - 27, tlLeft, tlRight - 54);
+    set('nowBox', { x: pillX.toFixed(1) });
+    set('nowLbl', { x: (pillX + 27).toFixed(1) });
+    const nowLbl = root.querySelector('[data-b="nowLbl"]');
+    if (nowLbl) nowLbl.textContent = `Day ${dayNum}`;
   };
-  return { svg, place };
+
+  const indexFromClientX = (svgEl, clientX) => {
+    const rect = svgEl.getBoundingClientRect();
+    const vx = ((clientX - rect.left) / Math.max(1, rect.width)) * W;
+    return Math.round(clamp((vx - tlLeft) / tlW, 0, 1) * Math.max(0, N - 1));
+  };
+
+  return { svg, place, indexFromClientX };
 }
 
 // ---- South-pole lighting map for the sunny-spot game -----------------------
@@ -284,18 +456,20 @@ export function createWalk({ app, sites, onOpenPro, onToggleTheme, onToggleSound
             <span>${g.stars === 3 ? 'Brilliant: you found one of the best-lit places on the Moon.' : g.stars === 2 ? 'Good eye! The very best spot nearby gets ' + Math.round(g.best * 100) + '%.' : g.value > 0 ? `The best spot nearby gets ${Math.round(g.best * 100)}%. High ridges win; crater floors lose.` : 'Crater floors here never see the Sun. Great for ice, terrible for solar panels.'}</span></div></div>`;
         return `${say(g ? 'Here’s the real sunlight map.' : 'Find the sunny spot.', g ? 'Bright = lots of sunlight in 2027. Dark = little or none. Where do you want to land?' : 'This is the area around the Moon’s south pole, 150 km across. Tap where you think the Sun shines the longest.')}
           <div class="w-content"><div class="w-game">
-            <div class="w-mapbox"><canvas class="w-map" width="520" height="520" aria-label="South-pole map: tap to guess the sunniest spot"></canvas>
-              <div class="w-map-hint">${g ? '' : 'Tap the map'}</div>
-              <div class="w-demo" hidden aria-hidden="true"><svg class="w-cursor" viewBox="0 0 24 24" width="34" height="34"><path d="M4 2l15 9.5-6.6 1.4 3.7 7.3-2.9 1.4-3.6-7.3L4 19z" fill="#fff" stroke="#111" stroke-width="1.3" stroke-linejoin="round"/></svg><span class="w-ripple"></span><span class="w-demo-tag"></span></div>
-              <div class="w-where" hidden><canvas class="w-where-moon" aria-label="Where this landing site is on the Moon"></canvas><div class="w-where-cap"></div><button type="button" class="w-link" data-a="map">Show the sunlight map again</button></div></div>
+            <div class="w-game-map">
+              <div class="w-mapbox"><canvas class="w-map" width="520" height="520" aria-label="South-pole map: tap to guess the sunniest spot"></canvas>
+                <div class="w-map-hint">${g ? '' : 'Tap the map'}</div>
+                <div class="w-demo" hidden aria-hidden="true"><svg class="w-cursor" viewBox="0 0 24 24" width="34" height="34"><path d="M4 2l15 9.5-6.6 1.4 3.7 7.3-2.9 1.4-3.6-7.3L4 19z" fill="#fff" stroke="#111" stroke-width="1.3" stroke-linejoin="round"/></svg><span class="w-ripple"></span><span class="w-demo-tag"></span></div>
+                <div class="w-where" hidden><canvas class="w-where-moon" aria-label="Where this landing site is on the Moon"></canvas><div class="w-where-cap"></div><button type="button" class="w-link" data-a="map">Show the sunlight map again</button></div></div>
+              ${g ? '<button type="button" class="w-link w-retry" data-a="retry">Guess again</button>' : ''}
+            </div>
             <div class="w-game-side">${result}
               ${g ? `<div class="w-landopts">
                   <button type="button" class="w-opt ${st.landPick === 'guess' && st.site ? 'is-picked' : ''}" data-land="guess"><b>Land at my spot</b><span>${g.value > 0 ? `${Math.round(g.value * 100)}% sunlight in 2027` : 'Brave: no sunlight at all'}</span></button>
                   <button type="button" class="w-opt ${st.landPick === 'best' && st.site ? 'is-picked' : ''}" data-land="best"><b>Land at the sunniest spot</b><span>${Math.round(g.best * 100)}% sunlight, on a ridge</span></button>
                 </div>
                 <p class="w-note">Or pick a famous place:</p>
-                <div class="w-cards w-cards-sm">${FEATURED.map((f) => `<button type="button" class="w-card ${st.site?.id === f.id ? 'is-picked' : ''}" data-site="${f.id}"><div class="c-art" style="background:${f.art}"></div><h3>${f.title}</h3><span class="c-tag">${f.tag}</span></button>`).join('')}</div>
-                <button type="button" class="w-link" data-a="retry">Guess again</button>`
+                <div class="w-cards w-cards-sm">${FEATURED.map((f) => `<button type="button" class="w-card ${st.site?.id === f.id ? 'is-picked' : ''}" data-site="${f.id}"><div class="c-art" style="background:${f.art}"></div><h3>${f.title}</h3><span class="c-tag">${f.tag}</span></button>`).join('')}</div>`
                 : `<div class="w-legend-wait">${icon('sun', 20)}<span>The Sun at the pole never climbs high. It circles the horizon, so <b>height</b> matters more than anything.</span></div>`}
             </div></div>
             ${why('Where does this map come from?', 'The picture is NASA’s Lunar Reconnaissance Orbiter camera mosaic. The sunlight colours are our own calculation from NASA LOLA laser-altimeter heights: for every 1 km square, how often the Sun is above the hills during 2027. NASA Goddard publishes a similar map, and ours matches its pattern closely.')}</div>`;
@@ -420,7 +594,7 @@ export function createWalk({ app, sites, onOpenPro, onToggleTheme, onToggleSound
         if (!st.scan) return `${say('Unpacking the lander…', 'Reading the real terrain around the site and working out where the Sun and Earth will be for 30 days.')}<div class="w-loading"><div class="w-spinner"></div>Calculating 30 days of sky</div>`;
         const v = st.v;
         return `${say(st.done ? (st.result.stars >= 2 ? 'Mission survived!' : st.result.stars === 1 ? 'It made it, just.' : 'The lander went quiet.') : 'Survive 30 days.', st.done ? surviveLine() : 'Press play and watch the sky. Sunlight charges the battery; Earth in view lets us talk. Keep an eye on both meters.')}
-          <div class="w-content"><div class="w-panel"><div data-sky>${skyline(st.ctx, st.scan).svg}</div>
+          <div class="w-content"><div class="w-panel"><div data-sky>${skyline(st.ctx, st.scan, app.config.power.loadW).svg}</div>
             <div class="w-meters">
               <div class="w-meter sun"><span>${icon('sun', 16)} Power</span><div class="bar"><i data-m="sun"></i></div><b data-mv="sun"></b></div>
               <div class="w-meter earth"><span>${icon('globe', 16)} Radio</span><div class="bar"><i data-m="earth"></i></div><b data-mv="earth"></b></div>
@@ -438,7 +612,7 @@ export function createWalk({ app, sites, onOpenPro, onToggleTheme, onToggleSound
                 <div class="w-fact"><div class="k">Both together</div><div class="v">${Math.round(st.result.both * 100)}%</div></div>
                 <div class="w-fact"><div class="k">Longest night</div><div class="v">${fmtHours(st.scan.stats.longestDarkH)}${st.scan.stats.longestDarkOpenEnded ? '+' : ''}</div></div>
               </div></div>` : ''}
-            ${why('What am I looking at?', 'Imagine standing on the lander and turning in a full circle. Left to right is the compass (north, east, south, west). Up and down is how high something is. The grey shape is the real terrain from NASA’s LOLA laser altimeter. The dotted trails show where the Sun (gold) and Earth (blue) travel this month. When a trail dips under the grey, that body is hidden.')}
+            ${why('What am I looking at?', 'Top: the real view around your lander, centered on where Earth sits so it never jumps across the edge. The dark hills come from NASA’s LOLA laser altimeter; when the Sun (gold) or Earth (blue) dips behind the hills, it is blocked. Bottom: the full 30-day forecast showing when solar power charges the battery (gold), when Earth radio can hear us (blue), and when you have both at once (green).')}
             ${why('Why does the Sun behave like this?', 'The Moon’s axis is tilted only about 1.5°. Near the poles the Sun never climbs high: it circles the whole sky once every 29.5 days, just skimming the horizon, so a hill kilometres away can block it for days. Near the equator it’s simpler: about two weeks of day, then two weeks of night. Earth barely moves at all, because the Moon always keeps the same face towards us.')}
             <p class="w-note">${RULES_NOTE}</p></div>`;
       },
@@ -729,12 +903,12 @@ export function createWalk({ app, sites, onOpenPro, onToggleTheme, onToggleSound
   }
   function bindSurvive() {
     if (!st.scan) return;
-    const sk = skyline(st.ctx, st.scan);
+    const load = app.config.power.loadW;
+    const sk = skyline(st.ctx, st.scan, load);
     const holder = scene.querySelector('[data-sky]');
     const range = scene.querySelector('input[type=range]');
     const live = scene.querySelector('.w-live');
     const s = st.scan.series, N = s.times.length;
-    const load = app.config.power.loadW;
     // Running counters for the meters.
     const sunCum = new Float32Array(N), earthCum = new Float32Array(N);
     for (let i = 0; i < N; i++) { sunCum[i] = (i ? sunCum[i - 1] : 0) + (s.lit[i] === 1 ? 1 : 0); earthCum[i] = (i ? earthCum[i - 1] : 0) + (s.los[i] === 1 ? 1 : 0); }
@@ -776,6 +950,27 @@ export function createWalk({ app, sites, onOpenPro, onToggleTheme, onToggleSound
       if (st.playing) { if (st.idx >= N - 1) st.idx = 0; raf = requestAnimationFrame(loop); } else cancelAnimationFrame(raf);
     });
     scene.querySelector('[data-a="skip"]').addEventListener('click', () => { st.idx = N - 1; range.value = st.idx; upd(); finish(); });
+    const tlHit = holder.querySelector('[data-tl]');
+    const svgEl = holder.querySelector('svg');
+    if (tlHit && svgEl) {
+      let dragging = false;
+      const scrubAt = (e) => {
+        if (st.playing) { st.playing = false; cancelAnimationFrame(raf); playBtn.innerHTML = icon('play', 18); }
+        st.idx = sk.indexFromClientX(svgEl, e.clientX);
+        range.value = st.idx;
+        upd();
+        if (st.idx >= N - 1) finish();
+      };
+      tlHit.addEventListener('pointerdown', (e) => {
+        dragging = true;
+        tlHit.setPointerCapture?.(e.pointerId);
+        scrubAt(e);
+      });
+      tlHit.addEventListener('pointermove', (e) => { if (dragging) scrubAt(e); });
+      const endDrag = () => { dragging = false; };
+      tlHit.addEventListener('pointerup', endDrag);
+      tlHit.addEventListener('pointercancel', endDrag);
+    }
     upd();
     if (st.playing && !st.done) raf = requestAnimationFrame(loop);
   }
