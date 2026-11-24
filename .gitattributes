@@ -4,3 +4,20 @@
 *.webp binary
 *.mp3 binary
 *.mp4 binary
+*.png binary
+*.i16z binary
+
+# JSON data files must stay LF on every platform so that file sizes and
+# SHA-256 checksums match the manifest (test/manifest.spec.js).
+# Without this, Windows `core.autocrlf = true` converts LF → CRLF on
+# checkout, inflating every JSON file by one byte per line and breaking
+# 86 of 180 checksums.
+public/data/**/*.json text eol=lf
+src/data/**/*.json text eol=lf
+
+# YAML workflows must stay LF so that test/deployGate.spec.js regex
+# patterns (which match \n boundaries) work on every platform.
+.github/**/*.yml text eol=lf
+
+# GeoJSON is JSON
+*.geojson text eol=lf
