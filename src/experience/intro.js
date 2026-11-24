@@ -122,9 +122,17 @@ function spinMoon(canvas, base) {
   const ease = (x) => 1 - Math.pow(1 - Math.min(1, Math.max(0, x)), 3);
   const loader = new THREE.TextureLoader();
   let ready = false;
-  const tex = loader.load(`${base}data/moonGlobal.jpg`, () => { ready = true; });
+  const fallback = setTimeout(() => { ready = true; }, 100);
+  const tex = loader.load(`${base}data/moonGlobal.jpg`, () => {
+    ready = true;
+    clearTimeout(fallback);
+  });
+  if (tex.image && tex.image.complete) {
+    ready = true;
+    clearTimeout(fallback);
+  }
   if ('colorSpace' in tex) tex.colorSpace = THREE.SRGBColorSpace;
-  const mat = new THREE.MeshStandardMaterial({ map: tex, roughness: 0.95, metalness: 0 });
+  const mat = new THREE.MeshStandardMaterial({ map: tex, roughness: 0.95, metalness: 0, color: 0xffffff });
   const moon = new THREE.Mesh(new THREE.SphereGeometry(1, 96, 64), mat);
   moon.rotation.z = 0.12;
   scene.add(moon);
@@ -163,6 +171,7 @@ function spinMoon(canvas, base) {
   raf = requestAnimationFrame(frame);
   return () => {
     alive = false;
+    clearTimeout(fallback);
     cancelAnimationFrame(raf);
     mat.map?.dispose(); mat.dispose(); moon.geometry.dispose();
     earthMat.map?.dispose(); earthMat.dispose(); earth.geometry.dispose();
@@ -339,6 +348,6 @@ export function mountIntro({ onChoose, onAbout, onVideo, siteCount = 29 }) {
     if (e.key === 'Enter' && document.activeElement === start) split();
   });
   // The full intro plays on every visit (Skip intro is always there).
-  setTimeout(() => start.focus({ preventScroll: true }), 2600);
+  setTimeout(() => start.focus({ preventScroll: true }), 1200);
   return el;
 }

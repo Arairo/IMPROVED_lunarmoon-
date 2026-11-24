@@ -675,15 +675,22 @@ export function createWalk({ app, sites, onOpenPro, onToggleTheme, onToggleSound
     const path = flightPath(plan, 0, phaseTimes(plan, 120));
     st.flight = plan;
     flyScene.setPlan(plan, path);
-    const timeline = flightTimeline(plan);
+    const timeline = flightTimeline(plan, { scale: 1.5 });
     const idxAt = (t) => { let lo = 0, hi = path.length - 1; while (lo < hi) { const m = (lo + hi) >> 1; if (path[m].t < t) lo = m + 1; else hi = m; } return lo; };
     const show = (u) => {
-      const i = u >= 1 ? path.length - 1 : idxAt(timeline.timeAt(u));
+      const t = timeline.timeAt(u);
+      let i = u >= 1 ? path.length - 1 : idxAt(t);
+      let frac = 0;
+      if (u < 1 && i < path.length - 1) {
+        if (path[i].t > t && i > 0) i--;
+        const span = path[i + 1].t - path[i].t;
+        if (span > 0) frac = Math.max(0, Math.min(1, (t - path[i].t) / span));
+      }
       const fast = timeline.isFastForward(u);
       flyScene.setFastForward(fast);
-      flyScene.setIndex(i);
-      const ph = plan.phases.find((p) => path[i].t >= p.start && path[i].t <= p.end) || plan.phases.at(-1);
-      const day = `day ${((path[i].t - plan.launchMs) / DAY).toFixed(1)}`;
+      flyScene.setIndex(i, frac);
+      const ph = plan.phases.find((p) => t >= p.start && t <= p.end) || plan.phases.at(-1);
+      const day = `day ${((t - plan.launchMs) / DAY).toFixed(1)}`;
       cap.textContent = u >= 1 ? `Touchdown at ${plan.site.name}!` : fast ? `Fast-forward: ${Math.round((ph.end - ph.start) / DAY)} days circling the Moon · ${day}` : `${ph.label} · ${day}`;
     };
     show(st.landed ? 1 : 0);

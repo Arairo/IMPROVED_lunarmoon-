@@ -184,10 +184,17 @@ export function mountFlight({ app, viewTabs, switchSubView, setTime }) {
   }
   function goto(x) {
     u = Math.max(0, Math.min(1, x));
-    idx = u >= 1 ? path.length - 1 : indexAt(timeAt(u));
+    const t = timeAt(u);
+    idx = u >= 1 ? path.length - 1 : indexAt(t);
+    let frac = 0;
+    if (u < 1 && idx < path.length - 1) {
+      if (path[idx].t > t && idx > 0) idx--;
+      const span = path[idx + 1].t - path[idx].t;
+      if (span > 0) frac = Math.max(0, Math.min(1, (t - path[idx].t) / span));
+    }
     fast = playing && timeline.isFastForward(u); // only while playing; a paused or scrubbed frame shows the craft
     scene?.setFastForward(fast);
-    scene?.setIndex(idx);
+    scene?.setIndex(idx, frac);
     scrub.value = String(Math.round(u * 1000));
     caption();
   }

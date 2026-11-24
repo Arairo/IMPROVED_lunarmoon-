@@ -226,14 +226,14 @@ export function planFlight(touchdownMs, opts = {}) {
       const total = P.reduce((s, x) => s + x, 0);
       loops = steps.map((x, i) => ({ ra: x, revs: Math.max(1, Math.round((want * (P[i] / total)) / P[i])), periodS: P[i] }));
       const earthS = loops.reduce((s, l) => s + l.revs * l.periodS, 0);
-      tLaunch = tTli - earthS * 1000 - 0.03 * DAY;
+      tLaunch = tTli - earthS * 1000 - 0.02 * DAY;
       tliDv = vPeri - visViva(MU_E, rp, (rp + ra0) / 2);
-      let t = tLaunch + 0.03 * DAY;
+      let t = tLaunch + 0.02 * DAY;
       for (let i = 0; i < loops.length; i++) {
         t += loops[i].revs * loops[i].periodS * 1000;
         loops[i].endMs = t;
       }
-      burns.push({ id: 'raise', label: `Raise the orbit in ${loops.length} perigee burns`, dv: visViva(MU_E, rp, (rp + steps[steps.length - 1]) / 2) - visViva(MU_E, rp, (rp + ra0) / 2), byLander: true, t: tLaunch + 0.03 * DAY });
+      burns.push({ id: 'raise', label: `Raise the orbit in ${loops.length} perigee burns`, dv: visViva(MU_E, rp, (rp + steps[steps.length - 1]) / 2) - visViva(MU_E, rp, (rp + ra0) / 2), byLander: true, t: tLaunch + 0.02 * DAY });
       burns.push({ id: 'tli', label: 'Final push towards the Moon', dv: vPeri - visViva(MU_E, rp, (rp + steps[steps.length - 1]) / 2), byLander: true, t: tTli });
     }
     burns.push({ id: 'tcm', label: 'Course corrections on the way', dv: 0.03, byLander: true, t: tTli + 0.5 * coastDays * DAY, basis: 'assumed' });
@@ -251,10 +251,10 @@ export function planFlight(touchdownMs, opts = {}) {
   const propKg = lander.dryKg * (Math.exp(landerDv / ve) - 1) * 1.05; // 5% reserve
   const totalDv = burns.reduce((s, b) => s + b.dv, 0);
 
-  phases.push({ id: 'launch', label: 'Launch', start: tLaunch, end: tLaunch + 0.01 * DAY });
-  if (route === 'direct') phases.push({ id: 'parking', label: 'Parking orbit around Earth', start: tLaunch + 0.01 * DAY, end: tTli });
-  if (route === 'phasing') phases.push({ id: 'loops', label: 'Loops around Earth, raising the orbit', start: tLaunch + 0.01 * DAY, end: tTli });
-  if (route === 'lowenergy') phases.push({ id: 'ascent', label: 'Straight onto the long route', start: tLaunch + 0.01 * DAY, end: tTli });
+  phases.push({ id: 'launch', label: 'Launch', start: tLaunch, end: tLaunch + 0.02 * DAY });
+  if (route === 'direct') phases.push({ id: 'parking', label: 'Parking orbit around Earth', start: tLaunch + 0.02 * DAY, end: tTli });
+  if (route === 'phasing') phases.push({ id: 'loops', label: 'Loops around Earth, raising the orbit', start: tLaunch + 0.02 * DAY, end: tTli });
+  if (route === 'lowenergy') phases.push({ id: 'ascent', label: 'Straight onto the long route', start: tLaunch + 0.02 * DAY, end: tTli });
   phases.push({ id: 'coast', label: route === 'lowenergy' ? 'The long way round: out and back with the Sun’s help' : 'Coasting to the Moon', start: tTli, end: tLoi });
   phases.push({ id: 'orbit', label: route === 'phasing' ? 'Lunar orbit, lowering it step by step' : 'Lunar orbit, waiting for the landing pass', start: tLoi, end: tDoi });
   phases.push({ id: 'descent', label: 'Descent to the surface', start: tDoi, end: touchdownMs });
@@ -351,11 +351,40 @@ export function phaseTimes(plan, perPhase = 160) {
   const loPeriod = period(MU_M, R_M + LUNAR_ORBIT_ALT) * 1000;
   for (const ph of plan.phases) {
     const span = ph.end - ph.start;
+    if (ph.id === 'loops' && plan.loops?.length) {
+      // Sample each revolution uniformly in true anomaly so eccentric perigee passes keep smooth arcs outside Earth.
+      const rp = plan.rpKm;
+      const totalRevs = plan.loops.reduce((s, l) => s + l.revs, 0);
+      const ptsPerRev = Math.max(60, Math.min(120, Math.floor(3000 / Math.max(1, totalRevs))));
+      let revStart = ph.start;
+      for (const lp of plan.loops) {
+        const a = (rp + lp.ra) / 2, e = (lp.ra - rp) / (lp.ra + rp);
+        const sFac = Math.sqrt(1 - e * e);
+        const revSpan = (lp.endMs - revStart) / lp.revs;
+        for (let r = 0; r < lp.revs; r++) {
+          const t0 = revStart + r * revSpan;
+          for (let j = 0; j < ptsPerRev; j++) {
+            const nu = (j / ptsPerRev) * 2 * Math.PI;
+            let E = Math.atan2(sFac * Math.sin(nu), e + Math.cos(nu));
+            if (E < 0) E += 2 * Math.PI;
+            const M = E - e * Math.sin(E);
+            out.push(Math.min(ph.end, t0 + (M / (2 * Math.PI)) * revSpan));
+          }
+        }
+        revStart = lp.endMs;
+      }
+      continue;
+    }
+    if (ph.id === 'coast') {
+      // Cluster samples denser near TLI perigee departure so the curve clears Earth cleanly without cutting chords.
+      const nCoast = Math.max(perPhase, plan.route === 'lowenergy' ? 480 : 300);
+      for (let i = 0; i < nCoast; i++) out.push(ph.start + Math.pow(i / nCoast, 1.5) * span);
+      continue;
+    }
     let n = perPhase;
     // Orbits need enough points per revolution to draw as rings, not stars.
     if (ph.id === 'orbit') n = Math.min(6000, Math.max(perPhase, Math.round((span / loPeriod) * 40)));
     if (ph.id === 'parking') n = Math.max(perPhase, Math.round((span / (period(MU_E, plan.rpKm) * 1000)) * 80));
-    if (ph.id === 'loops') n = Math.min(3000, Math.max(perPhase, plan.loops.reduce((s, l) => s + l.revs, 0) * 120));
     for (let i = 0; i < n; i++) out.push(ph.start + (i / n) * span);
   }
   out.push(plan.touchdownMs);
@@ -408,31 +437,54 @@ export function flightPath(plan, n = 900, sampleTimes = null) {
     const c2 = add(far, scale(cross(nrm, away), 9e5));
     coastPos = (t) => {
       const s = Math.max(0, Math.min(1, (t - plan.tliMs) / (plan.loiMs - plan.tliMs)));
-      const p3 = moonState(t > plan.loiMs - DAY ? t : plan.loiMs).r;
+      const p3 = m.r;
       const u = 1 - s;
       return add(add(scale(p0, u * u * u), scale(c1, 3 * u * u * s)), add(scale(c2, 3 * u * s * s), scale(p3, s * s * s)));
     };
   }
   const site = plan.siteDir || [0, 0, -1];
+  const tLaunchEnd = plan.launchMs + 0.02 * DAY;
+  const ls = plan.launchSite || LAUNCH_SITES[0], D = Math.PI / 180;
+  const g0 = Astronomy.SiderealTime(Astronomy.MakeTime(new Date(plan.launchMs))) * 15 * D;
+  const plon0 = ls.lon * D + g0, plat0 = ls.lat * D;
+  const pPad0 = [R_E * Math.cos(plat0) * Math.cos(plon0), R_E * Math.cos(plat0) * Math.sin(plon0), R_E * Math.sin(plat0)];
+  const uPad = unit(pPad0);
+
+  const orbitAt = (t) => {
+    if (plan.route === 'phasing' && plan.loops.length) {
+      // Which loop are we on?
+      let start = plan.launchMs + 0.02 * DAY, L = plan.loops[0];
+      for (const lp of plan.loops) { if (t <= lp.endMs) { L = lp; break; } start = lp.endMs; }
+      const a = (rp + L.ra) / 2, e = (L.ra - rp) / (L.ra + rp);
+      const M = Math.sqrt(MU_E / (a * a * a)) * ((t - start) / 1000);
+      const E = kepler(M % (2 * Math.PI), e);
+      const nu = 2 * Math.atan2(Math.sqrt(1 + e) * Math.sin(E / 2), Math.sqrt(1 - e) * Math.cos(E / 2));
+      const r = a * (1 - e * Math.cos(E));
+      return add(scale(pHat, r * Math.cos(nu)), scale(qHat, r * Math.sin(nu)));
+    }
+    const w = circ(MU_E, rp) / rp; // rad/s
+    const th = -w * ((plan.tliMs - t) / 1000);
+    return add(scale(pHat, rp * Math.cos(th)), scale(qHat, rp * Math.sin(th)));
+  };
+  const pOrb1 = orbitAt(tLaunchEnd);
+  const uOrb1 = unit(pOrb1);
+  const dotPadOrb = Math.max(-1, Math.min(1, dot(uPad, uOrb1)));
+  const angLaunch = Math.acos(dotPadOrb);
+  const sinAngLaunch = Math.sin(angLaunch);
+
   for (const t of times) {
     let pos, phase, near = null;
     if (t < plan.tliMs) {
-      phase = plan.route === 'phasing' ? 'loops' : plan.route === 'direct' ? 'parking' : 'ascent';
       near = 'earth';
-      if (plan.route === 'phasing' && plan.loops.length) {
-        // Which loop are we on?
-        let start = plan.launchMs + 0.03 * DAY, L = plan.loops[0];
-        for (const lp of plan.loops) { if (t <= lp.endMs) { L = lp; break; } start = lp.endMs; }
-        const a = (rp + L.ra) / 2, e = (L.ra - rp) / (L.ra + rp);
-        const M = Math.sqrt(MU_E / (a * a * a)) * ((t - start) / 1000);
-        const E = kepler(M % (2 * Math.PI), e);
-        const nu = 2 * Math.atan2(Math.sqrt(1 + e) * Math.sin(E / 2), Math.sqrt(1 - e) * Math.cos(E / 2));
-        const r = a * (1 - e * Math.cos(E));
-        pos = add(scale(pHat, r * Math.cos(nu)), scale(qHat, r * Math.sin(nu)));
+      if (t < tLaunchEnd) {
+        phase = 'launch';
+        const f = Math.max(0, Math.min(1, (t - plan.launchMs) / (tLaunchEnd - plan.launchMs)));
+        const dir = sinAngLaunch > 1e-4 ? add(scale(uPad, Math.sin((1 - f) * angLaunch) / sinAngLaunch), scale(uOrb1, Math.sin(f * angLaunch) / sinAngLaunch)) : uPad;
+        const alt = (rp - R_E) * (Math.sin(f * Math.PI / 2) ** 1.5);
+        pos = scale(dir, R_E + alt);
       } else {
-        const w = circ(MU_E, rp) / rp; // rad/s
-        const th = -w * ((plan.tliMs - t) / 1000);
-        pos = add(scale(pHat, rp * Math.cos(th)), scale(qHat, rp * Math.sin(th)));
+        phase = plan.route === 'phasing' ? 'loops' : plan.route === 'direct' ? 'parking' : 'ascent';
+        pos = orbitAt(t);
       }
     } else if (t < plan.loiMs) {
       phase = 'coast';

@@ -108,7 +108,7 @@ body { background: var(--xp-bg); color: var(--xp-ink); -webkit-font-smoothing: a
   opacity: calc(var(--sunrise, 0) * 0.9); filter: blur(12px);
 }
 /* Sunrise flare: a bright point and a thin horizontal streak at the upper-right limb */
-.xp-flare { position: absolute; left: 86%; top: 16%; width: 0; height: 0; z-index: 2; pointer-events: none; opacity: 0; animation: xpFlare 4.2s var(--xp-ease) 1.5s forwards; }
+.xp-flare { position: absolute; left: 86%; top: 16%; width: 0; height: 0; z-index: 2; pointer-events: none; opacity: 0; animation: xpFlare 3.5s var(--xp-ease) 0.6s forwards; }
 .xp-flare::before { content: ''; position: absolute; left: -46px; top: -46px; width: 92px; height: 92px; border-radius: 50%; background: radial-gradient(circle, rgba(255, 255, 255, 0.95) 0%, rgba(255, 220, 140, 0.7) 12%, rgba(255, 170, 40, 0.18) 38%, transparent 70%); mix-blend-mode: screen; }
 .xp-flare::after { content: ''; position: absolute; left: -45vw; top: -1px; width: 90vw; height: 2px; background: linear-gradient(90deg, transparent, rgba(255, 210, 140, 0.0) 20%, rgba(255, 225, 170, 0.55) 50%, rgba(255, 210, 140, 0) 80%, transparent); filter: blur(0.6px); mix-blend-mode: screen; }
 .xp-flare i { position: absolute; left: -130px; top: -130px; width: 260px; height: 260px; border-radius: 50%; background: radial-gradient(circle, rgba(255, 200, 110, 0.22), transparent 65%); mix-blend-mode: screen; }
@@ -121,30 +121,30 @@ body { background: var(--xp-bg); color: var(--xp-ink); -webkit-font-smoothing: a
   background-position: 30% 50%;
   box-shadow: inset -40px -10px 80px rgba(0, 0, 0, 0.95), 0 0 80px rgba(255, 190, 80, 0.12);
   opacity: 0;
-  transform: translateY(40px) scale(0.86);
-  animation: xpMoonIn 2.2s var(--xp-ease) 0.55s forwards;
+  transform: translateY(30px) scale(0.9);
+  animation: xpMoonIn 1.5s var(--xp-ease) 0.08s forwards;
 }
 .xp-moon::after {
   /* Sunlight sweeping across the night side */
   content: ''; position: absolute; inset: 0; border-radius: 50%;
   background: radial-gradient(circle at 30% 50%, transparent 35%, rgba(0, 0, 0, 0.94) 72%);
-  animation: xpTerminator 3.4s var(--xp-ease) 0.6s forwards;
+  animation: xpTerminator 2.8s var(--xp-ease) 0.15s forwards;
 }
 @keyframes xpMoonIn { to { opacity: 1; transform: translateY(0) scale(1); } }
 @keyframes xpTerminator { from { background-position: -160px 0; opacity: 1; } to { background-position: 0 0; opacity: 0.55; } }
 @keyframes xpFadeIn { to { opacity: 1; } }
 @keyframes xpRise { from { opacity: 0; transform: translateY(18px); filter: blur(6px); } to { opacity: 1; transform: none; filter: none; } }
 
-.xp-eyebrow { font: 600 13px/1 var(--xp-font); letter-spacing: 0.18em; text-transform: uppercase; color: #ffb300; opacity: 0; animation: xpRise 0.9s var(--xp-ease) 1.6s forwards; }
+.xp-eyebrow { font: 600 13px/1 var(--xp-font); letter-spacing: 0.18em; text-transform: uppercase; color: #ffb300; opacity: 0; animation: xpRise 0.7s var(--xp-ease) 0.45s forwards; }
 .xp-title {
   margin: 14px 0 10px; font: 700 clamp(40px, 7vw, 84px)/1.02 var(--xp-font); letter-spacing: -0.035em;
   background: linear-gradient(180deg, #ffffff 30%, #b7bccb 100%);
   -webkit-background-clip: text; background-clip: text; color: transparent;
-  opacity: 0; animation: xpRise 1s var(--xp-ease) 1.8s forwards;
+  opacity: 0; animation: xpRise 0.8s var(--xp-ease) 0.6s forwards;
 }
-.xp-tagline { max-width: 560px; font: 400 clamp(17px, 2.1vw, 21px)/1.4 var(--xp-font); color: #a1a1a6; opacity: 0; animation: xpRise 1s var(--xp-ease) 2.05s forwards; }
+.xp-tagline { max-width: 560px; font: 400 clamp(17px, 2.1vw, 21px)/1.4 var(--xp-font); color: #a1a1a6; opacity: 0; animation: xpRise 0.8s var(--xp-ease) 0.75s forwards; }
 
-.xp-cta { margin-top: 30px; height: 56px; position: relative; display: flex; justify-content: center; opacity: 0; animation: xpRise 0.9s var(--xp-ease) 2.4s forwards; }
+.xp-cta { margin-top: 30px; height: 56px; position: relative; display: flex; justify-content: center; opacity: 0; animation: xpRise 0.8s var(--xp-ease) 0.95s forwards; }
 .xp-start { min-width: 180px; height: 56px; font-size: 17px; }
 .xp-start.is-splitting { animation: xpSplitOut 0.45s var(--xp-ease) forwards; }
 @keyframes xpSplitOut { to { transform: scaleX(0.2); opacity: 0; } }
@@ -173,7 +173,7 @@ body { background: var(--xp-bg); color: var(--xp-ink); -webkit-font-smoothing: a
 .xp-mode .xp-go { margin-top: 14px; display: inline-flex; align-items: center; gap: 6px; font: 600 14px var(--xp-font); color: #2997ff; }
 .xp-modes-wrap { margin-top: 30px; }
 
-.xp-stats { position: static; margin-top: 26px; display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; padding: 0 16px; z-index: 2; opacity: 0; animation: xpRise 1s var(--xp-ease) 2.7s forwards; }
+.xp-stats { position: static; margin-top: 26px; display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; padding: 0 16px; z-index: 2; opacity: 0; animation: xpRise 0.8s var(--xp-ease) 1.15s forwards; }
 .xp-stat { font: 500 12px/1 var(--xp-font); color: #a1a1a6; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 999px; padding: 8px 13px; background: rgba(255, 255, 255, 0.03); }
 .xp-stat b { color: #f5f5f7; font-weight: 600; }
 #xp-intro.is-choosing .xp-stats { opacity: 0 !important; transition: opacity 0.3s; }
@@ -1581,7 +1581,7 @@ html[data-theme='dark'] .cc-badge.amber { color: var(--xp-warn); }
 #xp-intro { justify-content: flex-start; }
 #xp-intro > .xp-stage { min-height: 100vh; min-height: 100svh; justify-content: center; flex: none; width: 100%; }
 @media (max-width: 720px), (max-height: 760px) { #xp-intro > .xp-stage { min-height: calc(100svh - 80px); } }
-.xp-more { margin-top: 26px; display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 999px; background: none; border: 0; color: #a1a1a6; font: 500 14px var(--xp-font); cursor: pointer; opacity: 0; animation: xpRise 0.9s var(--xp-ease) 3.1s forwards; }
+.xp-more { margin-top: 26px; display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 999px; background: none; border: 0; color: #a1a1a6; font: 500 14px var(--xp-font); cursor: pointer; opacity: 0; animation: xpRise 0.8s var(--xp-ease) 1.35s forwards; }
 .xp-more:hover, .xp-more:focus-visible { color: #fff; }
 .xp-more svg { animation: xaNudge 2.4s ease-in-out 4s infinite; }
 @keyframes xaNudge { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(3px); } }
