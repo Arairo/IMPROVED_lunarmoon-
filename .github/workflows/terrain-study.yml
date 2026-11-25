@@ -1,0 +1,71 @@
+name: Terrain resolution study
+
+# Measures how fine the terrain must be, and how far out, for the sunlight and
+# Earth-in-view numbers (tools/terrain_study.mjs). Downloads NASA GSFC PGDA's 20 m
+# LOLA south-pole terrain (LDEM_80S_20MPP_ADJ, Barker et al. 2023), cuts +-180 km
+# around the pole with coarser copies (tools/pgda_mosaic.py), and compares skylines
+# built from each against a 20 m reference. Changes no app data: it commits only
+# docs/validation/terrain-study.{json,md}.
+on:
+  workflow_dispatch:
+  push:
+    branches: ['claude/**']
+    paths:
+      - .github/workflows/terrain-study.yml
+      - tools/terrain_study.mjs
+      - tools/pgda_mosaic.py
+
+permissions:
+  contents: write
+
+concurrency:
+  group: terrain-study-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  study:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Get GDAL (official container)
+        run: docker pull -q ghcr.io/osgeo/gdal:ubuntu-small-latest
+      - name: Download the 20 m terrain from NASA PGDA
+        run: |
+          mkdir -p data-raw
+          url=https://pgda.gsfc.nasa.gov/data/LOLA_20mpp/LDEM_80S_20MPP_ADJ.TIF
+          curl -sIL -m 60 "$url" | grep -iE '^(HTTP|content-length|last-modified)' || true
+          df -h . | tail -1
+          for i in 1 2 3 4 5; do
+            curl -fL --retry 5 --retry-delay 10 -C - -o data-raw/ldem20.tif "$url" && break
+            echo "download interrupted, resuming ($i)"; sleep 15
+          done
+          ls -la data-raw
+      - name: Cut the mosaic and its coarser copies
+        run: docker run --rm --user "$(id -u):$(id -g)" -e HOME=/tmp -v "$PWD":/w -w /w ghcr.io/osgeo/gdal:ubuntu-small-latest python3 tools/pgda_mosaic.py data-raw/ldem20.tif data-raw/mosaic 180 2>&1 | tee mosaic.log
+      - name: Free the disk (the source file is no longer needed)
+        run: rm -f data-raw/ldem20.tif && df -h . | tail -1
+      - name: Run the study
+        run: node --max-old-space-size=8192 tools/terrain_study.mjs data-raw/mosaic 2>&1 | tee study.log
+      - name: Summary
+        if: always()
+        run: |
+          { cat docs/validation/terrain-study.md 2>/dev/null || true
+            echo '<details><summary>Logs</summary>'; echo; echo '```'; cat mosaic.log 2>/dev/null; tail -120 study.log 2>/dev/null; echo '```'; echo '</details>'; } >> "$GITHUB_STEP_SUMMARY"
+      - name: Commit the results
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+          git add docs/validation/terrain-study.json docs/validation/terrain-study.md
+          git commit -m "Terrain resolution study: results" || echo "Nothing changed"
+          git pull --rebase -q origin "$GITHUB_REF_NAME"
+          git push
