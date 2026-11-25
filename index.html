@@ -25,20 +25,8 @@
       visibility: hidden !important;
     }
   </style>
-  <script>
-    (function () {
-      var d = document.documentElement, h = location.hash;
-      try {
-        var t = localStorage.getItem('lsp.theme');
-        if (t) d.dataset.theme = t;
-      } catch (e) {}
-      if (/planner\.html$/.test(location.pathname)) {
-        if (/(^#|&)from=pro(&|$)/.test(h)) d.classList.add('terrain-view');
-      } else if (!/^#pro(&|$)/.test(h)) {
-        d.classList.add('app-covered');
-      }
-    })();
-  </script>
+  <!-- Theme and cover classes before first paint (external so a strict Content-Security-Policy can allow it). -->
+  <script src="./early.js"></script>
   <link rel="preload" as="image" href="./data/moonGlobal.jpg" />
 </head>
 <body class="flex flex-col h-screen overflow-hidden">

@@ -1,4 +1,4 @@
-// Runs before the page is first laid out (a plain script at the top of <body>, not a
+// Runs before the page is first laid out (a plain script in <head>, not a
 // module), so the first layout is already the final one and nothing jumps around
 // (Cumulative Layout Shift; see docs/PERFORMANCE.md). Kept tiny and dependency-free.
 (function () {
