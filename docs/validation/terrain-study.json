@@ -1,4 +1,520 @@
 {
+ "schemaVersion": 1,
+ "kind": "terrain resolution: skylines and sunlight / Earth shares vs a 20 m reference",
+ "applicationCommit": "31f5669ec9234dac22b3fb962d32ec09effc115d",
+ "datasetVersion": "public/data/manifest.json sha256 5e412a71f0c3a310623ec574c8d19d5b917a5cea6a93939011cad7f7f1ef2e9a",
+ "validationDateUtc": "2026-11-25T14:59:31.530Z",
+ "reference": "NASA GSFC PGDA LDEM_80S_20MPP_ADJ (Barker et al. 2023, https://pgda.gsfc.nasa.gov/products/90), 20 m everywhere to 180 km, dense ray steps; PGDA AVGVISIB_85S_060M_201608 for the sites",
+ "caseCount": 1394,
+ "sites": [
+  "a3-cb",
+  "a3-hw",
+  "a3-ma",
+  "a3-mp",
+  "a3-mm",
+  "a3-n1",
+  "a3-n2",
+  "a3-g2",
+  "a3-sp",
+  "ridge",
+  "peak-shackleton",
+  "shackleton",
+  "best-1",
+  "best-2",
+  "degerlache",
+  "shoemaker",
+  "haworth",
+  "faustini",
+  "nobile",
+  "lcross",
+  "im1",
+  "im2",
+  "p00",
+  "p01",
+  "p02",
+  "p03",
+  "p04",
+  "p05",
+  "p06",
+  "p07",
+  "p08",
+  "p09",
+  "p10",
+  "p11",
+  "p12",
+  "p13",
+  "p14",
+  "p15",
+  "p16",
+  "p17",
+  "p18",
+  "p19",
+  "p20",
+  "p21",
+  "p22",
+  "p23",
+  "p24",
+  "p25",
+  "p26",
+  "p27",
+  "p28",
+  "p29",
+  "p30",
+  "p31",
+  "p32",
+  "p33",
+  "p34",
+  "p35",
+  "p36",
+  "p37",
+  "p38",
+  "p39",
+  "p40",
+  "p41",
+  "p42",
+  "p43",
+  "p44",
+  "p45",
+  "p46",
+  "p47",
+  "p48",
+  "p49",
+  "p50",
+  "p51",
+  "p52",
+  "p53",
+  "p54",
+  "p55",
+  "p56",
+  "p57",
+  "p58",
+  "p59"
+ ],
+ "dates": [
+  "2009-01-01T00:00:00.000Z",
+  "2027-08-07T00:00:00.000Z"
+ ],
+ "configuration": {
+  "mastHeightM": 2,
+  "azStepDeg": 0.5,
+  "stepHours": 3,
+  "referenceGrowth": 0.003,
+  "appGrowth": 0.015,
+  "mosaicHalfKm": 180
+ },
+ "metrics": {
+  "shipped": {
+   "site": {
+    "n": 22,
+    "sunMedianAbsPts": 0,
+    "sunP90AbsPts": 0.05,
+    "sunMaxAbsPts": 4.05,
+    "sunMeanSignedPts": -0.23,
+    "earthMedianAbsPts": 0,
+    "earthMaxAbsPts": 2.62,
+    "skylineRmsMedianDeg": 0.006,
+    "vsPgda60MedianAbsPts": 1.07,
+    "vsPgda60MaxAbsPts": 7.97
+   },
+   "random": {
+    "n": 60,
+    "sunMedianAbsPts": 0.08,
+    "sunP90AbsPts": 1.32,
+    "sunMaxAbsPts": 12.47,
+    "sunMeanSignedPts": 0.81,
+    "earthMedianAbsPts": 0.03,
+    "earthMaxAbsPts": 24.96,
+    "skylineRmsMedianDeg": 0.151
+   }
+  },
+  "shippedCustom": {
+   "random": {
+    "n": 60,
+    "sunMedianAbsPts": 0.09,
+    "sunP90AbsPts": 1.32,
+    "sunMaxAbsPts": 12.47,
+    "sunMeanSignedPts": 0.82,
+    "earthMedianAbsPts": 0.03,
+    "earthMaxAbsPts": 24.96,
+    "skylineRmsMedianDeg": 0.152
+   }
+  },
+  "near10": {
+   "site": {
+    "n": 22,
+    "sunMedianAbsPts": 0.01,
+    "sunP90AbsPts": 0.06,
+    "sunMaxAbsPts": 0.07,
+    "sunMeanSignedPts": 0.02,
+    "earthMedianAbsPts": 0.01,
+    "earthMaxAbsPts": 0.19,
+    "skylineRmsMedianDeg": 0.007,
+    "vsPgda60MedianAbsPts": 1.03,
+    "vsPgda60MaxAbsPts": 7.97
+   },
+   "random": {
+    "n": 60,
+    "sunMedianAbsPts": 0.01,
+    "sunP90AbsPts": 0.05,
+    "sunMaxAbsPts": 0.08,
+    "sunMeanSignedPts": 0.02,
+    "earthMedianAbsPts": 0.01,
+    "earthMaxAbsPts": 0.06,
+    "skylineRmsMedianDeg": 0.007
+   }
+  },
+  "near20": {
+   "site": {
+    "n": 22,
+    "sunMedianAbsPts": 0,
+    "sunP90AbsPts": 0.06,
+    "sunMaxAbsPts": 0.07,
+    "sunMeanSignedPts": 0.01,
+    "earthMedianAbsPts": 0,
+    "earthMaxAbsPts": 0.09,
+    "skylineRmsMedianDeg": 0.003,
+    "vsPgda60MedianAbsPts": 1.06,
+    "vsPgda60MaxAbsPts": 7.97
+   },
+   "random": {
+    "n": 60,
+    "sunMedianAbsPts": 0.01,
+    "sunP90AbsPts": 0.03,
+    "sunMaxAbsPts": 0.04,
+    "sunMeanSignedPts": 0.01,
+    "earthMedianAbsPts": 0,
+    "earthMaxAbsPts": 0.06,
+    "skylineRmsMedianDeg": 0.004
+   }
+  },
+  "near30": {
+   "site": {
+    "n": 22,
+    "sunMedianAbsPts": 0,
+    "sunP90AbsPts": 0.03,
+    "sunMaxAbsPts": 0.06,
+    "sunMeanSignedPts": 0.01,
+    "earthMedianAbsPts": 0,
+    "earthMaxAbsPts": 0.05,
+    "skylineRmsMedianDeg": 0.002,
+    "vsPgda60MedianAbsPts": 1.07,
+    "vsPgda60MaxAbsPts": 7.97
+   },
+   "random": {
+    "n": 60,
+    "sunMedianAbsPts": 0.01,
+    "sunP90AbsPts": 0.03,
+    "sunMaxAbsPts": 0.04,
+    "sunMeanSignedPts": 0.01,
+    "earthMedianAbsPts": 0,
+    "earthMaxAbsPts": 0.06,
+    "skylineRmsMedianDeg": 0.003
+   }
+  },
+  "tiles_m60": {
+   "site": {
+    "n": 22,
+    "sunMedianAbsPts": 0,
+    "sunP90AbsPts": 0.01,
+    "sunMaxAbsPts": 4.05,
+    "sunMeanSignedPts": -0.24,
+    "earthMedianAbsPts": 0,
+    "earthMaxAbsPts": 2.62,
+    "skylineRmsMedianDeg": 0.002,
+    "vsPgda60MedianAbsPts": 1.07,
+    "vsPgda60MaxAbsPts": 7.97
+   },
+   "random": {
+    "n": 60,
+    "sunMedianAbsPts": 0.02,
+    "sunP90AbsPts": 0.44,
+    "sunMaxAbsPts": 3.23,
+    "sunMeanSignedPts": 0.17,
+    "earthMedianAbsPts": 0,
+    "earthMaxAbsPts": 2.86,
+    "skylineRmsMedianDeg": 0.043
+   }
+  },
+  "tiles_m120": {
+   "site": {
+    "n": 22,
+    "sunMedianAbsPts": 0,
+    "sunP90AbsPts": 0.02,
+    "sunMaxAbsPts": 4.05,
+    "sunMeanSignedPts": -0.24,
+    "earthMedianAbsPts": 0,
+    "earthMaxAbsPts": 2.62,
+    "skylineRmsMedianDeg": 0.003,
+    "vsPgda60MedianAbsPts": 1.07,
+    "vsPgda60MaxAbsPts": 7.97
+   },
+   "random": {
+    "n": 60,
+    "sunMedianAbsPts": 0.02,
+    "sunP90AbsPts": 0.83,
+    "sunMaxAbsPts": 7.18,
+    "sunMeanSignedPts": 0.39,
+    "earthMedianAbsPts": 0.01,
+    "earthMaxAbsPts": 5.39,
+    "skylineRmsMedianDeg": 0.057
+   }
+  },
+  "tiles_m240": {
+   "site": {
+    "n": 22,
+    "sunMedianAbsPts": 0,
+    "sunP90AbsPts": 0.05,
+    "sunMaxAbsPts": 4.05,
+    "sunMeanSignedPts": -0.23,
+    "earthMedianAbsPts": 0,
+    "earthMaxAbsPts": 2.62,
+    "skylineRmsMedianDeg": 0.005,
+    "vsPgda60MedianAbsPts": 1.07,
+    "vsPgda60MaxAbsPts": 7.97
+   },
+   "random": {
+    "n": 60,
+    "sunMedianAbsPts": 0.12,
+    "sunP90AbsPts": 2.29,
+    "sunMaxAbsPts": 12.46,
+    "sunMeanSignedPts": 0.83,
+    "earthMedianAbsPts": 0.03,
+    "earthMaxAbsPts": 24.92,
+    "skylineRmsMedianDeg": 0.12
+   }
+  },
+  "tiles_m240max": {
+   "site": {
+    "n": 22,
+    "sunMedianAbsPts": 0,
+    "sunP90AbsPts": 0.26,
+    "sunMaxAbsPts": 4.05,
+    "sunMeanSignedPts": -0.27,
+    "earthMedianAbsPts": 0,
+    "earthMaxAbsPts": 2.62,
+    "skylineRmsMedianDeg": 0.015,
+    "vsPgda60MedianAbsPts": 1.07,
+    "vsPgda60MaxAbsPts": 7.98
+   },
+   "random": {
+    "n": 60,
+    "sunMedianAbsPts": 0.2,
+    "sunP90AbsPts": 1.89,
+    "sunMaxAbsPts": 16.22,
+    "sunMeanSignedPts": 0.88,
+    "earthMedianAbsPts": 0.08,
+    "earthMaxAbsPts": 25.19,
+    "skylineRmsMedianDeg": 0.194
+   }
+  },
+  "near5_m60": {
+   "site": {
+    "n": 22,
+    "sunMedianAbsPts": 0,
+    "sunP90AbsPts": 0.01,
+    "sunMaxAbsPts": 0.02,
+    "sunMeanSignedPts": 0,
+    "earthMedianAbsPts": 0,
+    "earthMaxAbsPts": 0.07,
+    "skylineRmsMedianDeg": 0.002,
+    "vsPgda60MedianAbsPts": 1.06,
+    "vsPgda60MaxAbsPts": 7.97
+   },
+   "random": {
+    "n": 60,
+    "sunMedianAbsPts": 0,
+    "sunP90AbsPts": 0.01,
+    "sunMaxAbsPts": 0.02,
+    "sunMeanSignedPts": 0.01,
+    "earthMedianAbsPts": 0,
+    "earthMaxAbsPts": 0.06,
+    "skylineRmsMedianDeg": 0.003
+   }
+  },
+  "near10_m60": {
+   "site": {
+    "n": 22,
+    "sunMedianAbsPts": 0,
+    "sunP90AbsPts": 0.01,
+    "sunMaxAbsPts": 0.02,
+    "sunMeanSignedPts": 0,
+    "earthMedianAbsPts": 0,
+    "earthMaxAbsPts": 0.05,
+    "skylineRmsMedianDeg": 0.002,
+    "vsPgda60MedianAbsPts": 1.06,
+    "vsPgda60MaxAbsPts": 7.97
+   },
+   "random": {
+    "n": 60,
+    "sunMedianAbsPts": 0,
+    "sunP90AbsPts": 0.01,
+    "sunMaxAbsPts": 0.02,
+    "sunMeanSignedPts": 0,
+    "earthMedianAbsPts": 0,
+    "earthMaxAbsPts": 0.03,
+    "skylineRmsMedianDeg": 0.002
+   }
+  },
+  "near10_m120": {
+   "site": {
+    "n": 22,
+    "sunMedianAbsPts": 0,
+    "sunP90AbsPts": 0.03,
+    "sunMaxAbsPts": 0.03,
+    "sunMeanSignedPts": 0.01,
+    "earthMedianAbsPts": 0.01,
+    "earthMaxAbsPts": 0.11,
+    "skylineRmsMedianDeg": 0.003,
+    "vsPgda60MedianAbsPts": 1.06,
+    "vsPgda60MaxAbsPts": 7.97
+   },
+   "random": {
+    "n": 60,
+    "sunMedianAbsPts": 0.01,
+    "sunP90AbsPts": 0.02,
+    "sunMaxAbsPts": 0.03,
+    "sunMeanSignedPts": 0.01,
+    "earthMedianAbsPts": 0,
+    "earthMaxAbsPts": 0.05,
+    "skylineRmsMedianDeg": 0.004
+   }
+  },
+  "near10_m40_30_m120": {
+   "site": {
+    "n": 22,
+    "sunMedianAbsPts": 0,
+    "sunP90AbsPts": 0.01,
+    "sunMaxAbsPts": 0.03,
+    "sunMeanSignedPts": 0,
+    "earthMedianAbsPts": 0,
+    "earthMaxAbsPts": 0.03,
+    "skylineRmsMedianDeg": 0.002,
+    "vsPgda60MedianAbsPts": 1.07,
+    "vsPgda60MaxAbsPts": 7.97
+   },
+   "random": {
+    "n": 60,
+    "sunMedianAbsPts": 0,
+    "sunP90AbsPts": 0.02,
+    "sunMaxAbsPts": 0.02,
+    "sunMeanSignedPts": 0.01,
+    "earthMedianAbsPts": 0,
+    "earthMaxAbsPts": 0.03,
+    "skylineRmsMedianDeg": 0.002
+   }
+  },
+  "near3_m60_50_m240": {
+   "site": {
+    "n": 22,
+    "sunMedianAbsPts": 0,
+    "sunP90AbsPts": 0.02,
+    "sunMaxAbsPts": 0.04,
+    "sunMeanSignedPts": 0.01,
+    "earthMedianAbsPts": 0,
+    "earthMaxAbsPts": 0.07,
+    "skylineRmsMedianDeg": 0.003,
+    "vsPgda60MedianAbsPts": 1.06,
+    "vsPgda60MaxAbsPts": 7.97
+   },
+   "random": {
+    "n": 60,
+    "sunMedianAbsPts": 0.01,
+    "sunP90AbsPts": 0.03,
+    "sunMaxAbsPts": 0.05,
+    "sunMeanSignedPts": 0.01,
+    "earthMedianAbsPts": 0.01,
+    "earthMaxAbsPts": 0.08,
+    "skylineRmsMedianDeg": 0.004
+   }
+  },
+  "near10_m60_50_m240": {
+   "site": {
+    "n": 22,
+    "sunMedianAbsPts": 0,
+    "sunP90AbsPts": 0.02,
+    "sunMaxAbsPts": 0.03,
+    "sunMeanSignedPts": 0.01,
+    "earthMedianAbsPts": 0,
+    "earthMaxAbsPts": 0.05,
+    "skylineRmsMedianDeg": 0.002,
+    "vsPgda60MedianAbsPts": 1.06,
+    "vsPgda60MaxAbsPts": 7.97
+   },
+   "random": {
+    "n": 60,
+    "sunMedianAbsPts": 0.01,
+    "sunP90AbsPts": 0.02,
+    "sunMaxAbsPts": 0.04,
+    "sunMeanSignedPts": 0.01,
+    "earthMedianAbsPts": 0,
+    "earthMaxAbsPts": 0.03,
+    "skylineRmsMedianDeg": 0.002
+   }
+  },
+  "near10_m120max": {
+   "site": {
+    "n": 22,
+    "sunMedianAbsPts": 0.01,
+    "sunP90AbsPts": 0.07,
+    "sunMaxAbsPts": 0.09,
+    "sunMeanSignedPts": -0.02,
+    "earthMedianAbsPts": 0.02,
+    "earthMaxAbsPts": 0.35,
+    "skylineRmsMedianDeg": 0.007,
+    "vsPgda60MedianAbsPts": 1.12,
+    "vsPgda60MaxAbsPts": 7.98
+   },
+   "random": {
+    "n": 60,
+    "sunMedianAbsPts": 0.02,
+    "sunP90AbsPts": 0.1,
+    "sunMaxAbsPts": 0.13,
+    "sunMeanSignedPts": -0.03,
+    "earthMedianAbsPts": 0.01,
+    "earthMaxAbsPts": 0.96,
+    "skylineRmsMedianDeg": 0.013
+   }
+  },
+  "m20_appSteps": {
+   "site": {
+    "n": 22,
+    "sunMedianAbsPts": 0,
+    "sunP90AbsPts": 0,
+    "sunMaxAbsPts": 0.01,
+    "sunMeanSignedPts": 0,
+    "earthMedianAbsPts": 0,
+    "earthMaxAbsPts": 0.01,
+    "skylineRmsMedianDeg": 0.002,
+    "vsPgda60MedianAbsPts": 1.07,
+    "vsPgda60MaxAbsPts": 7.97
+   },
+   "random": {
+    "n": 60,
+    "sunMedianAbsPts": 0,
+    "sunP90AbsPts": 0,
+    "sunMaxAbsPts": 0.01,
+    "sunMeanSignedPts": 0,
+    "earthMedianAbsPts": 0,
+    "earthMaxAbsPts": 0.02,
+    "skylineRmsMedianDeg": 0.002
+   }
+  },
+  "reference": {
+   "site": {
+    "n": 19,
+    "vsPgda60MedianAbsPts": 1.07,
+    "vsPgda60MaxAbsPts": 7.98
+   }
+  },
+  "positionSensitivity": {
+   "site": {
+    "medianSpreadPts": 1.61,
+    "maxSpreadPts": 42.73,
+    "note": "range of the sunlight share over 8 points 60 m from each site"
+   }
+  }
+ },
+ "failedCases": [],
  "generated": "2026-11-25T14:59:31.530Z",
  "commit": "31f5669ec9234dac22b3fb962d32ec09effc115d",
  "quick": false,

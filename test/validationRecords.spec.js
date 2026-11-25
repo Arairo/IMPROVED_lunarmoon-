@@ -9,7 +9,7 @@ const KEYS = ['schemaVersion', 'kind', 'applicationCommit', 'datasetVersion', 'v
 
 test('Validation records: every file has the shared fields, real dates and no invented values', () => {
   const files = readdirSync(dir).filter((f) => f.endsWith('.json'));
-  assert.deepEqual(files.sort(), ['azimuth-resolution.json', 'jpl-horizons.json', 'lroc.json', 'pgda.json']);
+  assert.deepEqual(files.sort(), ['azimuth-resolution.json', 'jpl-horizons.json', 'lroc.json', 'pgda.json', 'terrain-study.json']);
   for (const f of files) {
     const r = JSON.parse(readFileSync(new URL(f, dir), 'utf8'));
     for (const k of KEYS) assert.ok(k in r, `${f}: missing ${k}`);

@@ -19,6 +19,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import zlib from 'node:zlib';
+import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { createGrid, computeHorizon, tilesNear, HIRES_REACH_M } from '../src/core/horizon.js';
 import { createGlobalGrid } from '../src/core/globalDem.js';
@@ -286,12 +287,27 @@ for (const name of ['m20', 'm40', 'm60', 'm120', 'm240']) {
 }
 function readGridData(name) { const buf = fs.readFileSync(path.join(inDir, `${name}.i16`)); return new Int16Array(buf.buffer, buf.byteOffset, buf.byteLength / 2); }
 
+const manifestSha = createHash('sha256').update(fs.readFileSync(path.join(dataDir, 'manifest.json'))).digest('hex');
 const result = {
+  // Shared validation-record fields (docs/validation/README.md, test/validationRecords.spec.js).
+  schemaVersion: 1,
+  kind: 'terrain resolution: skylines and sunlight / Earth shares vs a 20 m reference',
+  applicationCommit: /^[0-9a-f]{40}$/.test(sourceCommit()) ? sourceCommit() : 'not recorded',
+  datasetVersion: `public/data/manifest.json sha256 ${manifestSha}`,
+  validationDateUtc: new Date().toISOString(),
+  reference: 'NASA GSFC PGDA LDEM_80S_20MPP_ADJ (Barker et al. 2023, https://pgda.gsfc.nasa.gov/products/90), 20 m everywhere to 180 km, dense ray steps; PGDA AVGVISIB_85S_060M_201608 for the sites',
+  caseCount: rows.length * Object.keys(VARIANTS).length,
+  sites: rows.map((r) => r.id),
+  dates: [new Date(t0).toISOString(), new Date(t1).toISOString()],
+  configuration: { mastHeightM: 2, azStepDeg: 0.5, stepHours: stepH, referenceGrowth: 0.003, appGrowth: 0.015, mosaicHalfKm: 180 },
+  metrics: null,
+  failedCases: [],
   generated: new Date().toISOString(), commit: sourceCommit(), quick,
   method: 'Skylines (0.5 deg azimuth steps, 2 m mast) from NASA PGDA LDEM_80S_20MPP_ADJ cut to +-180 km and block-averaged copies of it, in distance bands from the observer; beyond 180 km the app\'s 1 km polar grid and whole-Moon grid. Reference: 20 m everywhere, ray steps 0.3% of distance (the app uses 1.5%). Shares as NASA PGDA AVGVISIB: visible fraction of the Sun\'s disk, Earth when any of its disk is above the skyline, 18.6-year cycle from 2009.',
   variants: Object.fromEntries(Object.entries(VARIANTS).map(([k, v]) => [k, v({ appTiles: { meta: { name: 'tiles near the point', cellSize: 20 } } }).bands.map(([g, d]) => `${g.meta.name ?? g.meta.cellSize + ' m'} ${d === INF ? '' : `to ${d / 1000} km`}`.trim()).join(', then ')])),
   summary, cost, rows,
 };
+result.metrics = summary;
 const outDir = outArg >= 0 ? path.resolve(args[outArg + 1]) : path.join(root, 'docs/validation');
 fs.writeFileSync(path.join(outDir, 'terrain-study.json'), JSON.stringify(result, null, 1));
 

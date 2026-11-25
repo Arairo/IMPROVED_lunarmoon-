@@ -3,8 +3,8 @@ name: Add 20 m terrain and check against NASA PGDA
 # Run from the Actions tab ("Run workflow"). Uses GDAL to read just the needed
 # parts of two NASA Goddard PGDA products:
 #   - LOLA 20 m south-pole terrain (LDEM_80S_20MPP_ADJ, Barker et al. 2023):
-#     16 km x 16 km tiles covering the nine Artemis III candidate regions, plus one
-#     around each south-polar site outside them, packed losslessly, checked against our
+#     16 km x 16 km tiles covering everything within 160 km of the pole and the nine
+#     Artemis III candidate regions, plus one around each south-polar site outside them, packed losslessly, checked against our
 #     240 m LOLA grid before it is used, then the sites' skylines are rebuilt.
 #   - Lunar polar illumination (average Sun / Earth visibility, Mazarico et al.):
 #     compared with our own sunlight and Earth-in-view map layers.
@@ -23,7 +23,7 @@ defaults:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 150
+    timeout-minutes: 240
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
@@ -33,6 +33,15 @@ jobs:
       - run: npm ci
       - name: Get GDAL (official container; apt on the runner is slow)
         run: docker pull -q ghcr.io/osgeo/gdal:ubuntu-small-latest
+      - name: Download the 20 m terrain (one file, about 2.6 GB; steadier than hundreds of ranged reads)
+        run: |
+          mkdir -p data-raw
+          url=https://pgda.gsfc.nasa.gov/data/LOLA_20mpp/LDEM_80S_20MPP_ADJ.TIF
+          for i in 1 2 3 4 5; do
+            curl -fL --retry 5 --retry-delay 10 -C - -o data-raw/ldem20.tif "$url" && break
+            echo "download interrupted, resuming ($i)"; sleep 15
+          done
+          ls -la data-raw
       - name: Read the PGDA products
         run: docker run --rm --user "$(id -u):$(id -g)" -e HOME=/tmp -e GDAL_HTTP_MAX_RETRY=6 -e GDAL_HTTP_RETRY_DELAY=3 -v "$PWD":/w -w /w ghcr.io/osgeo/gdal:ubuntu-small-latest python3 tools/pgda_fetch.py data-raw/pgda 2>&1 | tee fetch.log
       - name: Check and pack the 20 m tiles, compare illumination

@@ -22,6 +22,7 @@ result can be traced to the code and data it came from:
 | `pgda.json` | Sunlight / Earth-visibility maps and sites vs NASA GSFC PGDA | same, from `public/data/pgda_check.json` (PGDA workflow) |
 | `lroc.json` | Lit / shadowed pixels vs LROC photographs | same, from `public/data/lroc_check.json` (LROC workflow) |
 | `azimuth-resolution.json` | Skyline sampling: 2°, 1°, 0.5° and shipped vs a 0.25° reference | `node tools/azimuth_resolution.mjs` |
+| `terrain-study.json` (+ `terrain-study.md`) | Terrain resolution by distance band (20 m to 3/10/20/30 km, 40–240 m middle grids) vs 20 m everywhere, at 22 sites and 60 random points near the pole | Terrain resolution study workflow (`tools/pgda_mosaic.py`, `tools/terrain_study.mjs`) |
 
 Each record covers only what it says: the JPL check validates celestial positions at
 those sites and times, not terrain, power or radio. See `docs/VALIDATION.md` for the

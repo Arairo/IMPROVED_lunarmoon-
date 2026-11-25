@@ -34,10 +34,19 @@ SITES = json.load(open(os.path.join(os.path.dirname(__file__), '..', 'src', 'dat
 SITES = SITES if isinstance(SITES, list) else SITES.get('sites', [])
 POLAR = [s for s in SITES if s['lat'] <= -80]
 DEM_URL = '/vsicurl/https://pgda.gsfc.nasa.gov/data/LOLA_20mpp/LDEM_80S_20MPP_ADJ.TIF'
+# A local copy (the workflow downloads the whole file first: one 2.6 GB download is far
+# quicker and steadier than hundreds of ranged reads from NASA's server).
+LOCAL_DEM = os.environ.get('LDEM20_LOCAL', 'data-raw/ldem20.tif')
 SUN_URL = '/vsicurl/https://pgda.gsfc.nasa.gov/data/MoonIllumination/AVGVISIB_75S_120M_201608.TIF'
 EARTH_URL = '/vsicurl/https://pgda.gsfc.nasa.gov/data/MoonIllumination/AVGVISIB_75S_120M_201608_EARTH.TIF'
 SUN85_URL = '/vsicurl/https://pgda.gsfc.nasa.gov/data/MoonIllumination/AVGVISIB_85S_060M_201608.TIF'
-HALF = 8000.0  # 20 m window: +-8 km around each site
+HALF = 10040.0  # 20 m window around each site outside the 16 km grid: 10 km all round (+2 cells)
+# docs/validation/terrain-study.md: 20 m terrain out to 10 km from the observer, then the
+# 240 m grid, matches 20 m terrain all the way out to within 0.1 point of sunlight; the
+# 240 m grid alone near a point was off by up to 12 points (sunlight) and 25 (Earth).
+# So the 16 km grid of 20 m tiles covers everything within POLAR_CAP of the pole, and the
+# app loads the tiles within 10 km of a point (HIRES_REACH_M in src/core/horizon.js).
+POLAR_CAP = 160000.0  # metres from the pole (about 84.7 deg S)
 TILE = 16000.0  # region tiles: a fixed 16 km grid in polar stereographic metres
 OVERLAP = 40.0  # each region tile reads 2 extra cells per side so neighbours join up
 MARGIN = 1000.0  # region tiles cover each region's outline plus this margin
@@ -118,7 +127,7 @@ def point(ds, meta, x, y):
 
 
 # --- 20 m terrain windows --------------------------------------------------
-dem = gdal.Open(DEM_URL)
+dem = gdal.Open(LOCAL_DEM if os.path.exists(LOCAL_DEM) else DEM_URL)
 dmeta = info(dem)
 print('DEM', json.dumps(dmeta, default=str)[:900], flush=True)
 def tag(k):
@@ -141,13 +150,37 @@ def region_tiles():
 REG = region_tiles()
 
 
+def polar_tiles():
+    """16 km grid cells within POLAR_CAP of the pole that the region tiles don't already cover."""
+    have = {t['id'] for t in REG}
+    out = []
+    k = math.ceil(POLAR_CAP / TILE)
+    for i in range(-k, k):
+        for j in range(-k, k):
+            # nearest point of the cell [i*TILE, (i+1)*TILE] x [j*TILE, (j+1)*TILE] to the pole
+            nx = min(max(0.0, i * TILE), (i + 1) * TILE)
+            ny = min(max(0.0, j * TILE), (j + 1) * TILE)
+            if math.hypot(nx, ny) > POLAR_CAP:
+                continue
+            tid = f'reg_{tag(i)}_{tag(j)}'
+            if tid in have:
+                continue
+            out.append({'id': tid, 'x': (i + 0.5) * TILE, 'y': (j + 0.5) * TILE, 'regions': []})
+    return out
+
+
+POLAR = polar_tiles()
+REG = REG + POLAR
+print(f'{len(POLAR)} extra tiles cover everything within {POLAR_CAP / 1000:.0f} km of the pole', flush=True)
+
+
 def covered(x, y, r=6000.0):
     """True if the square +-r around (x, y) lies inside the region tiles."""
     return all(any(abs(px - t['x']) <= TILE / 2 and abs(py - t['y']) <= TILE / 2 for t in REG)
                for px in (x - r, x, x + r) for py in (y - r, y, y + r))
 
 
-windows = [{**t, 'kind': 'region', 'half': TILE / 2 + OVERLAP} for t in REG]
+windows = [{**t, 'kind': 'region' if t['regions'] else 'polar', 'half': TILE / 2 + OVERLAP} for t in REG]
 for s in POLAR:
     x, y = xy(s['lat'], s['lon'])
     if covered(x, y):

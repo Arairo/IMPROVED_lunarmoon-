@@ -421,12 +421,14 @@ export function horizonAt(horizon, azDeg) {
   return 0;
 }
 
-// ---- 20 m LOLA tiles (PGDA LDEM_80S_20MPP_ADJ): around south-polar sites and ----
-// covering the Artemis III candidate regions. Packed files (src/core/tileCodec.js),
-// loaded only when a site near them is in use and added to the shared terrain, so
-// nudges and the landing-area check see 20 m detail. Neighbouring tiles within
-// HIRES_REACH_M are loaded too, so a site near a tile edge has 20 m terrain all round.
-export const HIRES_REACH_M = 3000;
+// ---- 20 m LOLA tiles (PGDA LDEM_80S_20MPP_ADJ): a 16 km grid over everything within ----
+// 160 km of the pole and the Artemis III candidate regions, plus windows around the other
+// south-polar sites. Packed files (src/core/tileCodec.js), loaded only when a point on them
+// is in use and added to the shared terrain. Every tile within HIRES_REACH_M of the point
+// is loaded: docs/validation/terrain-study.md found that 20 m terrain out to 10 km, then
+// the 240 m grid, gives the same sunlight and Earth shares as 20 m terrain all the way out
+// (within 0.1 point), while 240 m terrain near the point was off by up to 12 / 25 points.
+export const HIRES_REACH_M = 10000;
 const hiresIndex = new Map(); // baseUrl -> promise of hires/index.json (null when missing)
 const hiresLoaded = new Map();
 async function hiresIndexFor(baseUrl) {
