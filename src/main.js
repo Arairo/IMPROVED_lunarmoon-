@@ -184,9 +184,10 @@ export function selectSite(site, fly = false) {
   if (!site) return;
   app.site = site;
   xp?.busy();
-  // A custom point needs the full terrain grids for its skyline; until they arrive it
-  // uses the 5 km grid, is flagged "approximate", and is recomputed when they land.
-  if (String(site.id || '').startsWith('custom')) ensureTerrain();
+  // A custom point, or any site with a mast other than 2 m, needs the full terrain for
+  // its skyline; until it arrives the result is flagged "approximate" and it is
+  // recomputed when the terrain lands (ensureTerrain, loadHiresFor).
+  if (needsLiveSkyline(site)) ensureTerrain();
   app.ctx = prepareSite(site, null, app.config);
   app.scan = scanWindow(app.ctx, app.windowStartMs, app.windowDays, app.config);
   const heading = document.getElementById('timelineHeading');
@@ -198,10 +199,20 @@ export function selectSite(site, fly = false) {
   loadHiresFor(site);
 }
 
-// 20 m terrain near the big south-polar sites, fetched only when needed.
+/** True when the site's skyline is computed live (not the precomputed 2 m one). */
+function needsLiveSkyline(site) {
+  return String(site?.id || '').startsWith('custom') || Math.abs((app.config.mastHeightM ?? 2) - 2) > 1e-6;
+}
+
+// 20 m terrain near the big south-polar sites, fetched only when needed. A live skyline
+// is recomputed once the tiles under it arrive (it was built from the 240 m grid).
 function loadHiresFor(site) {
   ensureHiresTile(site.lat, site.lon, `${import.meta.env.BASE_URL}data`)
-    .then((added) => { if (added) window.dispatchEvent(new Event('lsp-terrain')); })
+    .then((added) => {
+      if (!added) return;
+      if (app.site === site && needsLiveSkyline(site)) selectSite(site, false);
+      window.dispatchEvent(new Event('lsp-terrain'));
+    })
     .catch(() => {});
 }
 
@@ -788,7 +799,7 @@ function ensureTerrain() {
       const [polar, g] = await Promise.all([loadTerrain(base).catch(() => null), loadGlobalDem(base).catch(() => null)]);
       if (g) setGlobalDem(g);
       if (polar) { polar.global = g; setSharedTerrain(polar); }
-      if (String(app.site?.id || '').startsWith('custom')) selectSite(app.site, false);
+      if (app.site && needsLiveSkyline(app.site)) selectSite(app.site, false);
       window.dispatchEvent(new Event('lsp-terrain'));
       if (app.site) loadHiresFor(app.site);
       return !!(polar || g);

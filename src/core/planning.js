@@ -46,6 +46,8 @@ export function windowStats(site, startMs, config, days = 30, stepMs = HOUR) {
     both: both / total,
     darkH: sc.stats.longestDarkH,
     avgPowerW: sc.stats.avgPowerW,
+    // The skyline came from the 5 km grid or a rough mast adjustment (terrain not loaded).
+    approximate: ctx.horizon?.quality?.tier === 'coarse' || ctx.horizon?.quality?.tier === 'none',
   };
 }
 
@@ -94,13 +96,15 @@ export function findNextWindow(site, fromMs, config, { minDays = 3, searchDays =
  * Returns { sun: [min, max], earth: [min, max] }.
  */
 export function positionRange(site, startMs, config, { metres = 250, days = 30 } = {}) {
-  const pts = [site, ...Object.keys(DIRECTIONS).map((d) => {
+  // The centre is computed live like the four around it (not looked up by id), so all
+  // five rest on the same terrain.
+  const pts = [{ ...site, id: `${site.id}-r0` }, ...Object.keys(DIRECTIONS).map((d) => {
     const p = destination(site.lat, site.lon, DIRECTIONS[d], metres);
     return { ...site, id: `${site.id}-r${d}`, lat: p.lat, lon: p.lon };
   })];
   const all = pts.map((p) => windowStats(p, startMs, config, days, 2 * HOUR));
   const span = (k) => [Math.min(...all.map((s) => s[k])), Math.max(...all.map((s) => s[k]))];
-  return { sun: span('sun'), earth: span('earth') };
+  return { sun: span('sun'), earth: span('earth'), approximate: all.some((s) => s.approximate) };
 }
 
 /**
@@ -203,7 +207,7 @@ function* dispersionSteps(site, startMs, config, { radiusM = 500, n = 25, days =
   }
   const both = pts.map((p) => p.both).sort((a, b) => a - b);
   const worst = pts.reduce((w, p) => (p.both < w.both ? p : w), pts[0]);
-  return { radiusM, points: pts, centre: pts[0], min: both[0], p10: quantile(both, 0.1), p50: quantile(both, 0.5), max: both[both.length - 1], worst };
+  return { radiusM, points: pts, centre: pts[0], min: both[0], p10: quantile(both, 0.1), p50: quantile(both, 0.5), max: both[both.length - 1], worst, approximate: pts.some((p) => p.approximate) };
 }
 
 function runSync(gen) {

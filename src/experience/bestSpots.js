@@ -62,6 +62,9 @@ function rate(site, startMs, config) {
     sun: sc.stats.litFraction,
     earth: sc.stats.earthCentreFraction,
     darkH: sc.stats.longestDarkH,
+    // Skyline from the 5 km grid (detailed terrain not loaded yet): not ranked against
+    // sites with LOLA 20 m / 240 m skylines.
+    approximate: ['coarse', 'none'].includes(ctx.horizon?.quality?.tier),
   };
 }
 
@@ -90,10 +93,11 @@ export function findBestSpots({ sites, startMs, config, onDone, onProgress }) {
     if (cancelled) return;
     let flown = null, overall = null;
     for (const r of results) {
+      if (r.approximate) continue;
       if (FLOWN_IDS.includes(r.site.id) && (!flown || better(r, flown))) flown = r;
       if (!overall || better(r, overall)) overall = r;
     }
-    onDone({ flown, overall, count: list.length });
+    onDone({ flown, overall, count: list.length, skipped: results.filter((r) => r.approximate).length });
   })();
   return () => { cancelled = true; };
 }

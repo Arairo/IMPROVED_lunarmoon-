@@ -34,7 +34,7 @@ export function apolloChecks(sites) {
   });
 }
 
-/** First change of the requested kind after `from` (2 h steps over 20 days, then refined to 10 min). */
+/** First change of the requested kind after `from`: one 20-day scan at scanWindow's 30-minute steps (no refinement). */
 export function flownEventChecks(sites) {
   return FLOWN_EVENTS.map((f) => {
     const site = sites.find((s) => s.id === f.id);

@@ -52,6 +52,8 @@ for (const s of sites) {
   const h = computeHorizon(terrain, s.lat, s.lon, { mastHeight: 2 });
   const q = h.quality;
   out[s.id] = {
+    // Where it was computed: the app checks these, so another place reusing the id never gets this skyline.
+    lat: s.lat, lon: s.lon,
     groundHeight: Math.round(h.groundHeight),
     source: h.source,
     terrain: h.terrain,

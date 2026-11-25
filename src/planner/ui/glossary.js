@@ -37,7 +37,7 @@ export const GLOSSARY = {
   },
   lola: {
     title: 'LOLA',
-    text: 'The Lunar Orbiter Laser Altimeter on NASA’s Lunar Reconnaissance Orbiter. Its laser measurements are the source of the terrain heights used here, gridded at 20 m over the Artemis III candidate regions and other main south-polar sites (NASA Goddard PGDA), 240 m near the pole, 1 km out to 75°S, and about 1.9 km for the rest of the Moon (LDEM_16).',
+    text: 'The Lunar Orbiter Laser Altimeter on NASA’s Lunar Reconnaissance Orbiter. Its laser measurements are the source of the terrain heights used here, gridded at 20 m over the Artemis III candidate regions and other main south-polar sites (NASA Goddard PGDA), 240 m near the pole, 1 km out to 75°S, and for the rest of the Moon NASA’s LDEM_16 map (about 1.9 km; the skylines of listed sites were built from it) or, for points you pick, a copy averaged to about 3.8 km that the app downloads.',
   },
   psr: {
     title: 'Permanently shadowed region',

@@ -107,7 +107,7 @@ export function evaluate(ms, ctx, config = DEFAULT_CONFIG, { withDsn = true } = 
       commsReasons.push(`Link margin ${link.margin.toFixed(1)} dB (< ${config.comms.targetMarginDb} dB)`);
     }
   }
-  const powerStatus = power.watts >= config.power.loadW ? 'go' : power.watts > 0 ? 'marginal' : 'no-go';
+  const powerStatus = power.watts >= (config.power?.loadW ?? DEFAULT_CONFIG.power.loadW) ? 'go' : power.watts > 0 ? 'marginal' : 'no-go';
 
   return {
     ms,
@@ -232,7 +232,7 @@ export function scan(ctx, { startMs, endMs, stepMs = 20 * 60000 }, config = DEFA
     dte[i] = r.earth.los && r.dsnAny && r.link.margin >= 0 ? 1 : 0;
     energyWh += r.sun.watts * dtH[i];
     // Battery sizing: deepest cumulative energy deficit against the load.
-    cumulative += (r.sun.watts - config.power.loadW) * dtH[i];
+    cumulative += (r.sun.watts - (config.power?.loadW ?? DEFAULT_CONFIG.power.loadW)) * dtH[i];
     if (cumulative > peak) peak = cumulative;
     maxDrawdownWh = Math.max(maxDrawdownWh, peak - cumulative);
   }
@@ -266,7 +266,7 @@ export function scan(ctx, { startMs, endMs, stepMs = 20 * 60000 }, config = DEFA
     batteryKWhNoLosses: maxDrawdownWh / 1000,
     batterySim: sim,
     // The deficit is cut off by the window edge: the true battery need may be larger.
-    batteryOpenEnded: maxDrawdownWh > 0 && (watts[0] < config.power.loadW || watts[n - 1] < config.power.loadW),
+    batteryOpenEnded: maxDrawdownWh > 0 && (watts[0] < (config.power?.loadW ?? DEFAULT_CONFIG.power.loadW) || watts[n - 1] < (config.power?.loadW ?? DEFAULT_CONFIG.power.loadW)),
     earthVisibleFraction: mean(visible),
     earthCentreFraction: mean(los),
     dsnFraction: mean(dsnAny),

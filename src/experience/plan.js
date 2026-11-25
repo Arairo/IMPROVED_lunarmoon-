@@ -4,6 +4,7 @@
 
 import { nudgeSite, windowStats, describeChange, findNextWindow, positionRange, landingDispersionAsync, robustAimAsync } from '../core/planning.js';
 import { destination } from '../core/geo.js';
+import { ensureHiresTile } from '../core/horizon.js';
 import { showToast } from '../ui/modals.js';
 
 const DAY = 86400000;
@@ -60,7 +61,17 @@ export function mountPlanCard({ app, selectSite, setTime, getGlobe }) {
   const history = [];
 
   const snapshot = () => ({ site: app.site, windowStartMs: app.windowStartMs, timeMs: app.timeMs });
-  const stats = () => windowStats(app.site, app.windowStartMs, app.config);
+  // These tools compute skylines for points that have no precomputed one, so they wait
+  // for the detailed terrain (and the 20 m tiles around the point) instead of quietly
+  // using the 5 km grid. "Before" and "after" are both computed live, the same way.
+  const BASE = `${import.meta.env.BASE_URL}data`;
+  const ready = async (site) => {
+    await app.ensureTerrain?.();
+    await ensureHiresTile(site.lat, site.lon, BASE).catch(() => false);
+  };
+  const live = (site) => ({ ...site, id: `live:${site.id}` });
+  const stats = (site = app.site) => windowStats(live(site), app.windowStartMs, app.config);
+  const approxNote = (...r) => (r.some((x) => x?.approximate) ? ' (approximate: the detailed terrain could not be loaded)' : '');
   const say = (text) => { out.textContent = text; out.classList.remove('is-new'); void out.offsetWidth; out.classList.add('is-new'); };
   const remember = () => { history.push(snapshot()); undoBtn.hidden = false; };
   // What the card itself last set; if the site or date changes elsewhere, the
@@ -68,25 +79,33 @@ export function mountPlanCard({ app, selectSite, setTime, getGlobe }) {
   let mine = null;
   const markMine = () => { mine = { site: app.site, start: app.windowStartMs }; };
 
-  card.querySelectorAll('[data-dir]').forEach((b) => b.addEventListener('click', () => {
+  card.querySelectorAll('[data-dir]').forEach((b) => b.addEventListener('click', async () => {
     const km = Number(card.querySelector('[data-km]').value);
-    const before = stats();
     const from = app.site;
-    remember();
     const moved = nudgeSite(from, b.dataset.dir, km);
+    say('Loading the terrain there…');
+    await Promise.all([ready(from), ready(moved)]);
+    if (app.site !== from) return; // the site changed meanwhile
+    const before = stats(from);
+    remember();
     getGlobe()?.setGhost?.(from.lat, from.lon);
     selectSite(moved, false);
+    const after = stats(moved);
     const word = { N: 'north', S: 'south', E: 'east', W: 'west' }[b.dataset.dir];
-    say(describeChange(`Moved ${km} km ${word}`, before, stats()));
+    say(describeChange(`Moved ${km} km ${word}`, before, after) + approxNote(before, after));
     markMine();
   }));
 
-  card.querySelectorAll('[data-day]').forEach((b) => b.addEventListener('click', () => {
+  card.querySelectorAll('[data-day]').forEach((b) => b.addEventListener('click', async () => {
     const d = Number(b.dataset.day);
+    const site = app.site;
+    await ready(site);
+    if (app.site !== site) return;
     const before = stats();
     remember();
     setTime(app.windowStartMs + d * DAY, true);
-    say(describeChange(d > 0 ? 'One day later' : 'One day earlier', before, stats()));
+    const after = stats();
+    say(describeChange(d > 0 ? 'One day later' : 'One day earlier', before, after) + approxNote(before, after));
     markMine();
   }));
 
@@ -125,11 +144,13 @@ export function mountPlanCard({ app, selectSite, setTime, getGlobe }) {
     const stale = () => myKey !== dispKey;
     // Sliced so the page stays responsive; a newer request cancels this one.
     (async () => {
+      await ready(site);
+      if (stale()) return;
       const d = await landingDispersionAsync(site, start, app.config, { radiusM, n: 25 }, { isCancelled: stale });
       if (!d || stale()) return;
       app.lastDispersion = { ...d, siteId: site.id, start };
       const range = Math.round(d.min * 100) === Math.round(d.max * 100) ? pct(d.min) : `${pct(d.min)}–${pct(d.max)}`;
-      const worstTxt = d.worst.dist > 0 ? ` The weakest spot is ${distWord(d.worst.dist)} ${dirWord(d.worst.az)} of the aim.` : '';
+      const worstTxt = (d.worst.dist > 0 ? ` The weakest spot is ${distWord(d.worst.dist)} ${dirWord(d.worst.az)} of the aim.` : '') + approxNote(d);
       dispOut.innerHTML = `<b>If the lander touches down anywhere within ${distWord(radiusM)}:</b> power and radio together ${range} of the next 30 days (worst case ${pct(d.min)}, typical ${pct(d.p50)}).${worstTxt}<span data-aim> <span class="w-spinner" style="width:10px;height:10px;border-width:2px"></span> Looking for a safer place to aim…</span>`;
       {
         const r = await robustAimAsync(site, start, app.config, { radiusM, n: 13 }, { isCancelled: stale });
@@ -140,14 +161,16 @@ export function mountPlanCard({ app, selectSite, setTime, getGlobe }) {
         app.lastAim = r.aim.dist === 0 || gain < 2 ? null : { ...r, siteId: site.id, start };
         if (r.aim.dist === 0 || gain < 2) { aimEl.textContent = ' Aiming here is already the safest choice nearby.'; return; }
         aimEl.innerHTML = ` <br><b>Safer aim:</b> ${distWord(r.aim.dist)} ${dirWord(r.aim.az)} keeps at least ${pct(r.dispersion.p10)} even after a bad landing (${pct(d.p10)} aiming here). <button type="button" class="p-aim">Aim there</button>`;
-        aimEl.querySelector('.p-aim').addEventListener('click', () => {
-          const before = stats();
-          remember();
+        aimEl.querySelector('.p-aim').addEventListener('click', async () => {
           const p = destination(site.lat, site.lon, r.aim.az, r.aim.dist);
           const moved = { ...nudgeSite(site, 'N', 0.001), lat: p.lat, lon: p.lon, id: `custom-${p.lat.toFixed(4)},${p.lon.toFixed(4)}`, name: `${site.baseName || site.short || site.name}, safer aim`, short: `${site.baseName || site.short || site.name} · safer aim` };
+          await ready(moved);
+          if (app.site !== site) return;
+          const before = stats(site);
+          remember();
           getGlobe()?.setGhost?.(site.lat, site.lon);
           selectSite(moved, false);
-          say(describeChange(`Moved the aim ${distWord(r.aim.dist)} ${dirWord(r.aim.az)}`, before, stats()));
+          say(describeChange(`Moved the aim ${distWord(r.aim.dist)} ${dirWord(r.aim.az)}`, before, stats(moved)));
           markMine();
           dispOut.hidden = true;
         });
@@ -172,6 +195,9 @@ export function mountPlanCard({ app, selectSite, setTime, getGlobe }) {
   let key = '', timer = 0;
   function refresh() {
     if (!app.site) return;
+    // Only in Professional mode: the range needs the detailed terrain, which the landing
+    // page must not download. Opening Pro mode calls refresh() again.
+    if (document.body.dataset.mode !== 'pro') { key = ''; return; }
     if (dispKey && dispKey !== `${app.site.lat},${app.site.lon}|${app.windowStartMs}|${card.querySelector('[data-rad]').value}`) { dispKey = ''; dispOut.hidden = true; }
     if (mine && (mine.site !== app.site || mine.start !== app.windowStartMs)) {
       mine = null;
@@ -185,10 +211,13 @@ export function mountPlanCard({ app, selectSite, setTime, getGlobe }) {
     key = k;
     clearTimeout(timer);
     rangeEl.textContent = 'Checking 250 m around…';
-    timer = setTimeout(() => {
+    const site = app.site;
+    timer = setTimeout(async () => {
       try {
-        const r = positionRange(app.site, app.windowStartMs, app.config);
-        rangeEl.textContent = `Landing up to 250 m away: sunlight ${span(r.sun)}, Earth ${span(r.earth)}`;
+        await ready(site);
+        if (k !== key || app.site !== site) return;
+        const r = positionRange(site, app.windowStartMs, app.config);
+        rangeEl.textContent = `Landing up to 250 m away: sunlight ${span(r.sun)}, Earth ${span(r.earth)}${r.approximate ? ' (approximate terrain)' : ''}`;
         app.lastRange = { key: k, metres: 250, days: 30, sun: r.sun, earth: r.earth };
         window.dispatchEvent(new Event('lsp-range')); // the report quotes this line
       } catch {

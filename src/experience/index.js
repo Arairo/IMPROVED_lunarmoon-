@@ -298,6 +298,7 @@ export function initExperience(api) {
     setTimeout(() => document.body.classList.remove('xp-enter'), 1400);
     setTimeout(() => {
       window.dispatchEvent(new Event('resize'));
+      plan.refresh(); // the ±250 m range waits for Professional mode (it needs the detailed terrain)
       if (tour) proTour.start();
       else if (store.get('lsp.proWelcome2') !== '1') showWelcome();
       else if (!store.get('lsp.controlsSeen')) {
@@ -421,6 +422,8 @@ export function initExperience(api) {
       selectSite(sp.r.site, true);
     }));
   }
+  // Candidates without a detailed skyline were left out; rank again once the terrain is in.
+  window.addEventListener('lsp-terrain', () => { if (best.skipped) { best.key = ''; refreshBest(); } });
   function refreshBest() {
     const key = `${app.windowStartMs}|${JSON.stringify(app.config)}`;
     if (key === best.key) return;
@@ -432,8 +435,9 @@ export function initExperience(api) {
       best.cancel = findBestSpots({
         sites, startMs: app.windowStartMs, config: app.config,
         onProgress: (f) => renderBest('busy', f),
-        onDone: ({ flown, overall, count }) => {
+        onDone: ({ flown, overall, count, skipped }) => {
           best.count = count;
+          best.skipped = skipped;
           best.spots = [];
           if (overall) best.spots.push({ r: overall, color: '#30d158', title: 'Best overall' });
           if (flown && flown.site.id !== overall?.site.id) best.spots.push({ r: flown, color: '#bf5af2', title: 'Best flown site' });

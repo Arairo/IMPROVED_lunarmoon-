@@ -209,6 +209,8 @@ export function rayHorizon(terrain, lat, lon, az, { ground = terrain.heightAt(la
 }
 
 export function computeHorizon(terrain, lat, lon, { mastHeight = 2, maxDistM = 300000, azStepDeg = AZ_STEP_DEG, growth = RAY_GROWTH, refine = RAY_REFINE } = {}) {
+  // At exactly +-90 deg every great-circle ray leaves along one meridian; 1e-4 deg (~3 m) away they don't.
+  lat = Math.max(-89.9999, Math.min(89.9999, lat));
   const count = Math.round(360 / azStepDeg);
   const elevations = new Float32Array(count);
   const distances = new Float32Array(count);
@@ -250,6 +252,9 @@ export function horizonQuality({ method, siteCellM = null, azStepDeg = null, gro
   } else if (method === 'compact') {
     tier = 'coarse';
     text = 'Approximate horizon from a 5 km grid, used until the detailed terrain has loaded. Shadows from smaller hills are missing.';
+  } else if (method === 'mast-approx') {
+    tier = 'coarse';
+    text = 'Approximate horizon for this mast height, used until the detailed terrain has loaded.';
   } else {
     tier = siteCellM != null && siteCellM <= 20 ? 'fine' : 'standard';
     const cell = (m) => (m == null ? '?' : m >= 1000 ? `${+(m / 1000).toFixed(1)} km` : `${Math.round(m)} m`);
@@ -289,12 +294,39 @@ export function groundSlope(lat, lon, terrain = sharedTerrain) {
   return { slopeDeg: Math.atan(Math.hypot(gx, gy)) * RAD, baselineM: 2 * d, cell: c.cell };
 }
 
-/** Compute or look up compact 180-sample site horizon with mast adjustment. */
-export function computeSiteHorizon(site, mastHeight = 2) {
-  const pre = precomputedHorizons[site.id];
-  const mastDelta = (mastHeight - 2) * 0.012;
-  if (pre) {
-    const el180 = pre.el180.map((v) => v - mastDelta);
+/** Mast height the precomputed skylines were built for (tools/build_site_horizons.mjs). */
+export const PRECOMPUTED_MAST_M = 2;
+
+/**
+ * The precomputed skyline for this site, or null. Matched by id AND position: another
+ * place that happens to reuse an id (the planner's "best-2" is not sites.json's) must
+ * not get a skyline computed 20 km away.
+ */
+export function precomputedFor(site) {
+  const pre = precomputedHorizons[site?.id];
+  if (!pre) return null;
+  if (pre.lat != null && pre.lon != null) {
+    const dLat = (site.lat - pre.lat) * 30323; // metres per degree of latitude on the Moon
+    const dLon = ((((site.lon - pre.lon + 540) % 360) - 180)) * 30323 * Math.cos(site.lat * Math.PI / 180);
+    if (Math.hypot(dLat, dLon) > 50) return null;
+  }
+  return pre;
+}
+
+/**
+ * Compute or look up the compact 180-sample (2°) site horizon.
+ *
+ * Precomputed skylines are for a 2 m mast. For any other mast the skyline is recomputed
+ * from the loaded terrain: near terrain (often only tens of metres away on the 20 m tiles)
+ * moves by degrees when the mast changes, so no fixed offset is right. Until the terrain
+ * has loaded, the precomputed skyline is shifted by a rough offset and flagged approximate
+ * (quality tier 'coarse'), and the caller is expected to load the terrain and recompute.
+ */
+export function computeSiteHorizon(site, mastHeight = PRECOMPUTED_MAST_M) {
+  const pre = precomputedFor(site);
+  const sameMast = Math.abs(mastHeight - PRECOMPUTED_MAST_M) < 1e-6;
+  if (pre && sameMast) {
+    const el180 = pre.el180.slice();
     // Older entries don't record their sampling; recover the site cell from the label.
     const m = /([\d.]+)\s*(km|m)\b/.exec(pre.source || '');
     const siteCellM = pre.siteCellM ?? (m ? Number(m[1]) * (m[2] === 'km' ? 1000 : 1) : null);
@@ -307,9 +339,21 @@ export function computeSiteHorizon(site, mastHeight = 2) {
       quality: horizonQuality({ method: pre.terrain ? 'rays' : 'sphere', siteCellM, azStepDeg: 2, growth: pre.growth ?? RAY_GROWTH, refine: !!pre.refine, maxDistM: 300000, maxStepM: pre.maxStepM ?? null, coarsestCellM: pre.coarsestCellM ?? null, note: pre.refine ? null : 'Built before ridge-crest refinement: sunlight may read slightly high.' }),
     };
   }
-  if (!pre && sharedTerrain && sharedTerrain.heightAt(site.lat, site.lon)) {
+  if (sharedTerrain && sharedTerrain.heightAt(site.lat, site.lon)) {
     const full = computeHorizon(sharedTerrain, site.lat, site.lon, { mastHeight, azStepDeg: 2 });
     return { el180: Array.from(full.elevations), groundHeight: Math.round(full.groundHeight), mastHeight, source: full.source, terrain: true, quality: full.quality };
+  }
+  if (pre) {
+    // Other mast, terrain not loaded yet: a rough shift (right only for terrain ~5 km away).
+    const shift = (mastHeight - PRECOMPUTED_MAST_M) * 0.012;
+    return {
+      el180: pre.el180.map((v) => v - shift),
+      groundHeight: pre.groundHeight,
+      mastHeight,
+      source: pre.source,
+      terrain: pre.terrain,
+      quality: horizonQuality({ method: 'mast-approx', siteCellM: pre.siteCellM ?? null, azStepDeg: 2, coarsestCellM: pre.coarsestCellM ?? null, note: `Skyline built for a ${PRECOMPUTED_MAST_M} m mast and roughly adjusted to ${mastHeight} m until the terrain has loaded.` }),
+    };
   }
   const h0 = sampleDemHeight(site.lat, site.lon);
   const dip = sphereHorizonDip(mastHeight);
@@ -358,16 +402,19 @@ export function computeSiteHorizon(site, mastHeight = 2) {
 /** Horizon elevation (deg) at any azimuth, linearly interpolated. */
 export function horizonAt(horizon, azDeg) {
   if (horizon.el180) {
-    const f = (((azDeg % 360) + 360) % 360) / 2;
-    const i0 = Math.floor(f) % 180;
-    const i1 = (i0 + 1) % 180;
+    const n = horizon.el180.length;
+    const f = ((((azDeg % 360) + 360) % 360) / 360) * n;
+    const i0 = Math.floor(f) % n;
+    const i1 = (i0 + 1) % n;
     const t = f - Math.floor(f);
     return horizon.el180[i0] * (1 - t) + horizon.el180[i1] * t;
   }
   if (horizon.elevations) {
-    const f = (((azDeg % 360) + 360) % 360) / AZ_STEP_DEG;
-    const i0 = Math.floor(f) % AZ_COUNT;
-    const i1 = (i0 + 1) % AZ_COUNT;
+    // Any azimuth step: computeHorizon may have been called with azStepDeg other than 0.5.
+    const n = horizon.elevations.length;
+    const f = ((((azDeg % 360) + 360) % 360) / 360) * n;
+    const i0 = Math.floor(f) % n;
+    const i1 = (i0 + 1) % n;
     const t = f - Math.floor(f);
     return horizon.elevations[i0] * (1 - t) + horizon.elevations[i1] * t;
   }
@@ -380,11 +427,16 @@ export function horizonAt(horizon, azDeg) {
 // nudges and the landing-area check see 20 m detail. Neighbouring tiles within
 // HIRES_REACH_M are loaded too, so a site near a tile edge has 20 m terrain all round.
 export const HIRES_REACH_M = 3000;
-let hiresIndex = null; // promise of hires/index.json (or null when it is missing)
+const hiresIndex = new Map(); // baseUrl -> promise of hires/index.json (null when missing)
 const hiresLoaded = new Map();
 async function hiresIndexFor(baseUrl) {
-  hiresIndex ??= fetch(`${baseUrl}/hires/index.json`).then((r) => (r.ok ? r.json() : null)).catch(() => null);
-  return hiresIndex;
+  if (!hiresIndex.has(baseUrl)) {
+    hiresIndex.set(baseUrl, fetch(`${baseUrl}/hires/index.json`).then((r) => (r.ok ? r.json() : null)).catch(() => null));
+  }
+  const index = await hiresIndex.get(baseUrl);
+  // A failed fetch (offline for a moment) must not switch 20 m terrain off for the session.
+  if (!index) hiresIndex.delete(baseUrl);
+  return index;
 }
 /** Index entries of the tiles that cover (x, y) or come within `reach` metres of it. */
 export function tilesNear(tiles, x, y, reach = HIRES_REACH_M) {

@@ -7,8 +7,9 @@
 // 1. 20 m terrain tiles (PGDA LDEM_80S_20MPP_ADJ, Barker et al. 2023): a 16 km grid
 //    covering the Artemis III candidate regions, plus one around each south-polar site
 //    outside them (tools/pgda_fetch.py picks the windows). Units and orientation are not assumed: every flip/transpose
-//    is tried and the one that matches our 240 m LOLA grid best is kept; a tile
-//    that does not match within 60 m (mean absolute difference) is rejected.
+//    is tried, with each plausible unit, and the one that matches our 240 m LOLA grid best
+//    is kept; a tile that does not match within 60 m (mean absolute difference) is
+//    rejected, and any rejection fails the run.
 //    -> public/data/hires/<id>.{i16z,json} (packed, src/core/tileCodec.js) and hires/index.json
 // 2. PGDA average Sun / Earth visibility maps vs our own 2027 map layers (5 km south
 //    cap), and at each site vs our 2027 sunlight share with and without the 20 m tiles.
@@ -52,14 +53,23 @@ function variant(arr, n, v) {
   return out;
 }
 
-function toMetres(a) {
+/**
+ * Every plausible reading of the file's values as metres above 1737.4 km. The units are
+ * not guessed from the values alone (a tile whose heights really are in metres can have
+ * a median near 1737 or within +-20 of zero, which once dropped reg_m3_6): each reading is
+ * checked against our own LOLA grid below and the one that matches best is kept.
+ */
+function unitCandidates(a) {
   const m = median(a);
-  let f = (v) => v;
-  let unit = 'metres above 1737.4 km';
-  if (Math.abs(m) > 1e6) { f = (v) => v - R; unit = 'radius in metres'; }
-  else if (m > 1700 && m < 1760) { f = (v) => (v - 1737.4) * 1000; unit = 'radius in km'; }
-  else if (Math.abs(m) < 20) { f = (v) => v * 1000; unit = 'km above 1737.4 km'; }
-  return { data: a.map((v) => (Number.isFinite(v) ? f(v) : NaN)), unit };
+  const all = [
+    { unit: 'metres above 1737.4 km', f: (v) => v },
+    { unit: 'radius in metres', f: (v) => v - R },
+    { unit: 'radius in km', f: (v) => (v - 1737.4) * 1000 },
+    { unit: 'km above 1737.4 km', f: (v) => v * 1000 },
+  ];
+  return all
+    .filter((c) => Math.abs(c.f(m)) < 12000) // the Moon's relief is within about +-10 km
+    .map((c) => ({ unit: c.unit, data: a.map((v) => (Number.isFinite(v) ? c.f(v) : NaN)) }));
 }
 
 // ---- 1. 20 m tiles --------------------------------------------------------
@@ -67,6 +77,7 @@ const hiresDir = path.join(dataDir, 'hires');
 fs.mkdirSync(hiresDir, { recursive: true });
 const index = [];
 const tiles = [];
+const rejected = [];
 const windowsFile = path.join(inDir, 'windows.json');
 const windowIds = fs.existsSync(windowsFile) ? readJson(windowsFile) : polar.map((s) => s.id);
 // Tiles are replaced as a set: clear the old ones so none is left over.
@@ -77,8 +88,8 @@ for (const id of windowIds) {
   if (!fs.existsSync(mp)) { console.log(`${s.id}: no 20 m window`); continue; }
   const meta = readJson(mp);
   const n = meta.size, cell = meta.cellSize, half = (n * cell) / 2;
-  const { data: raw, unit } = toMetres(f32(path.join(inDir, `dem_${s.id}.f32`)));
-  let best = null, v0 = null;
+  let best = null, v0 = null, unit = null;
+  for (const { data: raw, unit: u } of unitCandidates(f32(path.join(inDir, `dem_${s.id}.f32`)))) {
   for (let v = 0; v < 8; v++) {
     const a = variant(raw, n, v);
     let sum = 0, bias = 0, k = 0, refCoarse = 0;
@@ -95,15 +106,21 @@ for (const id of windowIds) {
       if (!Number.isFinite(ref)) continue;
       sum += Math.abs(h - ref); bias += h - ref; k++;
     }
-    const cand = { v, a, mae: sum / k, bias: bias / k, k, ref: refCoarse > k / 2 ? '1 km' : '240 m' };
-    if (v === 0) v0 = cand;
+    const cand = { v, a, unit: u, mae: sum / k, bias: bias / k, k, ref: refCoarse > k / 2 ? '1 km' : '240 m' };
+    if (v === 0 && (!v0 || cand.mae < v0.mae)) v0 = cand;
     if (k > 100 && (!best || cand.mae < best.mae)) best = cand;
+  }
   }
   // The file's own orientation (variant 0) matched on every tile so far. On flat ground
   // the variants differ little, so only accept another one if it is clearly better.
   if (best && best.v !== 0 && v0?.k > 100 && v0.mae < 2 * best.mae) best = v0;
   const limit = best?.ref === '1 km' ? 100 : 60; // 1 km cells smooth out slopes, so allow more
-  if (!best || best.mae > limit) { console.log(`${s.id}: REJECTED (best mean abs difference vs ${best?.ref ?? 'LOLA'} grid ${best?.mae?.toFixed(1)} m)`); continue; }
+  if (!best || best.mae > limit) {
+    console.log(`${s.id}: REJECTED (best mean abs difference vs ${best?.ref ?? 'LOLA'} grid ${best?.mae?.toFixed(1)} m)`);
+    rejected.push(s.id);
+    continue;
+  }
+  unit = best.unit;
   const out = new Int16Array(n * n);
   let filled = 0;
   for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) {
@@ -131,6 +148,11 @@ for (const id of windowIds) {
   console.log(`${s.id.padEnd(16)} 20 m tile ${n}x${n} (${unit}, variant ${best.v}): vs ${best.ref} grid mean |diff| ${best.mae.toFixed(1)} m, bias ${best.bias.toFixed(1)} m, ${filled} gaps filled`);
 }
 fs.writeFileSync(path.join(hiresDir, 'index.json'), JSON.stringify({ generated: new Date().toISOString(), commit: sourceCommit(), note: 'kind "region": 16 km grid over the Artemis III candidate regions (regions = their codes); kind "site": around a south-polar site outside them. Packed: see src/core/tileCodec.js.', source: 'NASA GSFC PGDA LDEM_80S_20MPP_ADJ (Barker et al. 2023)', url: 'https://pgda.gsfc.nasa.gov/products/90', tiles: index }, null, 1));
+if (rejected.length) {
+  // Fail the workflow so a dropped tile is noticed (reg_m3_6 went missing silently once).
+  console.error(`REJECTED ${rejected.length} tile(s): ${rejected.join(', ')}. The run continues so the logs show the comparison, but it will fail.`);
+  process.exitCode = 1;
+}
 
 // ---- 2. Sunlight per site with and without the 20 m tiles -----------------
 const t0 = Date.UTC(2027, 0, 1), t1 = Date.UTC(2028, 0, 1);

@@ -917,13 +917,13 @@
   },
   {
    "id": "site-skylines",
-   "version": "d453cff1b398",
+   "version": "4c28ede9b181",
    "title": "Precomputed site skylines",
    "files": [
     {
      "path": "data/precomputedHorizons.json",
-     "bytes": 42362,
-     "sha256": "76ceb62f4c86b47cc276bd0cdf37f44fb04ed77e06601b37ff9667038f627afa"
+     "bytes": 43396,
+     "sha256": "104ecceec1d1b55796aee17342c241b8624ecee4351a9e282c62e4a285fbb8ab"
     }
    ],
    "provider": "this project",
