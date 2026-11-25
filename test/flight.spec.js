@@ -85,3 +85,21 @@ test('flight: Apollo 11’s launch time from Kennedy comes out within 3 hours of
   const err = Math.abs(p.launchMs - Date.parse('1969-07-16T13:32Z')) / H;
   assert.ok(err < 3, `${err.toFixed(1)} h`);
 });
+
+test('flight: path starts on the launch pad at Earth’s surface and ascends into orbit', () => {
+  const T = Date.UTC(2027, 2, 10, 12);
+  for (const route of ['direct', 'phasing', 'lowenergy']) {
+    const p = planFlight(T, { route, launchSite: 'ksc' });
+    const path = flightPath(p, 100);
+    const start = path[0];
+    assert.equal(start.t, p.launchMs);
+    assert.equal(start.phase, 'launch');
+    assert.equal(start.near, 'earth');
+    const rStart = Math.hypot(...start.pos);
+    assert.ok(Math.abs(rStart - R_E) < 1, `${route}: starts at Earth radius ${rStart.toFixed(1)} km vs ${R_E}`);
+    const launchSamples = path.filter((s) => s.phase === 'launch');
+    const lastLaunch = launchSamples.at(-1);
+    const rEnd = Math.hypot(...lastLaunch.pos);
+    assert.ok(rEnd >= R_E - 1e-3, `${route}: launch end altitude ${rEnd.toFixed(1)} km`);
+  }
+});

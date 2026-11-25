@@ -3,6 +3,10 @@
 // (Cumulative Layout Shift; see docs/PERFORMANCE.md). Kept tiny and dependency-free.
 (function () {
   var d = document.documentElement, h = location.hash;
+  try {
+    var t = localStorage.getItem('lsp.theme');
+    if (t) d.dataset.theme = t;
+  } catch (e) {}
   if (/planner\.html$/.test(location.pathname)) {
     // Terrain 3D opened from Professional mode hides the controls Professional already has.
     if (/(^#|&)from=pro(&|$)/.test(h)) d.classList.add('terrain-view');

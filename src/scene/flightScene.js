@@ -10,7 +10,7 @@ import { moonState, sunDir, siteDirection, R_E, R_M } from '../core/flight.js';
 
 const U = 10000;
 const KE = 3, KM = 4;
-const PHASE_COLOR = { parking: 0x93c5fd, loops: 0x93c5fd, ascent: 0x93c5fd, coast: 0xfbbf24, orbit: 0x22d3ee, descent: 0x4ade80 };
+const PHASE_COLOR = { launch: 0x93c5fd, parking: 0x93c5fd, loops: 0x93c5fd, ascent: 0x93c5fd, coast: 0xfbbf24, orbit: 0x22d3ee, descent: 0x4ade80 };
 
 export function createFlightScene(canvas, { onHint } = {}) {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
@@ -59,7 +59,10 @@ export function createFlightScene(canvas, { onHint } = {}) {
 
   let plan = null, path = null, basis = null;
   let fullLine = null, doneLine = null, moonOrbit = null;
-  let cur = 0, lunarStart = -1, rel = [];
+  let cur = 0, lunarStart = -1, descentStart = -1, relScene = null, pathPts = null, approachDir = new THREE.Vector3(0, 0, 1);
+  let lastPhase = null, fastFwd = false, orbR = 0;
+  const orbU1 = new THREE.Vector3(), orbU2 = new THREE.Vector3();
+  const tmpP1 = new THREE.Vector3(), tmpP2 = new THREE.Vector3(), tmpPos = new THREE.Vector3();
 
   // EQJ km -> scene, with the Moon's orbit plane horizontal.
   const toScene = (v) => {
@@ -96,57 +99,165 @@ export function createFlightScene(canvas, { onHint } = {}) {
     basis = [e1, n, e2];
     for (const l of [fullLine, doneLine, moonOrbit]) if (l) { scene.remove(l); l.geometry.dispose(); }
     const pts = path.map(drawPos);
+    pathPts = pts;
     const colors = new Float32Array(pts.length * 3);
     path.forEach((s, i) => { const c = new THREE.Color(PHASE_COLOR[s.phase] || 0xffffff); colors.set([c.r, c.g, c.b], 3 * i); });
     const g1 = new THREE.BufferGeometry().setFromPoints(pts);
     g1.setAttribute('color', new THREE.BufferAttribute(colors, 3));
     fullLine = new THREE.Line(g1, new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.28 }));
-    const g2 = g1.clone();
+    // Share position & color buffers with fullLine so Moon-relative updates upload once per frame.
+    const g2 = new THREE.BufferGeometry();
+    g2.setAttribute('position', g1.getAttribute('position'));
+    g2.setAttribute('color', g1.getAttribute('color'));
     doneLine = new THREE.Line(g2, new THREE.LineBasicMaterial({ vertexColors: true }));
+    // Dynamic lunar-relative vertices move with the Moon over 40+ days; prevent stale bounding-sphere culling.
+    fullLine.frustumCulled = false;
+    doneLine.frustumCulled = false;
     scene.add(fullLine, doneLine);
     // Around the Moon the path is kept relative to the Moon, which moves ~88,000 km a day.
+    // Precompute Moon-relative scene offsets once (toScene is linear), eliminating per-frame allocations.
     lunarStart = path.findIndex((x) => x.near === 'moon');
-    rel = lunarStart < 0 ? [] : path.slice(lunarStart).map((x) => { const mc = moonState(x.t).r; return [(x.pos[0] - mc[0]) * KM, (x.pos[1] - mc[1]) * KM, (x.pos[2] - mc[2]) * KM]; });
-    // The Moon's own path over the flight.
+    descentStart = path.findIndex((x) => x.phase === 'descent');
+    if (lunarStart >= 0) {
+      const relLen = path.length - lunarStart;
+      relScene = new Float32Array(relLen * 3);
+      for (let j = 0; j < relLen; j++) {
+        const x = path[lunarStart + j];
+        const mcX = moonState(x.t).r;
+        const v = toScene([(x.pos[0] - mcX[0]) * KM, (x.pos[1] - mcX[1]) * KM, (x.pos[2] - mcX[2]) * KM]);
+        relScene[3 * j] = v.x;
+        relScene[3 * j + 1] = v.y;
+        relScene[3 * j + 2] = v.z;
+      }
+      // Orthonormal basis of the lunar orbit ring for smooth visual orbiting during fast-forward.
+      orbU1.set(relScene[0], relScene[1], relScene[2]);
+      orbR = orbU1.length();
+      if (orbR > 1e-6) {
+        orbU1.divideScalar(orbR);
+        orbU2.set(0, 0, 0);
+        const orbEnd = descentStart >= 0 ? descentStart - lunarStart : relLen;
+        let bestSq = 0;
+        for (let j = 1; j < orbEnd; j++) {
+          tmpP1.set(relScene[3 * j], relScene[3 * j + 1], relScene[3 * j + 2]);
+          tmpP1.addScaledVector(orbU1, -tmpP1.dot(orbU1));
+          const sq = tmpP1.lengthSq();
+          if (sq > bestSq) { bestSq = sq; orbU2.copy(tmpP1); }
+        }
+        if (bestSq > 1e-8) orbU2.normalize();
+      }
+    } else {
+      relScene = null;
+      orbR = 0;
+    }
+    const mcsLoi = toScene(m.r);
+    approachDir = mcsLoi.clone().normalize();
+    if (lunarStart > 1) {
+      let k = lunarStart - 1;
+      while (k > 0 && path[k - 1].phase === 'coast' && pts[k].distanceTo(mcsLoi) < 5) k--;
+      const d = mcsLoi.clone().sub(pts[k]);
+      if (d.lengthSq() > 0.01) approachDir = d.normalize();
+    }
+    // The Moon's own path over the flight (wide subtle dashes so fast-forward never strobes).
     const mp = [];
     for (let i = 0; i <= 240; i++) mp.push(toScene(moonState(p.launchMs + (i / 240) * (p.touchdownMs - p.launchMs) + 0).r));
-    moonOrbit = new THREE.Line(new THREE.BufferGeometry().setFromPoints(mp), new THREE.LineDashedMaterial({ color: 0x94a3b8, dashSize: 0.6, gapSize: 0.5, transparent: true, opacity: 0.45 }));
+    moonOrbit = new THREE.Line(new THREE.BufferGeometry().setFromPoints(mp), new THREE.LineDashedMaterial({ color: 0x94a3b8, dashSize: 3.0, gapSize: 2.0, transparent: true, opacity: 0.25 }));
+    moonOrbit.frustumCulled = false;
     moonOrbit.computeLineDistances();
     scene.add(moonOrbit);
     fit();
+    lastPhase = null;
     setIndex(0);
+    anchor.copy(goalAnchor);
+    camOffset.copy(goalOffset);
+    target.copy(anchor).add(camOffset);
+    dist = goalDist;
+    if (goalYaw != null) { yaw = goalYaw; pitch = goalPitch; }
+    render();
   }
 
   // Camera: drag to orbit, wheel to zoom; follows the action unless the user takes over.
-  let yaw = 0.6, pitch = 0.5, dist = 60, follow = true, goalYaw = null, goalPitch = null;
+  // `anchor` locks immediately to the tracked body (Earth / Moon / ship) with zero lag,
+  // while `camOffset`, `dist`, `yaw`, `pitch` ease smoothly across phase transitions.
+  let yaw = 0.6, pitch = 0.48, dist = 8, follow = true, goalYaw = null, goalPitch = null;
+  const anchor = new THREE.Vector3(), goalAnchor = new THREE.Vector3();
+  const camOffset = new THREE.Vector3(), goalOffset = new THREE.Vector3();
   const target = new THREE.Vector3();
-  let goalTarget = new THREE.Vector3(), goalDist = 60;
+  let goalDist = 8;
   function fit() {
     let maxR = 0;
     for (const s of path) maxR = Math.max(maxR, Math.hypot(...s.pos) / U);
     goalDist = Math.max(55, maxR * 2.2);
   }
-  function setIndex(i) {
+  function setIndex(i, frac = 0) {
     if (!path) return;
-    cur = Math.max(0, Math.min(path.length - 1, i));
+    const fi = typeof i === 'number' ? i : 0;
+    const idx = Math.floor(fi);
+    cur = Math.max(0, Math.min(path.length - 1, idx));
+    const nextIdx = Math.min(path.length - 1, cur + 1);
+    const f = Math.max(0, Math.min(1, frac || (fi - cur)));
     const s = path[cur];
-    const t = s.t;
-    const pos = drawPos(s);
-    craft.position.copy(pos);
-    craftHalo.position.copy(pos);
-    doneLine.geometry.setDrawRange(0, cur + 1);
+    const sNext = path[nextIdx];
+    const t = s.t + (sNext.t - s.t) * f;
+    // Compute Moon center ONCE for this frame.
+    const mc = moonState(t).r;
+    const mcs = toScene(mc);
+    const posAtSample = (kIdx, out) => {
+      if (path[kIdx].near === 'moon' && relScene && lunarStart >= 0) {
+        const o = (kIdx - lunarStart) * 3;
+        return out.set(mcs.x + relScene[o], mcs.y + relScene[o + 1], mcs.z + relScene[o + 2]);
+      }
+      return out.copy(pathPts[kIdx]);
+    };
+    const p1 = posAtSample(cur, tmpP1);
+    const pos = tmpPos.copy(p1);
+    if (f > 0) {
+      const p2 = posAtSample(nextIdx, tmpP2);
+      if (s.phase === 'orbit' && sNext.phase === 'orbit') {
+        const r1 = tmpP1.sub(mcs).length();
+        const r2 = tmpP2.sub(mcs).length();
+        pos.copy(tmpP1).lerp(tmpP2, f);
+        if (pos.lengthSq() > 1e-8) pos.normalize().multiplyScalar(r1 + (r2 - r1) * f);
+        pos.add(mcs);
+      } else {
+        pos.lerp(p2, f);
+      }
+    }
+    if (fastFwd && s.phase === 'orbit' && orbR > 0) {
+      // Show the ship smoothly orbiting the Moon at a readable ~0.8 laps/s during fast-forward
+      // instead of hiding it or strobing at 50 Hz, while keeping the camera calm.
+      const ang = (performance.now() / 1000) * Math.PI * 1.6;
+      const ca = Math.cos(ang) * orbR, sa = Math.sin(ang) * orbR;
+      craft.position.set(mcs.x + ca * orbU1.x + sa * orbU2.x, mcs.y + ca * orbU1.y + sa * orbU2.y, mcs.z + ca * orbU1.z + sa * orbU2.z);
+      craftHalo.position.copy(craft.position);
+    } else {
+      craft.position.copy(pos);
+      craftHalo.position.copy(pos);
+    }
+    // Keep the blue/cyan path visible up until descent starts; hide both orbit and descent lines once landing begins.
+    const pathEnd = descentStart >= 0 ? descentStart : path.length;
+    if (s.phase === 'descent') {
+      fullLine.visible = false;
+      doneLine.visible = false;
+    } else {
+      fullLine.visible = true;
+      doneLine.visible = true;
+      fullLine.geometry.setDrawRange(0, pathEnd);
+      doneLine.geometry.setDrawRange(0, Math.min(cur + 1, pathEnd));
+    }
     // Earth spin and the Moon, tidally locked.
     const g = Astronomy.SiderealTime(new Date(t)) * 15 * (Math.PI / 180);
     setBodyFrame(earth, [Math.cos(g), Math.sin(g), 0], [-Math.sin(g), Math.cos(g), 0], [0, 0, 1], new THREE.Vector3(), 1);
     glow.position.set(0, 0, 0);
-    const mc = moonState(t).r;
-    const mcs = toScene(mc);
-    if (lunarStart >= 0) {
-      for (const line of [fullLine, doneLine]) {
-        const a = line.geometry.attributes.position;
-        for (let j = 0; j < rel.length; j++) { const v = toScene([mc[0] + rel[j][0], mc[1] + rel[j][1], mc[2] + rel[j][2]]); a.setXYZ(lunarStart + j, v.x, v.y, v.z); }
-        a.needsUpdate = true;
+    if (lunarStart >= 0 && relScene) {
+      const posAttr = fullLine.geometry.attributes.position;
+      const arr = posAttr.array;
+      const mx = mcs.x, my = mcs.y, mz = mcs.z;
+      for (let j = 0, k = lunarStart * 3, n = relScene.length; j < n; j += 3, k += 3) {
+        arr[k] = mx + relScene[j];
+        arr[k + 1] = my + relScene[j + 1];
+        arr[k + 2] = mz + relScene[j + 2];
       }
+      posAttr.needsUpdate = true;
     }
     setBodyFrame(moon, siteDirection(0, 0, t), siteDirection(0, 90, t), siteDirection(90, 0, t), mcs, 1);
     if (plan.site) {
@@ -163,43 +274,129 @@ export function createFlightScene(canvas, { onHint } = {}) {
     // Where to look.
     goalYaw = goalPitch = null;
     if (follow) {
-      if (s.phase === 'orbit' || s.phase === 'descent') {
-        goalTarget = mcs.clone(); goalDist = s.phase === 'descent' ? 2.2 : 4.5;
-        // Look down on the landing site, a little from the side.
-        const dir = siteDot.position.clone().sub(mcs).normalize();
-        goalYaw = Math.atan2(dir.x, dir.z) + 0.35;
-        goalPitch = Math.max(-1.4, Math.min(1.4, Math.asin(dir.y) * 0.85));
+      if (s.phase === 'descent') {
+        // Descent only: angled 3/4 oblique view following the ship so you can see it tilt down
+        // toward the Moon's surface without looking straight up from underneath.
+        const shipRel = pos.clone().sub(mcs);
+        const siteRel = siteDot.position.clone().sub(mcs);
+        const shipDir = shipRel.lengthSq() > 1e-6 ? shipRel.clone().normalize() : approachDir.clone();
+        const baseYaw = Math.atan2(approachDir.x, approachDir.z) + 0.45;
+        const shipHoriz = Math.hypot(shipDir.x, shipDir.z);
+        const shipYaw = Math.atan2(shipDir.x, shipDir.z) + 0.60;
+        let dyShip = shipYaw - baseYaw;
+        while (dyShip > Math.PI) dyShip -= 2 * Math.PI;
+        while (dyShip < -Math.PI) dyShip += 2 * Math.PI;
+        const yawBlend = Math.min(1, Math.max(0, (shipHoriz - 0.08) / 0.20));
+        goalAnchor.copy(mcs);
+        goalOffset.copy(shipRel).lerp(siteRel, 0.45);
+        goalDist = 2.4;
+        goalYaw = baseYaw + dyShip * yawBlend;
+        const rawPitch = Math.asin(Math.max(-1, Math.min(1, shipDir.y)));
+        goalPitch = Math.max(-0.68, Math.min(0.68, rawPitch * 0.45 + (shipDir.y < -0.1 ? -0.05 : 0.25)));
       }
-      else if (s.near === 'earth' && plan.route !== 'phasing') { goalTarget = new THREE.Vector3(); goalDist = 9; }
-      else { goalTarget = pos.clone().multiplyScalar(0.5); goalDist = Math.max(14, pos.length() * 1.5 + 8); if (plan.route === 'lowenergy' && s.phase === 'coast') goalDist = Math.max(goalDist, 170); }
+      else if (s.phase === 'orbit') {
+        // Lunar orbit: lock anchor dead-center on Moon (zero lag & zero 50Hz shake).
+        goalAnchor.copy(mcs);
+        goalOffset.set(0, 0, 0);
+        goalDist = 6.5;
+        goalYaw = Math.atan2(approachDir.x, approachDir.z) + 0.45;
+        goalPitch = 0.55;
+      }
+      else if (s.phase === 'launch' || cur === 0) {
+        goalAnchor.set(0, 0, 0);
+        goalOffset.copy(pos).multiplyScalar(0.4);
+        goalDist = 8.0;
+        const dir = padDot.position.clone().normalize();
+        goalYaw = Math.atan2(dir.x, dir.z) + 0.35;
+        goalPitch = 0.48;
+      }
+      else if (s.near === 'earth') {
+        if (s.phase === 'loops') {
+          // Patient and thrifty phasing loops: steady 3/4 view sized to loop envelope (no perigee zoom slams).
+          const toMoon = mcs.clone().normalize();
+          let raScene = 6;
+          if (plan.loops?.length) {
+            const lp = plan.loops.find((l) => t <= l.endMs) || plan.loops[plan.loops.length - 1];
+            raScene = lp.ra / U;
+          }
+          goalAnchor.set(0, 0, 0);
+          goalOffset.copy(toMoon).multiplyScalar(Math.min(6.5, raScene * 0.22));
+          goalDist = Math.max(10.0, Math.min(28.0, raScene * 1.1 + 5.5));
+          goalYaw = Math.atan2(toMoon.x, toMoon.z) + 0.65;
+          goalPitch = 0.46;
+        } else {
+          // Fast and thirsty (parking orbit) & low-energy ascent: follow the ship smoothly around Earth.
+          goalAnchor.set(0, 0, 0);
+          goalOffset.copy(pos).multiplyScalar(0.45);
+          goalDist = 8.0;
+          goalYaw = Math.atan2(pos.x, pos.z) + 0.40;
+          goalPitch = 0.48;
+        }
+      }
+      else {
+        // Coast: track the ship directly with zero lag, using a steady arrival-aligned angle
+        // so the starfield never flips 180°, blending cleanly into lunar orbit on final approach.
+        const baseCoastDist = plan.route === 'lowenergy' ? Math.min(38.0, Math.max(15.0, pos.length() * 0.28 + 10.0)) : 13.0;
+        const dMoon = pos.distanceTo(mcs);
+        const approach = Math.max(0, Math.min(1, 1 - (dMoon - 1.5) / 10.5));
+        goalAnchor.copy(pos).lerp(mcs, approach);
+        goalOffset.set(0, 0, 0);
+        goalDist = baseCoastDist + (6.5 - baseCoastDist) * approach;
+        goalYaw = Math.atan2(approachDir.x, approachDir.z) + 0.45;
+        goalPitch = 0.48 + (0.55 - 0.48) * approach;
+      }
+      if (lastPhase !== null && lastPhase !== s.phase) {
+        // Absorb any phase-boundary anchor jump into camOffset so target transitions smoothly.
+        camOffset.add(anchor).sub(goalAnchor);
+      }
+      anchor.copy(goalAnchor);
+      lastPhase = s.phase;
     }
     render();
   }
 
-  let disposed = false;
+  let disposed = false, animFrame = null, lastW = 0, lastH = 0;
+  function scheduleRender() {
+    if (disposed || animFrame != null) return;
+    animFrame = requestAnimationFrame(() => {
+      animFrame = null;
+      render();
+    });
+  }
   function render() {
     if (disposed) return;
+    if (animFrame != null) {
+      cancelAnimationFrame(animFrame);
+      animFrame = null;
+    }
     const w = canvas.clientWidth, h = canvas.clientHeight;
     if (w < 20 || h < 20) return;
-    renderer.setSize(w, h, false);
-    camera.aspect = w / h;
-    camera.updateProjectionMatrix();
-    target.lerp(goalTarget, 0.12);
-    dist += (goalDist - dist) * 0.12;
+    if (w !== lastW || h !== lastH) {
+      lastW = w; lastH = h;
+      renderer.setSize(w, h, false);
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+    }
+    if (follow) {
+      camOffset.lerp(goalOffset, 0.08);
+      target.copy(anchor).add(camOffset);
+    }
+    dist += (goalDist - dist) * 0.08;
     let turning = false;
     if (goalYaw != null) {
       let dy = goalYaw - yaw; while (dy > Math.PI) dy -= 2 * Math.PI; while (dy < -Math.PI) dy += 2 * Math.PI;
-      yaw += dy * 0.1; pitch += (goalPitch - pitch) * 0.1;
+      yaw += dy * 0.10; pitch += (goalPitch - pitch) * 0.10;
       turning = Math.abs(dy) + Math.abs(goalPitch - pitch) > 0.002;
     }
     camera.position.set(target.x + dist * Math.cos(pitch) * Math.sin(yaw), target.y + dist * Math.sin(pitch), target.z + dist * Math.cos(pitch) * Math.cos(yaw));
     camera.lookAt(target);
-    const k = Math.max(0.03, dist / 36);
-    craft.scale.setScalar(k); craftHalo.scale.setScalar(k * (1 + 0.15 * Math.sin(performance.now() / 180)));
+    const k = Math.max(0.045, dist / 28);
+    craft.scale.setScalar(k * 1.3);
+    craftHalo.scale.setScalar(k * (1.8 + 0.25 * Math.sin(performance.now() / 150)));
     padDot.scale.setScalar(Math.min(1, k));
     siteDot.scale.setScalar(Math.min(1.2, Math.max(0.25, dist / 12)));
     renderer.render(scene, camera);
-    if (turning || Math.abs(goalDist - dist) > 0.01 || target.distanceTo(goalTarget) > 0.001) requestAnimationFrame(render);
+    if (turning || Math.abs(goalDist - dist) > 0.01 || (follow && camOffset.distanceTo(goalOffset) > 0.001)) scheduleRender();
   }
 
   let drag = null;
@@ -231,11 +428,30 @@ export function createFlightScene(canvas, { onHint } = {}) {
     setIndex,
     render,
     get index() { return cur; },
-    setFollow(on) { follow = on; if (on && path) setIndex(cur); },
+    setFollow(on) {
+      const prevFollow = follow;
+      follow = on;
+      if (on && path) {
+        if (!prevFollow) lastPhase = '__refollow__';
+        setIndex(cur);
+      }
+    },
     /** Back to following the craft from the start of the path (e.g. "Fly it again"). */
-    resetView() { follow = true; if (path) setIndex(0); },
-    /** Fast-forwarding through many orbits: hide the craft (the orbit is still drawn) so it doesn't seem to jump about. */
-    setFastForward(on) { craft.visible = craftHalo.visible = !on; },
+    resetView() {
+      follow = true;
+      lastPhase = null;
+      if (path) {
+        setIndex(0);
+        anchor.copy(goalAnchor);
+        camOffset.copy(goalOffset);
+        target.copy(anchor).add(camOffset);
+        dist = goalDist;
+        if (goalYaw != null) { yaw = goalYaw; pitch = goalPitch; }
+        render();
+      }
+    },
+    /** Fast-forwarding through many orbits: keep the craft visible and smoothly orbiting at a readable pace. */
+    setFastForward(on) { fastFwd = !!on; craft.visible = craftHalo.visible = true; },
     /** Free GPU memory and the WebGL context now, instead of waiting for garbage collection. */
     dispose() {
       disposed = true;

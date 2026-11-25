@@ -35,10 +35,10 @@ export function phaseSeconds(plan, ph) {
   switch (ph.id) {
     case 'launch': return 1.6;
     case 'parking': return clamp(2.6 * o.laps, 2.5, 6); // ~2.6 s per lap around Earth
-    case 'loops': return o ? clamp(0.8 * o.laps, 4, 9) : 5;
+    case 'loops': return o ? clamp(1.8 * o.laps, 8, 18) : 8;
     case 'ascent': return 2.2;
-    case 'coast': return 5;
-    case 'orbit': return clamp(0.5 * o.laps, 2.5, 5);
+    case 'coast': return plan.route === 'lowenergy' ? 6.5 : 5;
+    case 'orbit': return clamp(0.6 * o.laps, 3, 6);
     case 'descent': return 3.2;
     default: return 3;
   }
