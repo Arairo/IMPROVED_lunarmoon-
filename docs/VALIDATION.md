@@ -139,6 +139,31 @@ windows were affected (they are whole numbers of steps), so no published number
 changed; `test/scanIntervals.spec.js` checks divisible, non-divisible, shorter-than-
 one-step and very short windows against an independent sum.
 
+### Terrain resolution study (26 Nov 2026)
+
+How fine must the terrain be, and how far out? `tools/terrain_study.mjs` (Terrain
+resolution study workflow) cut NASA PGDA's 20 m south-pole terrain (LDEM_80S_20MPP_ADJ)
+to +-180 km and built skylines with 17 mixes of resolution by distance, at the 22 polar
+sites and 60 random points poleward of about 85°S, against a reference of 20 m terrain all
+the way out with dense ray steps. Sunlight and Earth shares as PGDA computes them
+(18.6 years, disk fraction, 2 m mast). Full table: [validation/terrain-study.md](validation/terrain-study.md).
+
+- Listed sites (on the 20 m tiles) were already within 0.1 point of the reference.
+  (Cabeus B and IM-1 lie beyond the 180 km cut, so their reference is not all 20 m.)
+- Points off the tiles used the 240 m grid near the point and were off by up to
+  **12 points of sunlight and 25 of Earth-in-view** (median 0.1; 90th percentile 1.3).
+- **20 m terrain out to 10 km, then the 240 m grid, matched the reference within 0.1
+  point** everywhere. Finer middle grids (40-120 m) added nothing measurable beyond that;
+  a 240 m grid built with peak-preserving maxima was worse, not better.
+- The remaining gap to PGDA's 60 m map at the ridges (our 61% vs 55.5% at the connecting
+  ridge) is the same with 20 m terrain everywhere, so it is not our terrain resolution.
+  Moving the ridge point 60 m changes its sunlight from 48% to 85%: exact position, and how
+  PGDA's map was made, matter more there than any terrain upgrade.
+
+So the app now has 20 m tiles over everything within 160 km of the pole (378 tiles,
+72 MB in all, about 0.2 MB downloaded for a point) and uses every tile within 10 km of
+a point (`HIRES_REACH_M`).
+
 ## 4. What this tool is not
 
 - Not mission-certified. Final site and date decisions use NASA's own analyses
