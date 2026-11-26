@@ -414,7 +414,17 @@ async function assessmentClean() {
   await check('Clicking the 3D Moon picks a custom site', async () => {
     await page.click('#viewPole'); await wait(3500);
     const box = await page.$eval('#cesium canvas', (e) => { const r = e.getBoundingClientRect(); return { x: r.left, y: r.top, w: r.width, h: r.height }; });
-    await page.mouse.click(box.x + box.w * 0.43, box.y + box.h * 0.62); await wait(1200);
+    // A spot on the Moon with no site marker under it (markers move with the view, so a
+    // fixed screen point can land on one): try a few and use the first empty one.
+    const spot = await page.evaluate(({ w, h }) => {
+      const sc = window.lunarApp.scene.viewer.scene;
+      for (const [fx, fy] of [[0.43, 0.62], [0.35, 0.75], [0.6, 0.8], [0.3, 0.55], [0.7, 0.65], [0.5, 0.9]]) {
+        const pos = { x: w * fx, y: h * fy };
+        if (!sc.pick(pos) && sc.pickPosition && sc.globe.pick(sc.camera.getPickRay(pos), sc)) return { fx, fy };
+      }
+      return { fx: 0.43, fy: 0.62 };
+    }, { w: box.w, h: box.h });
+    await page.mouse.click(box.x + box.w * spot.fx, box.y + box.h * spot.fy); await wait(1200);
     const s = await app(() => window.lunarApp.site);
     assert(s.precision === 'custom' && s.lat < -60, `picked ${JSON.stringify(s)}`);
     await assessmentClean();
