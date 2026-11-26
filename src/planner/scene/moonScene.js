@@ -341,6 +341,7 @@ export async function createMoonScene(container, { terrain, onPick, onStatus }) 
 
   // --- Camera -----------------------------------------------------------------------
   function flyToSite(site, { altitudeM, duration = 2.2 * motionScale() } = {}) {
+    leaveStand();
     const polar = site.lat < -75;
     const alt = altitudeM ?? (polar ? 90000 : 350000);
     const target = Cesium.Cartesian3.fromDegrees(site.lon, site.lat, 0, MOON);
@@ -356,25 +357,52 @@ export async function createMoonScene(container, { terrain, onPick, onStatus }) 
    * the flight ends (and the detailed tiles have loaded) the camera is lifted
    * just above the rendered surface if it would otherwise be inside it.
    */
+  // Standing on the site: the eye is placed from the LOLA ground height the numbers use.
+  // While Cesium is still showing coarse terrain tiles (just after a 20 m tile reloads the
+  // terrain, or on a slow GPU), camera collision would lift the eye onto that coarse surface
+  // (kilometres up over a crater floor), so collision is off while standing, and once the
+  // detailed tiles have loaded the eye is put just above the rendered surface.
+  let standWatch = null;
+  const ssc = () => scene.screenSpaceCameraController;
+  function leaveStand() {
+    standWatch?.();
+    standWatch = null;
+    ssc().enableCollisionDetection = true;
+  }
   function siteView(siteCtx, azDeg, pitchDeg = 2) {
+    leaveStand();
     const mast = Math.max(1, (siteCtx.height ?? siteCtx.groundHeight + 2) - siteCtx.groundHeight);
     const orientation = { heading: Cesium.Math.toRadians(azDeg), pitch: Cesium.Math.toRadians(pitchDeg), roll: 0 };
     const at = (h) => Cesium.Cartesian3.fromDegrees(siteCtx.lon, siteCtx.lat, h, MOON);
     const eye = siteCtx.groundHeight + mast + 1;
+    const settle = () => {
+      const rendered = scene.globe.getHeight(Cesium.Cartographic.fromDegrees(siteCtx.lon, siteCtx.lat));
+      // Only trust the rendered surface once it agrees with the LOLA ground (detailed tiles in).
+      const ok = Number.isFinite(rendered) && Math.abs(rendered - siteCtx.groundHeight) < 200;
+      viewer.camera.setView({ destination: at(ok && rendered + 1 > eye ? rendered + mast + 1 : eye), orientation });
+      if (ok) ssc().enableCollisionDetection = true; // the surface is right now: collisions again
+      return ok;
+    };
+    ssc().enableCollisionDetection = false;
     viewer.camera.flyTo({
       destination: at(eye),
       orientation,
       duration: 2.5 * motionScale(),
       complete: () => {
-        const rendered = scene.globe.getHeight(Cesium.Cartographic.fromDegrees(siteCtx.lon, siteCtx.lat));
-        if (Number.isFinite(rendered) && rendered + 1 > eye && rendered - siteCtx.groundHeight < 200) {
-          viewer.camera.setView({ destination: at(rendered + mast + 1), orientation });
-        }
+        if (settle()) return;
+        // Detailed tiles still loading: settle again when the queue empties (give up after 30 s).
+        const t0 = performance.now();
+        const off = scene.globe.tileLoadProgressEvent.addEventListener((queued) => {
+          if (queued === 0 || performance.now() - t0 > 30000) { if (settle() || performance.now() - t0 > 30000) { off(); if (standWatch === stop) standWatch = null; } }
+        });
+        const stop = () => off();
+        standWatch = stop;
       },
     });
   }
 
   function overview() {
+    leaveStand();
     viewer.camera.flyTo({
       destination: Cesium.Cartesian3.fromDegrees(10, -55, 5.2e6, MOON),
       orientation: { heading: 0, pitch: Cesium.Math.toRadians(-75), roll: 0 },
@@ -384,6 +412,7 @@ export async function createMoonScene(container, { terrain, onPick, onStatus }) 
 
   /** Pull back beyond the Moon so the Moon, Earth and the Sun's direction share the frame. */
   function earthMoonView() {
+    leaveStand();
     if (!currentState) return;
     const e = Cesium.Cartesian3.normalize(Cesium.Cartesian3.fromArray(currentState.earth), new Cesium.Cartesian3());
     const side = Cesium.Cartesian3.normalize(Cesium.Cartesian3.cross(e, Cesium.Cartesian3.UNIT_Z, new Cesium.Cartesian3()), new Cesium.Cartesian3());
@@ -402,6 +431,7 @@ export async function createMoonScene(container, { terrain, onPick, onStatus }) 
   }
 
   function southPole() {
+    leaveStand();
     viewer.camera.flyTo({
       destination: Cesium.Cartesian3.fromDegrees(0, -80.5, 420000, MOON),
       orientation: { heading: Cesium.Math.toRadians(180), pitch: Cesium.Math.toRadians(-62), roll: 0 },
