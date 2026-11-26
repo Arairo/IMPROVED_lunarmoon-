@@ -169,13 +169,13 @@ def polar_tiles():
     return out
 
 
-POLAR = polar_tiles()
-REG = REG + POLAR
-print(f'{len(POLAR)} extra tiles cover everything within {POLAR_CAP / 1000:.0f} km of the pole', flush=True)
+POLAR_TILES = polar_tiles()
+REG = REG + POLAR_TILES
+print(f'{len(POLAR_TILES)} extra tiles cover everything within {POLAR_CAP / 1000:.0f} km of the pole', flush=True)
 
 
-def covered(x, y, r=6000.0):
-    """True if the square +-r around (x, y) lies inside the region tiles."""
+def covered(x, y, r=HALF - 40.0):
+    """True if the square +-r (10 km) around (x, y) lies inside the region tiles."""
     return all(any(abs(px - t['x']) <= TILE / 2 and abs(py - t['y']) <= TILE / 2 for t in REG)
                for px in (x - r, x, x + r) for py in (y - r, y, y + r))
 
