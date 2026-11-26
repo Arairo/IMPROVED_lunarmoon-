@@ -1,5 +1,6 @@
 {
- "generated": "2026-11-22T07:34:55.926Z",
+ "generated": "2026-11-26T03:57:04.863Z",
+ "commit": "ade880100b5ddd7bda8d528186c90c0db2c605ca",
  "note": "PGDA \"average visibility\" (Mazarico et al. 2011 method; product 201608) is a multi-year average of the visible fraction of the Sun's / Earth's disk at the surface. Ours is the share of 2027 with the disk centre above the skyline from a 2 m mast. Expect differences of several points; the comparison is about the pattern.",
  "products": {
   "sun": "https://pgda.gsfc.nasa.gov/data/MoonIllumination/AVGVISIB_75S_120M_201608.TIF",
@@ -60,7 +61,7 @@
    },
    "ours20": {
     "sun": 9,
-    "earth": 37.2
+    "earth": 36.9
    },
    "pgdaSun60": 9.1,
    "pgdaSun60Detail": {
@@ -500,7 +501,8 @@
   }
  ],
  "likeForLike": {
-  "generated": "2026-11-22T07:36:24.774Z",
+  "generated": "2026-11-26T03:58:25.236Z",
+  "commit": "ade880100b5ddd7bda8d528186c90c0db2c605ca",
   "method": "Same quantities as PGDA AVGVISIB: visible fraction of the solar disk; Earth counted when any part of its disk is above the terrain; averaged over an 18.6-year nutation cycle from 2009 (12-hour steps for the 5 km map, 3-hour steps at sites); 2 m mast. PGDA uses hourly steps and its own LOLA terrain at 60-240 m.",
   "maps": {
    "sun": {
@@ -536,7 +538,7 @@
     "id": "a3-hw",
     "terrain": "LOLA 20 m grid",
     "oursSun": 9.5,
-    "oursEarth": 44.3,
+    "oursEarth": 44.1,
     "pgdaSun120": 10.3,
     "pgdaSun60": 9.1,
     "pgdaEarth120": 43.9
@@ -590,7 +592,7 @@
     "id": "a3-g2",
     "terrain": "LOLA 20 m grid",
     "oursSun": 36.1,
-    "oursEarth": 54.9,
+    "oursEarth": 54.8,
     "pgdaSun120": 37.1,
     "pgdaSun60": 37.2,
     "pgdaEarth120": 54.8
@@ -599,7 +601,7 @@
     "id": "a3-sp",
     "terrain": "LOLA 20 m grid",
     "oursSun": 1.9,
-    "oursEarth": 41.5,
+    "oursEarth": 41.4,
     "pgdaSun120": 3,
     "pgdaSun60": 2.9,
     "pgdaEarth120": 41.4
@@ -634,7 +636,7 @@
    {
     "id": "best-1",
     "terrain": "LOLA 20 m grid",
-    "oursSun": 64,
+    "oursSun": 63.9,
     "oursEarth": 61.3,
     "pgdaSun120": 79.7,
     "pgdaSun60": 59.4,
@@ -662,7 +664,7 @@
     "id": "shoemaker",
     "terrain": "LOLA 20 m grid",
     "oursSun": 0,
-    "oursEarth": 24.4,
+    "oursEarth": 24.3,
     "pgdaSun120": 0,
     "pgdaSun60": 0,
     "pgdaEarth120": 24.4
@@ -680,7 +682,7 @@
     "id": "faustini",
     "terrain": "LOLA 20 m grid",
     "oursSun": 0,
-    "oursEarth": 1.7,
+    "oursEarth": 1.6,
     "pgdaSun120": 0,
     "pgdaSun60": 0,
     "pgdaEarth120": 1.2

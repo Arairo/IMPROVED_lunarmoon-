@@ -3,9 +3,9 @@
  "kind": "site",
  "projection": "south-polar-stereographic",
  "radius": 1737400,
- "halfExtent": 8000,
+ "halfExtent": 10040,
  "cellSize": 20,
- "size": 800,
+ "size": 1004,
  "centreX": 7540,
  "centreY": 299940,
  "dtype": "int16-le",
@@ -16,12 +16,12 @@
  "sourceUnits": "metres above 1737.4 km",
  "orientationVariant": 0,
  "checkVs240m": {
-  "meanAbsDiffM": 19.6,
-  "biasM": 1.9,
-  "points": 7500,
+  "meanAbsDiffM": 19.1,
+  "biasM": 1.6,
+  "points": 11000,
   "against": "1 km"
  },
- "gapsFilledFrom240m": 157600,
+ "gapsFilledFrom240m": 300196,
  "encoding": "int16-le, each value minus the one above (row 0: minus the one to the left), gzip",
  "file": "im1.i16z"
 }

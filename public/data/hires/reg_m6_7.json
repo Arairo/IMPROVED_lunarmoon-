@@ -1,0 +1,28 @@
+{
+ "name": "hires_reg_m6_7",
+ "kind": "polar",
+ "regions": [],
+ "projection": "south-polar-stereographic",
+ "radius": 1737400,
+ "halfExtent": 8040,
+ "cellSize": 20,
+ "size": 804,
+ "centreX": -88000,
+ "centreY": 120000,
+ "dtype": "int16-le",
+ "noData": -32768,
+ "units": "metres above 1737.4 km sphere",
+ "rowOrder": "row 0 at +y, column 0 at -x (relative to centreX/centreY)",
+ "source": "NASA GSFC PGDA: LOLA 20 m south-pole DEM, LDEM_80S_20MPP_ADJ (Barker et al. 2023)",
+ "sourceUnits": "metres above 1737.4 km",
+ "orientationVariant": 0,
+ "checkVs240m": {
+  "meanAbsDiffM": 2.1,
+  "biasM": -0.1,
+  "points": 10000,
+  "against": "240 m"
+ },
+ "gapsFilledFrom240m": 0,
+ "encoding": "int16-le, each value minus the one above (row 0: minus the one to the left), gzip",
+ "file": "reg_m6_7.i16z"
+}
